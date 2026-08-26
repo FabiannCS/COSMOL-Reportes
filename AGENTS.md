@@ -20,11 +20,12 @@ Sistema que centraliza los reportes de las consultas generadas por los socios a 
 
 | Componente | Tecnología | Notas |
 |---|---|---|
-| Backend | **PHP 7.3** | ⚠️ Versión indispensable. NUNCA sugerir ni usar sintaxis, funciones o dependencias exclusivas de PHP 7.4+/8.x (ej. constructor property promotion, union types, `match`, named arguments, `str_contains`, etc.). |
+| Backend | **PHP 7.3** | Versión indispensable. NUNCA sugerir ni usar sintaxis, funciones o dependencias exclusivas de PHP 7.4+/8.x (ej. constructor property promotion, union types, `match`, named arguments, `str_contains`, etc.). |
 | Frontend | PHP server-side + HTML | No usar frameworks JS (React, Vue, etc.). JS plano solo si es estrictamente necesario. |
 | Diseño UI | Bootstrap | Plantilla de dashboard. Priorizar componentes y clases utilitarias de Bootstrap antes de escribir CSS propio. |
-| Contenerización | Docker / docker-compose | Todo el entorno (PHP, servidor web, PostgreSQL) corre en contenedores. No asumir instalación local de PHP/Postgres. |
-| Base de datos | PostgreSQL | Acceso vía PDO (`pdo_pgsql`). No usar extensiones abandonadas como `pg_connect` directo salvo justificación. |
+| Entorno de desarrollo | **Docker / docker-compose** | Todo el entorno (PHP + Apache, PostgreSQL) corre en contenedores. No instalar PHP, Apache ni PostgreSQL localmente (nada de XAMPP/WAMP). |
+| Servidor web | Apache (dentro del contenedor PHP) | Imagen base `php:7.3-apache`. El document root del contenedor apunta a `public/`. |
+| Base de datos | PostgreSQL (contenedor separado) | Acceso desde PHP vía PDO (`pdo_pgsql`). No usar extensiones abandonadas como `pg_connect` directo salvo justificación. |
 | Autoload | Composer (PSR-4) | Solo para autoload de clases propias, no para instalar frameworks pesados (Laravel, Symfony, etc.). |
 
 **Regla de oro:** antes de proponer una librería, sintaxis o función, verificar que sea compatible con PHP 7.3. En caso de duda, preferir la solución más simple y compatible.
@@ -34,12 +35,12 @@ Sistema que centraliza los reportes de las consultas generadas por los socios a 
 No se usa un framework completo. Se implementa un MVC ligero hecho a medida, con las piezas mínimas necesarias.
 
 **Flujo de una petición:**
-1. El navegador solicita una URL, ej. `/operador/trabajos`.
-2. Nginx/Apache reescribe la petición hacia `public/index.php` (front controller). `public/` es el único document root expuesto; `app/` nunca es accesible directamente por URL.
+1. El navegador solicita una URL, ej. `/operador/trabajos`, contra el puerto expuesto por el contenedor PHP/Apache (ej. `localhost:8080`).
+2. Apache, dentro del contenedor, reescribe la petición hacia `public/index.php` (front controller) mediante `.htaccess`. `public/` es el único document root expuesto; `app/` nunca es accesible directamente por URL.
 3. `index.php` inicializa `Core/Router.php`, que resuelve la ruta contra `Config/routes.php`.
 4. La petición pasa por los middlewares correspondientes: `AuthMiddleware` (¿hay sesión activa?) y `RoleMiddleware` (¿el rol del usuario tiene permiso sobre esa ruta?).
 5. El router invoca el método correspondiente del Controller.
-6. El Controller llama al Model correspondiente, que ejecuta la consulta SQL vía PDO (`Core/Database.php`).
+6. El Controller llama al Model correspondiente, que ejecuta la consulta SQL vía PDO (`Core/Database.php`), conectando al contenedor de PostgreSQL por el nombre del servicio definido en `docker-compose.yml` (ej. `db`), no por `localhost`.
 7. El Controller pasa los datos a la Vista correspondiente en `app/Views/`, que se renderiza dentro de `layouts/main.php` (navbar + sidebar + footer comunes, estilo Bootstrap).
 8. Se devuelve el HTML final al navegador.
 
@@ -47,14 +48,10 @@ No se usa un framework completo. Se implementa un MVC ligero hecho a medida, con
 
 ```
 cosmol-reportes/
-├── docker/
-│   ├── php/
-│   │   └── Dockerfile
-│   ├── nginx/
-│   │   └── default.conf
-│   └── postgres/
-│       └── init.sql
+├── Dockerfile
 ├── docker-compose.yml
+├── database/
+│   └── init.sql
 ├── composer.json
 ├── .env
 ├── .env.example
@@ -62,6 +59,7 @@ cosmol-reportes/
 │
 ├── public/
 │   ├── index.php
+│   ├── .htaccess
 │   └── assets/
 │       ├── css/
 │       ├── js/
@@ -190,7 +188,7 @@ Cada módulo se corresponde directamente con Controllers/Views del punto 4.
 | R2 | Seguridad y autenticación | Autenticación/autorización basada en roles fijos: Administrador, Supervisor, Operador. |
 | R3 | Actualización rápida de reportes | Datos de reportes siempre actualizados. |
 | R4 | Actualización rápida de trabajos | Trabajos de operadores actualizados en tiempo real. |
-| R5 | Entorno de ejecución | Contenerizado con Docker (frontend, backend, BD uniformes). |
+| R5 | Entorno de ejecución | Contenerizado mediante Docker / docker-compose (PHP+Apache y PostgreSQL), para garantizar una configuración uniforme entre todos los desarrolladores y el servidor de producción. |
 | R6 | Integridad y consistencia | Registro de trabajos ejecutado de forma consistente (transaccional donde aplique). |
 
 ## 8. Roles del Sistema
@@ -211,12 +209,26 @@ Tres roles fijos, validados en cada petición vía `RoleMiddleware`:
 - **Vistas:** no incluir lógica de negocio ni consultas SQL en archivos de `Views/`. Las vistas solo reciben datos ya procesados del Controller.
 - **Bootstrap:** reutilizar componentes del layout (`layouts/main.php`, `partials/`) en vez de duplicar markup de navbar/sidebar en cada vista.
 
-## 10. Reglas Explícitas para el Agente de IA
+## 10. Configuración del Entorno con Docker
+
+- **`Dockerfile`** (raíz del proyecto)**:** basado en `php:7.3-apache`. Debe instalar y habilitar la extensión `pdo_pgsql` (no viene por defecto en la imagen oficial), típicamente vía `docker-php-ext-install pdo pdo_pgsql`. También instala Composer dentro de la imagen (o se copia el binario) para poder correr `composer install`.
+- **`docker-compose.yml`:** define al menos dos servicios:
+  - `app` (o `web`) — construido desde el `Dockerfile` en la raíz del proyecto, monta el código del proyecto como volumen, expone un puerto (ej. `8080:80`).
+  - `db` — imagen oficial `postgres`, con variables de entorno para usuario/contraseña/nombre de base (tomadas de `.env`), y un volumen para persistir los datos entre reinicios.
+- **`database/init.sql`:** se monta en el volumen `/docker-entrypoint-initdb.d/` del contenedor `db`. PostgreSQL lo ejecuta automáticamente **solo la primera vez** que se crea el volumen de datos (si el volumen ya existe, hay que borrarlo para que se re-ejecute).
+- **Conexión entre contenedores:** desde `app/Config/database.php`, el host de conexión a PostgreSQL es el **nombre del servicio** en `docker-compose.yml` (ej. `db`), no `localhost` ni `127.0.0.1` — cada contenedor es su propia red interna.
+- **`public/.htaccess`:** sigue siendo necesario porque Apache corre *dentro* del contenedor PHP; reescribe todas las peticiones hacia `index.php` (front controller).
+- **Variables de entorno:** `.env` alimenta tanto a PHP (vía `app/Config/database.php`) como a `docker-compose.yml` (para las credenciales del servicio `db`), evitando duplicar valores sensibles en dos lugares.
+- **Levantar el entorno:** `docker-compose up -d` levanta ambos servicios; `docker-compose down` los detiene. `composer install` se corre dentro del contenedor `app` (ej. `docker-compose exec app composer install`).
+
+## 11. Reglas Explícitas para el Agente de IA
 
 - ❌ No actualizar ni sugerir actualizar la versión de PHP.
 - ❌ No introducir frameworks JS de frontend.
 - ❌ No introducir frameworks PHP completos (Laravel, Symfony, CodeIgniter) — el proyecto usa MVC casero.
 - ❌ No mezclar responsabilidades de módulos distintos en un mismo Controller/Model.
+- ❌ No sugerir instalar PHP, Apache o PostgreSQL directamente en el sistema operativo (XAMPP, WAMP, etc.) — todo el entorno corre vía Docker.
+- ❌ No usar `localhost`/`127.0.0.1` como host de base de datos en el código — debe ser el nombre del servicio de `docker-compose.yml`.
 - ✅ Mantener toda lógica de acceso a datos dentro de `app/Models/`.
 - ✅ Validar rol y sesión en cada ruta protegida, sin excepción.
 - ✅ Si un requerimiento no está claro o falta información para implementarlo (ej. permisos exactos del rol Supervisor), preguntar antes de asumir.
