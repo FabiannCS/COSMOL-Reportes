@@ -94,15 +94,23 @@ class Router
     private function executeMiddlewares(array $middlewares)
     {
         foreach ($middlewares as $middleware) {
-            $middlewareClass = "App\\Middlewares\\" . ucfirst($middleware) . "Middleware";
+            $parts = explode(':', $middleware, 2);
+            $name = $parts[0];
+            $arg = isset($parts[1]) ? $parts[1] : null;
+
+            $middlewareClass = "App\\Middlewares\\" . ucfirst($name) . "Middleware";
             if (class_exists($middlewareClass)) {
-                $instance = new $middlewareClass();
-                if (method_exists($instance, 'handle')) {
-                    $instance->handle();
+                if (method_exists($middlewareClass, 'handle')) {
+                    if ($arg !== null) {
+                        call_user_func([$middlewareClass, 'handle'], $arg);
+                    } else {
+                        call_user_func([$middlewareClass, 'handle']);
+                    }
                 }
             }
         }
     }
+
 
     /**
      * Respuesta para error 404

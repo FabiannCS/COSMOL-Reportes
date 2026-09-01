@@ -23,7 +23,6 @@ abstract class Controller
             return;
         }
 
-        // Extraer variables para que estén disponibles en la vista
         extract($data, EXTR_SKIP);
 
         if ($layout === null) {
@@ -44,29 +43,15 @@ abstract class Controller
         require $viewFile;
         $content = ob_get_clean();
 
-        // Renderizar layout principal inyectando $content
         require $layoutFile;
     }
 
-    /**
-     * Redirecciona a una URL relativa o absoluta
-     *
-     * @param string $url
-     * @return void
-     */
     protected function redirect($url)
     {
         header("Location: {$url}");
         exit;
     }
 
-    /**
-     * Retorna una respuesta JSON
-     *
-     * @param mixed $data
-     * @param int $statusCode
-     * @return void
-     */
     protected function json($data, $statusCode = 200)
     {
         http_response_code($statusCode);

@@ -24,10 +24,16 @@
         <h1 class="logo-title">COSMOL</h1>
         <p class="subtitle">Sistema de Reportes y Gestión de Trabajos</p>
 
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem;">
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
         <form action="/login" method="POST">
             <div class="form-group">
-                <label for="usuario">Codigo de Socio</label>
-                <input type="text" id="usuario" name="usuario" class="form-control" placeholder="Ingresa tu usuario" required autofocus>
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Ingresa tu usuario" required autofocus>
             </div>
 
             <div class="form-group">
@@ -42,3 +48,4 @@
     </div>
 </body>
 </html>
+

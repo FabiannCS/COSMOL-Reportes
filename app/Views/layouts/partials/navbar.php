@@ -1,6 +1,7 @@
 <?php
-$usuarioNombre = isset($_SESSION['usuario']['nombre']) ? $_SESSION['usuario']['nombre'] : 'Usuario';
-$usuarioRol    = isset($_SESSION['usuario']['rol'])    ? $_SESSION['usuario']['rol']    : '';
+$usuarioNombre = isset($_SESSION['usuario']['username'])   ? $_SESSION['usuario']['username']   : '';
+$rolActual     = isset($_SESSION['usuario']['nombre_rol']) ? $_SESSION['usuario']['nombre_rol'] : '';
+$homeUrl       = ($rolActual === 'Operador') ? '/operador/trabajos' : '/dashboard';
 ?>
 <header class="app-header">
     <div class="d-flex align-items-center me-auto">
@@ -9,27 +10,23 @@ $usuarioRol    = isset($_SESSION['usuario']['rol'])    ? $_SESSION['usuario']['r
             <i class="bi bi-list fs-5"></i>
         </button>
 
-        <a class="navbar-brand" href="/dashboard">
-            <i class="bi bi-water"></i>
+        <a class="navbar-brand" href="<?= $homeUrl ?>">
             <span>COSMOL <small class="text-muted fs-6 fw-normal d-none d-sm-inline">| Reportes</small></span>
         </a>
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <!-- Información del usuario logueado -->
-        <div class="d-none d-md-flex align-items-center text-end">
-            <div>
-                <div class="fw-semibold text-dark small"><?= htmlspecialchars($usuarioNombre, ENT_QUOTES, 'UTF-8') ?></div>
-                <?php if (!empty($usuarioRol)): ?>
-                    <span class="badge bg-light text-secondary border small"><?= htmlspecialchars($usuarioRol, ENT_QUOTES, 'UTF-8') ?></span>
-                <?php endif; ?>
-            </div>
-        </div>
+        <?php if (!empty($usuarioNombre)): ?>
+            <span class="text-muted small me-2 d-none d-md-inline">
+                <i class="bi bi-person-circle me-1"></i>
+                <strong><?= htmlspecialchars($usuarioNombre, ENT_QUOTES, 'UTF-8') ?></strong>
+                <span class="badge bg-secondary ms-1"><?= htmlspecialchars($rolActual, ENT_QUOTES, 'UTF-8') ?></span>
+            </span>
+        <?php endif; ?>
 
-        <!-- Botón de Cerrar Sesión -->
         <a href="/logout" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" title="Cerrar Sesión">
             <i class="bi bi-box-arrow-right"></i>
-            <span class="d-none d-sm-inline">Salir</span>
+            <span class="d-none d-sm-inline">Cerrar sesión</span>
         </a>
     </div>
 </header>
