@@ -5,13 +5,14 @@
  * @var array|null $trabajo
  * @var string|null $error
  */
+$error = isset($error) ? $error : null;
 $sesionError = isset($_SESSION['error']) ? $_SESSION['error'] : null;
 unset($_SESSION['error']);
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-file-earmark-text"></i> Detalle de Reconexión</h2>
-    <a href="/operador/trabajos" class="btn btn-outline-secondary">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <h2 class="h4 mb-0"><i class="bi bi-file-earmark-text"></i> Detalle de Reconexión</h2>
+    <a href="/operador/trabajos" class="btn btn-outline-secondary align-self-start align-self-md-auto">
         <i class="bi bi-arrow-left"></i> Volver a la Lista
     </a>
 </div>
@@ -28,7 +29,7 @@ unset($_SESSION['error']);
         No se pudieron cargar los detalles de esta reconexión. <a href="/operador/trabajos" class="alert-link">Regresar</a>.
     </div>
 <?php else: ?>
-    <div class="row">
+    <div class="row mx-0">
         <!-- Columna de Datos (Solo Lectura) -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
@@ -49,7 +50,7 @@ unset($_SESSION['error']);
 
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold mb-1">Ubicación (U-Z-R)</label>
-                        <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['ubicacion'] ?? '') ?> (Z: <?= htmlspecialchars($trabajo['zona'] ?? '') ?>, R: <?= htmlspecialchars($trabajo['ruta'] ?? '') ?>)" readonly disabled>
+                        <textarea class="form-control bg-e9ecef" rows="2" readonly disabled><?= htmlspecialchars($trabajo['ubicacion'] ?? '') ?> (Z: <?= htmlspecialchars($trabajo['zona'] ?? '') ?>, R: <?= htmlspecialchars($trabajo['ruta'] ?? '') ?>)</textarea>
                     </div>
 
                     <div class="mb-3">

@@ -46,7 +46,7 @@ class OperadorController extends Controller
         switch ($especialidad['nombre']) {
             case 'Reconexión':
                 $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
-                $respuesta = $client->get('/socios/23807/reconexiones');
+                $respuesta = $client->get('/reconexiones?estado=PENDIENTE');
                 $datos = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : null);
                 $vista = 'operador/reconexiones';
                 break;
@@ -117,7 +117,7 @@ class OperadorController extends Controller
         switch ($especialidad['nombre']) {
             case 'Reconexión':
                 $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
-                $respuesta = $client->get('/socios/23807/reconexiones');
+                $respuesta = $client->get('/reconexiones?estado=PENDIENTE');
                 $lista = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
                 
                 $datos = null;

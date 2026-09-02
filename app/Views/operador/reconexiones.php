@@ -13,8 +13,8 @@ $sesionError = isset($_SESSION['error']) ? $_SESSION['error'] : null;
 unset($_SESSION['error']);
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Mis Trabajos - <?= htmlspecialchars($especialidad) ?></h2>
+<div class="mb-4">
+    <h2 class="h4 text-wrap text-break">Mis Trabajos - <?= htmlspecialchars($especialidad) ?></h2>
 </div>
 
 <?php if ($mensaje): ?>
@@ -47,16 +47,15 @@ unset($_SESSION['error']);
                 <p>No hay reconexiones pendientes en este momento.</p>
             </div>
         <?php else: ?>
-            <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-3">ID API</th>
-                            <th class="d-none d-md-table-cell">Socio</th>
-                            <th>Ubicación / Ruta</th>
-                            <th class="d-none d-lg-table-cell">Descripción / Glosa</th>
-                            <th class="d-none d-xl-table-cell">Fecha Registro</th>
-                            <th>Estado</th>
+                            <th class="text-center">ID</th>
+                            <th class="text-center d-none d-md-table-cell">Socio</th>
+                            <th class="text-center">Ubicación</th>
+                            <th class="text-center d-none d-lg-table-cell">Descripción</th>
+                            <th class="text-center d-none d-xl-table-cell">Fecha registro</th>
+                            <th class="text-center">Estado</th>
                             <th class="text-center pe-3 d-none d-sm-table-cell">Acciones</th>
                         </tr>
                     </thead>
@@ -80,13 +79,12 @@ unset($_SESSION['error']);
                                     <?php if (!empty($t['coordenadas_gps'])): ?>
                                         </a>
                                     <?php endif; ?>
-                                    <br>
-                                    <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;">
+                                    <div class="small text-muted text-break lh-sm mt-1">
                                         <?= htmlspecialchars($t['direccion_predio'] ?? '') ?>
-                                    </small>
+                                    </div>
                                 </td>
                                 <td class="d-none d-lg-table-cell">
-                                    <?= htmlspecialchars($t['glosa'] ?? 'Sin descripción') ?>
+                                    <?= htmlspecialchars($t['glosa'] ?? 'N/A') ?>
                                 </td>
                                 <td class="d-none d-xl-table-cell">
                                     <?php
@@ -113,7 +111,6 @@ unset($_SESSION['error']);
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-            </div>
         <?php endif; ?>
     </div>
 </div>
