@@ -63,13 +63,66 @@ unset($_SESSION['error']);
                         <textarea class="form-control bg-e9ecef" rows="3" readonly disabled><?= htmlspecialchars($trabajo['glosa'] ?? 'Sin glosa extra') ?></textarea>
                     </div>
 
+                    <!-- Fotografía Adjunta -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Fotografía del Predio / Medidor</label>
+                        <?php if (!empty($trabajo['foto'])): ?>
+                            <?php 
+                                $fotoRaw = trim($trabajo['foto']);
+                                if (strpos($fotoRaw, 'http://') === 0 || strpos($fotoRaw, 'https://') === 0) {
+                                    $fotoUrl = $fotoRaw;
+                                } else {
+                                    if (strpos($fotoRaw, '/uploads/') === false && strpos($fotoRaw, 'uploads/') === false) {
+                                        $fotoRaw = '/uploads/reconexiones/' . ltrim($fotoRaw, '/');
+                                    }
+                                    $base = !empty($apiFotoBaseUrl) ? rtrim($apiFotoBaseUrl, '/') : '';
+                                    $fotoUrl = $base . '/' . ltrim($fotoRaw, '/');
+                                }
+                                $fotoId = htmlspecialchars($trabajo['id_reconexion'] ?? '0');
+                            ?>
+                            <div class="border rounded p-2 bg-white text-center shadow-sm">
+                                <a href="<?= htmlspecialchars($fotoUrl) ?>" target="_blank" title="Clic para ampliar en pestaña nueva">
+                                    <img src="<?= htmlspecialchars($fotoUrl) ?>" 
+                                         alt="Foto de la reconexión" 
+                                         class="img-fluid rounded border mb-2" 
+                                         style="max-height: 240px; width: auto; object-fit: contain;"
+                                         onerror="this.style.display='none'; document.getElementById('foto_error_rec_<?= $fotoId ?>').style.display='block';">
+                                </a>
+                                <div id="foto_error_rec_<?= $fotoId ?>" style="display: none;" class="alert alert-warning small py-2 mb-2">
+                                    <i class="bi bi-exclamation-circle text-warning me-1"></i> No se pudo cargar la vista previa de la imagen.
+                                </div>
+                                <div>
+                                    <a href="<?= htmlspecialchars($fotoUrl) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i> Ver Imagen Completa
+                                    </a>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="p-3 bg-white rounded border text-muted small text-center">
+                                <i class="bi bi-camera-slash display-6 d-block mb-1 text-secondary opacity-50"></i>
+                                El socio no adjuntó fotografía en esta reconexión.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
                     <?php if (!empty($trabajo['coordenadas_gps'])): ?>
+                        <?php 
+                            $coordsLimpia = preg_replace('/\s+/', '', $trabajo['coordenadas_gps']); 
+                            $urlVerMapa = "https://www.google.com/maps?q={$coordsLimpia}";
+                            $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coordsLimpia}";
+                        ?>
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold mb-1">Coordenadas GPS</label>
-                            <div class="input-group">
+                            <label class="form-label text-muted small fw-bold mb-1">Coordenadas GPS y Navegación</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-white"><i class="bi bi-geo-alt-fill text-danger"></i></span>
                                 <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['coordenadas_gps']) ?>" readonly disabled>
-                                <a href="https://maps.google.com/?q=<?= urlencode(str_replace(' ', '', $trabajo['coordenadas_gps'])) ?>" target="_blank" class="btn btn-outline-secondary">
-                                    <i class="bi bi-map"></i> Ver Mapa
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="<?= htmlspecialchars($urlVerMapa) ?>" target="_blank" class="btn btn-sm btn-outline-primary flex-fill">
+                                    <i class="bi bi-map me-1"></i> Ver Ubicación
+                                </a>
+                                <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="btn btn-sm btn-outline-success flex-fill">
+                                    <i class="bi bi-sign-turn-right-fill me-1"></i> Trazar Ruta (Cómo llegar)
                                 </a>
                             </div>
                         </div>

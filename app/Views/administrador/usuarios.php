@@ -4,8 +4,15 @@
  * 
  * @var array $usuarios Lista de usuarios registrados.
  * @var array $roles Lista de roles disponibles para el select.
+ * @var array $especialidades Lista de especialidades para operadores.
  * @var string|null $mensaje Mensaje de éxito flash.
  * @var string|null $error Mensaje de error flash.
+ * @var string $totalUsuarios Total de usuarios registrados.
+ * @var string $activos Total de usuarios activos.
+ * @var string $inactivos Total de usuarios inactivos.
+ * @var array $porEspecialidad Total de usuarios por especialidad.
+ * @var int $paginaActual Página actual de la tabla.
+ * @var int $totalPaginas Total de páginas disponibles.
  */
 $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 0;
 ?>
@@ -14,7 +21,6 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-1 text-dark">Gestión de Usuarios</h1>
-            <p class="text-muted small mb-0">Administración y control de cuentas de acceso al sistema.</p>
         </div>
         <div>
             <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
@@ -41,22 +47,78 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
         </div>
     <?php endif; ?>
 
+    <!-- Tarjetas de Métricas -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="p-3 me-3">
+                        <i class="bi bi-people-fill text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fs-5">Total Usuarios</div>
+                        <div class="h4 mb-0 fw-bold"><?= (int)$totalUsuarios ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="p-3 me-3">
+                        <i class="bi bi-person-check-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fs-5">Activos</div>
+                        <div class="h4 mb-0 fw-bold"><?= (int)$activos ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="p-3 me-3">
+                        <i class="bi bi-person-x-fill text-danger fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fs-5">Inactivos</div>
+                        <div class="h4 mb-0 fw-bold text-danger"><?= (int)$inactivos ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="p-3 me-3">
+                        <i class="bi bi-diagram-3-fill text-info fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fs-5">Especialidades</div>
+                        <div class="h4 mb-0 fw-bold"><?= count($porEspecialidad) ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tarjeta Principal con Tabla de Usuarios -->
-    <div class="card border-0 shadow-sm rounded-3">
+    <div class="card border-0 shadow-sm rounded-3" id="tabla-usuarios">
         <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-            <h6 class="card-title fw-bold mb-0 text-dark">
-                <i class="bi bi-people me-2 text-primary"></i>Usuarios Registrados
-            </h6>
-            <span class="badge bg-light text-dark border"><?= count($usuarios) ?> usuarios</span>
+            <h4 class="card-title mb-0 text-dark">
+                Usuarios Registrados
+            </h4>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4" style="width: 70px;">#</th>
+                            <th class="ps-4" style="width: 70px;">ID</th>
                             <th>Usuario</th>
                             <th>Rol</th>
+                            <th>Especialidad</th>
                             <th>Estado</th>
                             <th>Fecha de Registro</th>
                             <th class="text-end pe-4" style="min-width: 140px;">Acciones</th>
@@ -101,7 +163,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                             <div>
                                                 <div class="fw-semibold text-dark"><?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?></div>
                                                 <?php if ($esPropio): ?>
-                                                    <span class="badge bg-warning bg-opacity-25 text-dark" style="font-size: 0.68rem;">Tú</span>
+                                                    <span class="badge bg-warning bg-opacity-25 text-dark" style="font-size: 0.80rem;">Tú</span>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -112,8 +174,17 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                         </span>
                                     </td>
                                     <td>
+                                        <?php if ($nombreRol === 'Operador'): ?>
+                                            <span class="text-dark fw-bold" style="font-size: 0.90rem;">
+                                                <?= htmlspecialchars(isset($u['nombre_especialidad']) && $u['nombre_especialidad'] ? $u['nombre_especialidad'] : 'Sin asignar', ENT_QUOTES, 'UTF-8') ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted small">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
                                         <?php if ($estado === 1): ?>
-                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.85rem;">
                                                 <i class="bi bi-check-circle me-1"></i>Activo
                                             </span>
                                         <?php else: ?>
@@ -122,19 +193,20 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                             </span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-muted small"><?= $fecha ?></td>
+                                    <td class="text-muted small fw-bold"><?= $fecha ?></td>
                                     <td class="text-end pe-4">
                                         <div class="d-inline-flex gap-1 align-items-center">
                                             <!-- Botón Editar -->
                                             <button type="button" 
-                                                    class="btn btn-sm btn-outline-primary"
+                                                    class="btn btn-sm btn-primary"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalEditarUsuario"
                                                     data-id="<?= $idUsuario ?>"
                                                     data-username="<?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?>"
                                                     data-id-rol="<?= $idRol ?>"
+                                                    data-id-especialidad="<?= htmlspecialchars(isset($u['id_especialidad']) ? $u['id_especialidad'] : '', ENT_QUOTES, 'UTF-8') ?>"
                                                     title="Editar Usuario">
-                                                <i class="bi bi-pencil-square"></i>
+                                                Editar
                                             </button>
 
                                             <!-- Botón Cambiar Estado (Toggle) -->
@@ -143,7 +215,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                                     <i class="bi bi-toggle-on"></i>
                                                 </button>
                                             <?php else: ?>
-                                                <form action="/seguridad/usuarios/estado" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de <?= ($estado === 1) ? 'desactivar' : 'activar' ?> al usuario \'<?= htmlspecialchars(addslashes($username), ENT_QUOTES, 'UTF-8') ?>\'?');">
+                                                <form action="/administrador/usuarios/estado" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de <?= ($estado === 1) ? 'desactivar' : 'activar' ?> al usuario \'<?= htmlspecialchars(addslashes($username), ENT_QUOTES, 'UTF-8') ?>\'?');">
                                                     <input type="hidden" name="id_usuario" value="<?= $idUsuario ?>">
                                                     <input type="hidden" name="nuevo_estado" value="<?= ($estado === 1) ? 0 : 1 ?>">
                                                     <?php if ($estado === 1): ?>
@@ -165,6 +237,26 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                     </tbody>
                 </table>
             </div>
+            
+            <?php if (isset($totalPaginas) && $totalPaginas > 1): ?>
+                <div class="d-flex justify-content-center mt-4 pb-3">
+                    <nav aria-label="Navegación de páginas">
+                        <ul class="pagination mb-0">
+                            <li class="page-item <?= ($paginaActual <= 1) ? 'disabled' : '' ?>">
+                                <a class="page-link" href="?p=<?= $paginaActual - 1 ?>#tabla-usuarios" <?= ($paginaActual <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>Anterior</a>
+                            </li>
+                            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                <li class="page-item <?= ($i === $paginaActual) ? 'active' : '' ?>">
+                                    <a class="page-link" href="?p=<?= $i ?>#tabla-usuarios"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+                            <li class="page-item <?= ($paginaActual >= $totalPaginas) ? 'disabled' : '' ?>">
+                                <a class="page-link" href="?p=<?= $paginaActual + 1 ?>#tabla-usuarios" <?= ($paginaActual >= $totalPaginas) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>Siguiente</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -179,7 +271,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form action="/seguridad/usuarios/crear" method="POST">
+            <form action="/administrador/usuarios/crear" method="POST">
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="crear_username" class="form-label fw-semibold text-dark">Nombre de Usuario <span class="text-danger">*</span></label>
@@ -190,11 +282,23 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                         <select class="form-select" id="crear_id_rol" name="id_rol" required>
                             <option value="">Seleccione un rol...</option>
                             <?php foreach ($roles as $r): ?>
-                                <option value="<?= (int)$r['id_rol'] ?>">
+                                <option value="<?= (int)$r['id_rol'] ?>" data-nombre-rol="<?= htmlspecialchars($r['nombre_rol'], ENT_QUOTES, 'UTF-8') ?>">
                                     <?= htmlspecialchars($r['nombre_rol'], ENT_QUOTES, 'UTF-8') ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="mb-3" id="grupo_crear_especialidad">
+                        <label for="crear_id_especialidad" class="form-label fw-semibold text-dark">Especialidad (Operador)</label>
+                        <select class="form-select" id="crear_id_especialidad" name="id_especialidad">
+                            <option value="">Seleccione una especialidad...</option>
+                            <?php foreach ($especialidades as $esp): ?>
+                                <option value="<?= (int)$esp['id_especialidad'] ?>">
+                                    <?= htmlspecialchars($esp['nombre'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text small">Requerido si el usuario tiene rol de Operador.</div>
                     </div>
                     <div class="mb-3">
                         <label for="crear_password" class="form-label fw-semibold text-dark">Contraseña <span class="text-danger">*</span></label>
@@ -230,7 +334,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form action="/seguridad/usuarios/editar" method="POST">
+            <form action="/administrador/usuarios/editar" method="POST">
                 <input type="hidden" name="id_usuario" id="edit_usuario_id" value="">
                 <div class="modal-body p-4">
                     <div class="mb-3">
@@ -242,11 +346,23 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                         <select class="form-select" id="edit_usuario_id_rol" name="id_rol" required>
                             <option value="">Seleccione un rol...</option>
                             <?php foreach ($roles as $r): ?>
-                                <option value="<?= (int)$r['id_rol'] ?>">
+                                <option value="<?= (int)$r['id_rol'] ?>" data-nombre-rol="<?= htmlspecialchars($r['nombre_rol'], ENT_QUOTES, 'UTF-8') ?>">
                                     <?= htmlspecialchars($r['nombre_rol'], ENT_QUOTES, 'UTF-8') ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="mb-3" id="grupo_edit_especialidad">
+                        <label for="edit_usuario_id_especialidad" class="form-label fw-semibold text-dark">Especialidad (Operador)</label>
+                        <select class="form-select" id="edit_usuario_id_especialidad" name="id_especialidad">
+                            <option value="">Seleccione una especialidad...</option>
+                            <?php foreach ($especialidades as $esp): ?>
+                                <option value="<?= (int)$esp['id_especialidad'] ?>">
+                                    <?= htmlspecialchars($esp['nombre'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text small">Determina qué API de trabajos consultará el operador.</div>
                     </div>
                     <div class="mb-0">
                         <label for="edit_usuario_password" class="form-label fw-semibold text-dark">Nueva Contraseña (Opcional)</label>
@@ -273,13 +389,15 @@ document.addEventListener('DOMContentLoaded', function () {
             var button = event.relatedTarget;
             if (!button) return;
 
-            var idUsuario = button.getAttribute('data-id');
-            var username  = button.getAttribute('data-username');
-            var idRol     = button.getAttribute('data-id-rol');
+            var idUsuario      = button.getAttribute('data-id');
+            var username       = button.getAttribute('data-username');
+            var idRol          = button.getAttribute('data-id-rol');
+            var idEspecialidad = button.getAttribute('data-id-especialidad');
 
             document.getElementById('edit_usuario_id').value = idUsuario || '';
             document.getElementById('edit_usuario_username').value = username || '';
             document.getElementById('edit_usuario_id_rol').value = idRol || '';
+            document.getElementById('edit_usuario_id_especialidad').value = idEspecialidad || '';
             document.getElementById('edit_usuario_password').value = '';
         });
     }

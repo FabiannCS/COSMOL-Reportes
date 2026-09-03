@@ -12,4 +12,7 @@ return [
     'reclamos' => [
         'base_url' => getenv('API_RECLAMOS_URL') ?: '',
     ],
+    'fotos' => [
+        'base_url' => getenv('API_FOTOS_URL') ?: 'https://chatbot.cosmol.com.bo',
+    ],
 ];

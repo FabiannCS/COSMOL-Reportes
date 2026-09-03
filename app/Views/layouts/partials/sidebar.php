@@ -28,13 +28,6 @@ $isActive = function ($path) use ($currentUri) {
             <li class="sidebar-section-title">Seguridad</li>
 
             <li class="nav-item">
-                <a class="nav-link <?= $isActive('/seguridad/usuarios') ?>" href="/seguridad/usuarios">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Usuarios</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
                 <a class="nav-link <?= ($isActive('/seguridad/roles') || $isActive('/seguridad/permisos')) ?>" href="/seguridad/roles">
                     <i class="bi bi-shield-shaded"></i>
                     <span>Roles y Permisos</span>
@@ -46,22 +39,15 @@ $isActive = function ($path) use ($currentUri) {
 
             <li class="nav-item">
                 <a class="nav-link <?= $isActive('/administrador/trabajos') ?>" href="/administrador/trabajos">
-                    <i class="bi bi-briefcase-fill"></i>
-                    <span>Gestión de Trabajos</span>
+                    <i class="bi bi-clipboard-data"></i>
+                    <span>Supervisión de Trabajos</span>
                 </a>
             </li>
 
             <li class="nav-item">
-                <a class="nav-link <?= $isActive('/administrador/trabajos/crear') ?>" href="/administrador/trabajos/crear">
-                    <i class="bi bi-plus-circle-fill"></i>
-                    <span>Registrar Trabajo</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link <?= $isActive('/administrador/estados') ?>" href="/administrador/estados">
-                    <i class="bi bi-tags-fill"></i>
-                    <span>Estados</span>
+                <a class="nav-link <?= $isActive('/administrador/usuarios') ?>" href="/administrador/usuarios">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>Gestión de Personal</span>
                 </a>
             </li>
 

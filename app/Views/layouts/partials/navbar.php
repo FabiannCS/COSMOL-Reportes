@@ -16,14 +16,6 @@ $homeUrl       = ($rolActual === 'Operador') ? '/operador/trabajos' : '/dashboar
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <?php if (!empty($usuarioNombre)): ?>
-            <span class="text-muted small me-2 d-none d-md-inline">
-                <i class="bi bi-person-circle me-1"></i>
-                <strong><?= htmlspecialchars($usuarioNombre, ENT_QUOTES, 'UTF-8') ?></strong>
-                <span class="badge bg-secondary ms-1"><?= htmlspecialchars($rolActual, ENT_QUOTES, 'UTF-8') ?></span>
-            </span>
-        <?php endif; ?>
-
         <a href="/logout" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" title="Cerrar Sesión">
             <i class="bi bi-box-arrow-right"></i>
             <span class="d-none d-sm-inline">Cerrar sesión</span>

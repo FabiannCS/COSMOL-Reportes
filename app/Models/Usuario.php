@@ -14,9 +14,11 @@ class Usuario extends Model
     public function all()
     {
         $stmt = $this->db()->query(
-            "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, u.id_rol, r.nombre_rol 
+            "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, 
+                    u.id_rol, r.nombre_rol, u.id_especialidad, e.nombre as nombre_especialidad 
              FROM usuario u 
              LEFT JOIN rol r ON u.id_rol = r.id_rol 
+             LEFT JOIN especialidad e ON u.id_especialidad = e.id_especialidad 
              ORDER BY u.fecha_creacion DESC"
         );
         return $stmt->fetchAll();
@@ -31,9 +33,11 @@ class Usuario extends Model
     public function findByUsername($username)
     {
         $stmt = $this->db()->prepare(
-            "SELECT u.id_usuario, u.username, u.password_hash, u.estado, u.id_rol, r.nombre_rol 
+            "SELECT u.id_usuario, u.username, u.password_hash, u.estado, u.id_rol, r.nombre_rol, 
+                    u.id_especialidad, e.nombre as nombre_especialidad 
              FROM usuario u 
              LEFT JOIN rol r ON u.id_rol = r.id_rol 
+             LEFT JOIN especialidad e ON u.id_especialidad = e.id_especialidad 
              WHERE u.username = :username AND u.estado = 1"
         );
         $stmt->execute(['username' => $username]);
@@ -49,9 +53,11 @@ class Usuario extends Model
     public function findById($idUsuario)
     {
         $stmt = $this->db()->prepare(
-            "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, u.id_rol, r.nombre_rol 
+            "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, 
+                    u.id_rol, r.nombre_rol, u.id_especialidad, e.nombre as nombre_especialidad 
              FROM usuario u 
              LEFT JOIN rol r ON u.id_rol = r.id_rol 
+             LEFT JOIN especialidad e ON u.id_especialidad = e.id_especialidad 
              WHERE u.id_usuario = :id_usuario"
         );
         $stmt->execute(['id_usuario' => (int)$idUsuario]);
@@ -62,16 +68,18 @@ class Usuario extends Model
     {
         $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
         $estado = isset($data['estado']) ? (int)$data['estado'] : 1;
+        $idEspecialidad = !empty($data['id_especialidad']) ? (int)$data['id_especialidad'] : null;
 
         $stmt = $this->db()->prepare(
-            "INSERT INTO usuario (username, password_hash, id_rol, estado) 
-             VALUES (:username, :password_hash, :id_rol, :estado)"
+            "INSERT INTO usuario (username, password_hash, id_rol, id_especialidad, estado) 
+             VALUES (:username, :password_hash, :id_rol, :id_especialidad, :estado)"
         );
         return $stmt->execute([
-            'username'      => trim($data['username']),
-            'password_hash' => $passwordHash,
-            'id_rol'        => (int)$data['id_rol'],
-            'estado'        => $estado
+            'username'        => trim($data['username']),
+            'password_hash'   => $passwordHash,
+            'id_rol'          => (int)$data['id_rol'],
+            'id_especialidad' => $idEspecialidad,
+            'estado'          => $estado
         ]);
     }
 
@@ -79,35 +87,41 @@ class Usuario extends Model
      * Actualiza la información de un usuario
      *
      * @param int $id
-     * @param array $data ['username', 'id_rol', 'password' (opcional)]
+     * @param array $data ['username', 'id_rol', 'id_especialidad' (opcional), 'password' (opcional)]
      * @return bool
      */
     public function update($id, array $data)
     {
+        $idEspecialidad = !empty($data['id_especialidad']) ? (int)$data['id_especialidad'] : null;
+
         if (!empty($data['password'])) {
             $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
             $stmt = $this->db()->prepare(
                 "UPDATE usuario 
-                 SET username = :username, id_rol = :id_rol, password_hash = :password_hash, fecha_actualizacion = CURRENT_TIMESTAMP 
+                 SET username = :username, id_rol = :id_rol, id_especialidad = :id_especialidad, 
+                     password_hash = :password_hash, fecha_actualizacion = CURRENT_TIMESTAMP 
                  WHERE id_usuario = :id"
             );
             return $stmt->execute([
-                'username'      => trim($data['username']),
-                'id_rol'        => (int)$data['id_rol'],
-                'password_hash' => $passwordHash,
-                'id'            => (int)$id
+                'username'        => trim($data['username']),
+                'id_rol'          => (int)$data['id_rol'],
+                'id_especialidad' => $idEspecialidad,
+                'password_hash'   => $passwordHash,
+                'id'              => (int)$id
             ]);
         }
 
         $stmt = $this->db()->prepare(
             "UPDATE usuario 
-             SET username = :username, id_rol = :id_rol, fecha_actualizacion = CURRENT_TIMESTAMP 
+             SET username = :username, id_rol = :id_rol, id_especialidad = :id_especialidad, 
+                 fecha_actualizacion = CURRENT_TIMESTAMP 
              WHERE id_usuario = :id"
         );
         return $stmt->execute([
-            'username' => trim($data['username']),
-            'id_rol'   => (int)$data['id_rol'],
-            'id'       => (int)$id
+            'username'        => trim($data['username']),
+            'id_rol'          => (int)$data['id_rol'],
+            'id_especialidad' => $idEspecialidad,
+            'id'              => (int)$id
         ]);
     }
 

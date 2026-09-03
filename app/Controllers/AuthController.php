@@ -107,9 +107,72 @@ class AuthController extends Controller
             $this->redirect('/operador/trabajos');
         }
 
+        // --- 1. Total Consultas ---
+        $db = \App\Core\Database::getInstance();
+        $totalConsultas = 0;
+        try {
+            $stmt = $db->query("SELECT COUNT(*) FROM consulta");
+            $totalConsultas = (int)$stmt->fetchColumn();
+        } catch (\Exception $e) {
+            $totalConsultas = 0; // Por si la tabla consulta aún no existe
+        }
+
+        // --- 2. Operadores Activos ---
+        $totalOperadores = 0;
+        try {
+            $stmtOp = $db->query("SELECT COUNT(*) FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE r.nombre_rol = 'Operador' AND u.estado = 1");
+            $totalOperadores = (int)$stmtOp->fetchColumn();
+        } catch (\Exception $e) {
+            $totalOperadores = 0;
+        }
+
+        // --- 3. Trabajos de las APIs (Pendientes y Concluidos) ---
+        $totalPendientes = 0;
+        $totalConcluidos = 0;
+        
+        $apiConfig = require __DIR__ . '/../Config/api.php';
+        $clientRec = new \App\Services\ApiClient($apiConfig['reconexiones']['base_url']);
+        $clientRecl = new \App\Services\ApiClient($apiConfig['reclamos']['base_url']);
+
+        // Reconexiones Pendientes
+        $resRecPend = $clientRec->get('/reconexiones?estado=PENDIENTE');
+        if ($resRecPend && isset($resRecPend['datos'])) {
+            $totalPendientes += count($resRecPend['datos']);
+        } elseif (is_array($resRecPend)) {
+            $totalPendientes += count($resRecPend);
+        }
+
+        // Reclamos Pendientes
+        $resReclPend = $clientRecl->get('/reclamos?estado=PENDIENTE');
+        if ($resReclPend && isset($resReclPend['datos'])) {
+            $totalPendientes += count($resReclPend['datos']);
+        } elseif (is_array($resReclPend)) {
+            $totalPendientes += count($resReclPend);
+        }
+
+        // Reconexiones Concluidas
+        $resRecCon = $clientRec->get('/reconexiones?estado=CONCLUIDO');
+        if ($resRecCon && isset($resRecCon['datos'])) {
+            $totalConcluidos += count($resRecCon['datos']);
+        } elseif (is_array($resRecCon)) {
+            $totalConcluidos += count($resRecCon);
+        }
+
+        // Reclamos Concluidos
+        $resReclCon = $clientRecl->get('/reclamos?estado=CONCLUIDO');
+        if ($resReclCon && isset($resReclCon['datos'])) {
+            $totalConcluidos += count($resReclCon['datos']);
+        } elseif (is_array($resReclCon)) {
+            $totalConcluidos += count($resReclCon);
+        }
+
         $this->view('dashboard/index', [
-            'title'   => 'Dashboard — COSMOL Reportes',
-            'usuario' => $usuario
+            'title'           => 'Dashboard — COSMOL Reportes',
+            'usuario'         => $usuario,
+            'totalConsultas'  => $totalConsultas,
+            'totalOperadores' => $totalOperadores,
+            'totalPendientes' => $totalPendientes,
+            'totalConcluidos' => $totalConcluidos
         ], 'main');
     }
 }

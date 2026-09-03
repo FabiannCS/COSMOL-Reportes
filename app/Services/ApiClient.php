@@ -67,7 +67,7 @@ class ApiClient
             ]
         ];
 
-        if ($method === 'POST' && $data !== null) {
+        if (($method === 'POST' || $method === 'PUT') && $data !== null) {
             $options[CURLOPT_POSTFIELDS] = json_encode($data);
         }
 
