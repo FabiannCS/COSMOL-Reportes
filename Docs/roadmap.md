@@ -12,63 +12,62 @@ El desarrollo se divide en **2 etapas** con **8 fases** en total:
 ```
  ETAPA A — Cimientos Técnicos              ETAPA B — Módulos Funcionales
  (transversal, ya documentada)              (vertical, por caso de uso)
-┌─────────────────────────────┐     ┌──────────────────────────────────────┐
-│ Fase 1 │ Docker             │     │ Fase 5 │ Seguridad (completar)       │
-│ Fase 2 │ MVC Core           │ ──► │ Fase 6 │ Módulo Operador             │
-│ Fase 3 │ Layout Bootstrap   │     │ Fase 7 │ Módulo Administrador        │
-│ Fase 4 │ Auth + Middlewares │     │ Fase 8 │ Módulo Reportes             │
-└─────────────────────────────┘     └──────────────────────────────────────┘
+┌─────────────────────────────┐     ┌─────────────────────────────────────────┐
+│ Fase 1 │ Docker             │  │ Fase 5 │ Seguridad (completar)         │
+│ Fase 2 │ MVC Core           │  │ Fase 6 │ Módulo Operador                      │
+│ Fase 3 │ Layout Bootstrap   │  │ Fase 7 │ Módulo Administrador                 │
+│ Fase 4 │ Auth + Middlewares │  │ Fase 8 │ Módulo Reportes                      │
+└─────────────────────────────┘     └─────────────────────────────────────────┘
 ```
 
 ---
 
-## Etapa A — Cimientos Técnicos (Fases 1–4)
+## Etapa A — Cimientos Técnicos (Fases 1–4) ✅
 
-> **Estado:** Ya documentadas en `Docs/fabian/`. Son prerequisito para todo lo demás.
+> **Estado:** ✅ **Completada y Realizada** (Implementada en código y documentada en [`Docs/fabian/realizado/implementacion_inicial.md`](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/realizado/implementacion_inicial.md)).
 
-| Fase | Plan de Implementación | Qué entrega |
-|---|---|---|
-| **Fase 1** | [fase_1_docker.md](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/fase_1_docker.md) | Contenedores Docker funcionando, BD con esquema inicial, pgAdmin4 conectado |
-| **Fase 2** | [fase_2_mvc_core.md](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/fase_2_mvc_core.md) | Mini-framework MVC: Router, Controller, Model, Database, front controller |
-| **Fase 3** | [fase_3_layout.md](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/fase_3_layout.md) | Dashboard con Bootstrap: navbar, sidebar por rol, footer, responsive |
-| **Fase 4** | [fase_4_autenticacion.md](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/fase_4_autenticacion.md) | Login/logout, sesiones, AuthMiddleware, RoleMiddleware |
+| Fase | Plan de Implementación | Qué entrega | Estado |
+|---|---|---|---|
+| **Fase 1** | Docker y Base de Datos | Contenedores Docker funcionando (`cosmol_app`, `cosmol_db`), BD PostgreSQL con esquema inicial, conexión pgAdmin 4 | ✅ Realizado |
+| **Fase 2** | MVC Core | Mini-framework MVC: Router, Controller, Model, Database Singleton, front controller | ✅ Realizado |
+| **Fase 3** | Layout Bootstrap | Dashboard con Bootstrap 5.3 + Icons: navbar, sidebar dinámico por rol, footer, responsive | ✅ Realizado |
+| **Fase 4** | Auth + Middlewares | Login/logout, sesiones, AuthMiddleware, RoleMiddleware y RBAC | ✅ Realizado |
 
-**Resultado de la Etapa A:** Un sistema que arranca, autentica usuarios y controla acceso por rol, pero sin funcionalidad de negocio.
+**Resultado de la Etapa A:** ✅ Sistema base operativo que arranca en Docker, autentica usuarios, maneja sesiones y controla acceso por roles.
 
 ---
 
 ## Etapa B — Módulos Funcionales (Fases 5–8)
 
-> **Estado:** Por documentar. Cada fase se planificará con su propio plan de implementación antes de ejecutarla.
+> **Estado:** 🚀 **En curso.** Fase 5 (Seguridad) y Fase 6 (Módulo Operador) concluidas y validadas exitosamente al 100%.
 
-### Fase 5 — Módulo Seguridad (completar)
+### Fase 5 — Módulo Seguridad (✅)
 
-> Completa lo que la Fase 4 dejó pendiente. Al terminar, el administrador puede gestionar usuarios, roles y permisos desde la interfaz.
+> Completa el control de acceso y administración de cuentas. El administrador gestiona usuarios, roles y permisos desde la interfaz con control RBAC.
 
 | Caso de Uso | Controllers | Views | Models |
 |---|---|---|---|
-| Gestionar Usuario (CRUD) | `UsuarioController` | `seguridad/usuarios.php` | `Usuario.php` (ampliar) |
+| Gestionar Usuario (CRUD) | `UsuarioController` | `seguridad/usuarios.php` | `Usuario.php` |
 | Gestionar Rol (CRUD) | `RolController` | `seguridad/roles.php` | `Rol.php` |
-| Asignar Permiso | `RolController` o dedicado | `seguridad/permisos.php` | `Permiso.php` |
+| Asignar Permiso | `RolController` | `seguridad/permisos.php` | `Permiso.php` |
 
-**Entregable:** El administrador puede crear, editar, desactivar usuarios y asignar roles desde el sistema.  
-**Archivo:** `Docs/fabian/fase_5_seguridad.md` *(por crear)*
+**Entregable:** El administrador puede crear, editar, cambiar estado de usuarios y gestionar roles/permisos desde el sistema.  
+**Archivo de Resumen:** [`Docs/fabian/realizado/fase_5_seguridad_completado.md`](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/realizado/fase_5_seguridad_completado.md) *(✅ Realizado y validado)*
 
 ---
 
-### Fase 6 — Módulo Operador
+### Fase 6 — Módulo Operador (✅)
 
-> El módulo central del sistema. Los operadores gestionan sus propios trabajos.
+> El módulo operativo del sistema. Los operadores visualizan y concluyen sus trabajos pendientes consumiendo APIs REST externas (ver AGENTS.md §1.1). **El sistema NO almacena trabajos localmente.**
 
-| Caso de Uso | Controllers | Views | Models |
+| Caso de Uso | Controllers | Views | Services / Models |
 |---|---|---|---|
-| Listar Trabajos | `OperadorController` | `operador/trabajos.php` | `Trabajo.php` |
-| Registrar Trabajo Concluido | `OperadorController` | (dentro de trabajos) | `Trabajo.php`, `Estado.php` |
-| Registrar Observaciones | `OperadorController` | `operador/observaciones.php` | (Model observaciones) |
-| Historial de Trabajo | `OperadorController` | `operador/historial.php` | `Trabajo.php` |
+| Listar Trabajos por Especialidad | `OperadorController` | `operador/reconexiones.php`<br>`operador/reclamos.php` | `ApiClient.php` (cURL GET)<br>`Especialidad.php` |
+| Visualizar Detalle de Trabajo | `OperadorController` | `operador/reconexion_detalle.php`<br>`operador/reclamo_detalle.php` | `ApiClient.php` (cURL GET)<br>GPS Google Maps + Fotos |
+| Concluir Trabajo Asignado | `OperadorController` | Formulario en vista detalle | `ApiClient.php` (cURL PUT / POST) |
 
-**Entregable:** Un operador inicia sesión, ve sus trabajos pendientes, los marca como concluidos, agrega observaciones y consulta su historial.  
-**Archivo:** `Docs/fabian/fase_6_operador.md` *(por crear)*
+**Entregable:** Un operador inicia sesión, el sistema detecta su especialidad (Reconexión, Maestro de alcantarillado, Agua Potable), lista sus trabajos pendientes desde la API externa con optimización móvil, permite inspeccionar el detalle (con socio solicitante, ubicación, ruta GPS y foto en vivo) y enviar la conclusión al servidor externo.  
+**Archivo de Resumen:** [`Docs/fabian/realizado/modulo_operador_completado.md`](file:///c:/Proyectos/Cosmol_reportes/Docs/fabian/realizado/modulo_operador_completado.md) *(✅ Realizado y validado)*
 
 ---
 
@@ -177,25 +176,22 @@ Cada fase seguirá este ciclo:
 
 ---
 
-## Estructura Final de Planes en Docs/fabian/
+## Estructura de Planes en Docs/fabian/
 
 ```
 Docs/fabian/
-├── implementacion_inicial.md          ← índice general (existente)
-├── fase_1_docker.md                   ← ✅ existente
-├── fase_2_mvc_core.md                 ← ✅ existente
-├── fase_3_layout.md                   ← ✅ existente
-├── fase_4_autenticacion.md            ← ✅ existente
-├── fase_5_seguridad.md                ← 📝 por crear
-├── fase_6_operador.md                 ← 📝 por crear
-├── fase_7_administrador.md            ← 📝 por crear
-└── fase_8_reportes.md                 ← 📝 por crear
+├── realizado/
+│   ├── implementacion_inicial.md          ← ✅ Etapa A completa (Fases 1–4)
+│   ├── fase_5_seguridad_completado.md     ← ✅ Fase 5 completa (Seguridad)
+│   └── modulo_operador_completado.md      ← ✅ Fase 6 completa (Operador)
+├── fase_7_administrador.md                ← 📝 Por crear
+└── fase_8_reportes.md                     ← 📝 Por crear
 ```
 
 ---
 
 ## ¿Cómo avanzamos?
 
-> [!IMPORTANT]
-> **Pregunta para decidir:** ¿Las fases 1-4 ya están implementadas en código o solo están documentadas?  
-> Esto determina si empezamos ejecutando la Fase 1 o si saltamos directo a planificar la Fase 5.
+> [!TIP]
+> **Siguiente Paso Inmediato:** Con la **Fase 5 (Seguridad)** completada y el **Módulo Operador (Fase 6)** consolidado y validado en tiempo real con las APIs externas, el siguiente módulo a planificar e implementar es la **Fase 7: Módulo Administrador (`fase_7_administrador.md`)**.
+
