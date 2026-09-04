@@ -85,7 +85,7 @@
         </div>
         <div class="col-12 col-md-4">
             <a href="/administrador/usuarios" class="btn btn-outline-info w-100 py-3 text-start d-flex align-items-center justify-content-between rounded-3 border-2">
-                <span class="fw-bold fs-5 text-dark"><i class="bi bi-people me-2 text-info"></i>Gestionar Personal</span>
+                <span class="fw-bold fs-5 text-dark"><i class="bi bi-people me-2 text-info"></i>Gestionar Usuarios</span>
                 <i class="bi bi-chevron-right text-muted"></i>
             </a>
         </div>
