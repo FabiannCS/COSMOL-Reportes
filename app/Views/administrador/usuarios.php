@@ -20,10 +20,11 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
     <!-- Encabezado de Página -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
         <div>
-            <h1 class="h3 fw-bold mb-1 text-dark">Gestión de Usuarios</h1>
+            <h1 class="h2 fw-bold mb-1 text-dark">Gestión de Usuarios</h1>
+            <p class="text-muted small mb-0">Administración de cuentas de acceso, asignación de roles y especialidades.</p>
         </div>
         <div>
-            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
+            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
                 <i class="bi bi-person-plus-fill"></i>
                 <span>Nuevo Usuario</span>
             </button>
@@ -48,55 +49,62 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
     <?php endif; ?>
 
     <!-- Tarjetas de Métricas -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="p-3 me-3">
-                        <i class="bi bi-people-fill text-primary fs-4"></i>
-                    </div>
+    <div class="row g-3 g-xl-4 mb-4">
+        <!-- Total Usuarios -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="text-muted small fs-5">Total Usuarios</div>
-                        <div class="h4 mb-0 fw-bold"><?= (int)$totalUsuarios ?></div>
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Usuarios</span>
+                        <span class="h3 fw-bold mb-0 text-dark"><?= (int)$totalUsuarios ?></span>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people-fill fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="p-3 me-3">
-                        <i class="bi bi-person-check-fill fs-4"></i>
-                    </div>
+
+        <!-- Activos -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="text-muted small fs-5">Activos</div>
-                        <div class="h4 mb-0 fw-bold"><?= (int)$activos ?></div>
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Activos</span>
+                        <span class="h3 fw-bold mb-0 text-success"><?= (int)$activos ?></span>
+                    </div>
+                    <div class="bg-success bg-opacity-10 text-success rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-person-check-fill fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="p-3 me-3">
-                        <i class="bi bi-person-x-fill text-danger fs-4"></i>
-                    </div>
+
+        <!-- Inactivos -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="text-muted small fs-5">Inactivos</div>
-                        <div class="h4 mb-0 fw-bold text-danger"><?= (int)$inactivos ?></div>
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Inactivos</span>
+                        <span class="h3 fw-bold mb-0 text-danger"><?= (int)$inactivos ?></span>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-person-x-fill fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="p-3 me-3">
-                        <i class="bi bi-diagram-3-fill text-info fs-4"></i>
-                    </div>
+
+        <!-- Especialidades -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="text-muted small fs-5">Especialidades</div>
-                        <div class="h4 mb-0 fw-bold"><?= count($porEspecialidad) ?></div>
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Especialidades</span>
+                        <span class="h3 fw-bold mb-0 text-dark"><?= count($porEspecialidad) ?></span>
+                    </div>
+                    <div class="bg-info bg-opacity-10 text-info rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-diagram-3-fill fs-3"></i>
                     </div>
                 </div>
             </div>
@@ -104,32 +112,32 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
     </div>
 
     <!-- Tarjeta Principal con Tabla de Usuarios -->
-    <div class="card border-0 shadow-sm rounded-3" id="tabla-usuarios">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" id="tabla-usuarios">
         <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0 text-dark">
+            <h5 class="card-title fw-bold mb-0 text-dark">
                 Usuarios Registrados
-            </h4>
+            </h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4" style="width: 70px;">ID</th>
-                            <th>Usuario</th>
-                            <th>Rol</th>
-                            <th>Especialidad</th>
-                            <th>Estado</th>
-                            <th>Fecha de Registro</th>
-                            <th class="text-end pe-4" style="min-width: 140px;">Acciones</th>
+                            <th class="ps-4 text-nowrap" style="width: 70px;">ID</th>
+                            <th class="text-nowrap">Usuario</th>
+                            <th class="text-nowrap">Rol</th>
+                            <th class="text-nowrap">Especialidad</th>
+                            <th class="text-nowrap">Estado</th>
+                            <th class="text-nowrap">Fecha de Registro</th>
+                            <th class="text-end pe-4 text-nowrap" style="min-width: 140px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($usuarios)): ?>
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
-                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    No hay usuarios registrados en el sistema.
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-1 d-block mb-3 text-opacity-50"></i>
+                                    <h5>No hay usuarios registrados en el sistema.</h5>
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -157,13 +165,10 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                     <td class="ps-4 text-muted fw-semibold"><?= $idUsuario ?></td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 32px; height: 32px;">
-                                                <i class="bi bi-person-fill text-muted"></i>
-                                            </div>
                                             <div>
-                                                <div class="fw-semibold text-dark"><?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?></div>
+                                                <span class="fw-semibold text-dark"><?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?></span>
                                                 <?php if ($esPropio): ?>
-                                                    <span class="badge bg-warning bg-opacity-25 text-dark" style="font-size: 0.80rem;">Tú</span>
+                                                    <span class="badge bg-warning bg-opacity-25 text-dark ms-1" style="font-size: 0.75rem;">Tú</span>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -185,20 +190,20 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                     <td>
                                         <?php if ($estado === 1): ?>
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.85rem;">
-                                                <i class="bi bi-check-circle me-1"></i>Activo
+                                                Activo
                                             </span>
                                         <?php else: ?>
                                             <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
-                                                <i class="bi bi-x-circle me-1"></i>Inactivo
+                                                Inactivo
                                             </span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-muted small fw-bold"><?= $fecha ?></td>
-                                    <td class="text-end pe-4">
+                                    <td class="text-muted small fw-semibold text-nowrap"><?= $fecha ?></td>
+                                    <td class="text-end pe-4 text-nowrap">
                                         <div class="d-inline-flex gap-1 align-items-center">
                                             <!-- Botón Editar -->
                                             <button type="button" 
-                                                    class="btn btn-sm btn-primary"
+                                                    class="btn btn-sm btn-primary rounded-pill px-3"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalEditarUsuario"
                                                     data-id="<?= $idUsuario ?>"
@@ -206,12 +211,12 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                                     data-id-rol="<?= $idRol ?>"
                                                     data-id-especialidad="<?= htmlspecialchars(isset($u['id_especialidad']) ? $u['id_especialidad'] : '', ENT_QUOTES, 'UTF-8') ?>"
                                                     title="Editar Usuario">
-                                                Editar
+                                                <i class="bi bi-pencil-square me-1"></i><span>Editar</span>
                                             </button>
 
                                             <!-- Botón Cambiar Estado (Toggle) -->
                                             <?php if ($esPropio): ?>
-                                                <button type="button" class="btn btn-sm btn-light border text-muted" disabled title="No puedes desactivar tu propia cuenta activa">
+                                                <button type="button" class="btn btn-sm btn-light border text-muted rounded-pill px-2" disabled title="No puedes desactivar tu propia cuenta activa">
                                                     <i class="bi bi-toggle-on"></i>
                                                 </button>
                                             <?php else: ?>
@@ -219,11 +224,11 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                                     <input type="hidden" name="id_usuario" value="<?= $idUsuario ?>">
                                                     <input type="hidden" name="nuevo_estado" value="<?= ($estado === 1) ? 0 : 1 ?>">
                                                     <?php if ($estado === 1): ?>
-                                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Desactivar Cuenta">
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="Desactivar Cuenta">
                                                             <i class="bi bi-toggle-on"></i>
                                                         </button>
                                                     <?php else: ?>
-                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Activar Cuenta">
+                                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Activar Cuenta">
                                                             <i class="bi bi-toggle-off"></i>
                                                         </button>
                                                     <?php endif; ?>
@@ -239,11 +244,16 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
             </div>
             
             <?php if (isset($totalPaginas) && $totalPaginas > 1): ?>
-                <div class="d-flex justify-content-center mt-4 pb-3">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 p-3 border-top bg-light">
+                    <div class="small text-muted">
+                        Página <strong><?= $paginaActual ?></strong> de <strong><?= $totalPaginas ?></strong> (Total: <?= $totalUsuarios ?>)
+                    </div>
                     <nav aria-label="Navegación de páginas">
-                        <ul class="pagination mb-0">
+                        <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
                             <li class="page-item <?= ($paginaActual <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?p=<?= $paginaActual - 1 ?>#tabla-usuarios" <?= ($paginaActual <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>Anterior</a>
+                                <a class="page-link" href="?p=<?= $paginaActual - 1 ?>#tabla-usuarios" <?= ($paginaActual <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
                             </li>
                             <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
                                 <li class="page-item <?= ($i === $paginaActual) ? 'active' : '' ?>">
@@ -251,7 +261,9 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                 </li>
                             <?php endfor; ?>
                             <li class="page-item <?= ($paginaActual >= $totalPaginas) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?p=<?= $paginaActual + 1 ?>#tabla-usuarios" <?= ($paginaActual >= $totalPaginas) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>Siguiente</a>
+                                <a class="page-link" href="?p=<?= $paginaActual + 1 ?>#tabla-usuarios" <?= ($paginaActual >= $totalPaginas) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
                             </li>
                         </ul>
                     </nav>
@@ -383,7 +395,46 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Alternar visibilidad y requerimiento del campo especialidad
+    function alternarEspecialidad(selectRol, grupoEsp, selectEsp) {
+        if (!selectRol || !grupoEsp) return;
+        var selectedOption = selectRol.options[selectRol.selectedIndex];
+        var nombreRol = selectedOption ? selectedOption.getAttribute('data-nombre-rol') : '';
+        if (nombreRol === 'Operador') {
+            grupoEsp.style.display = 'block';
+            if (selectEsp) selectEsp.required = true;
+        } else {
+            grupoEsp.style.display = 'none';
+            if (selectEsp) {
+                selectEsp.required = false;
+                selectEsp.value = '';
+            }
+        }
+    }
+
+    // Modal Crear Usuario
+    var selectRolCrear = document.getElementById('crear_id_rol');
+    var grupoEspCrear = document.getElementById('grupo_crear_especialidad');
+    var selectEspCrear = document.getElementById('crear_id_especialidad');
+    if (selectRolCrear) {
+        selectRolCrear.addEventListener('change', function () {
+            alternarEspecialidad(selectRolCrear, grupoEspCrear, selectEspCrear);
+        });
+        alternarEspecialidad(selectRolCrear, grupoEspCrear, selectEspCrear);
+    }
+
+    // Modal Editar Usuario
     var modalEditar = document.getElementById('modalEditarUsuario');
+    var selectRolEdit = document.getElementById('edit_usuario_id_rol');
+    var grupoEspEdit = document.getElementById('grupo_edit_especialidad');
+    var selectEspEdit = document.getElementById('edit_usuario_id_especialidad');
+
+    if (selectRolEdit) {
+        selectRolEdit.addEventListener('change', function () {
+            alternarEspecialidad(selectRolEdit, grupoEspEdit, selectEspEdit);
+        });
+    }
+
     if (modalEditar) {
         modalEditar.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
@@ -399,6 +450,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('edit_usuario_id_rol').value = idRol || '';
             document.getElementById('edit_usuario_id_especialidad').value = idEspecialidad || '';
             document.getElementById('edit_usuario_password').value = '';
+
+            alternarEspecialidad(selectRolEdit, grupoEspEdit, selectEspEdit);
         });
     }
 });

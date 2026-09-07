@@ -22,6 +22,10 @@ return [
         '/administrador/usuarios'         => ['UsuarioController', 'index',                ['auth', 'role:Administrador']],
         '/administrador/trabajos'         => ['AdministradorController', 'trabajos',       ['auth', 'role:Administrador']],
         '/administrador/trabajos/detalle' => ['AdministradorController', 'trabajoDetalle', ['auth', 'role:Administrador']],
+
+        // Módulo de Reportes (Administrador y Supervisor)
+        '/reportes/visualizar' => ['ReporteController', 'visualizar', ['auth', 'role:Administrador,Supervisor']],
+        '/reportes/exportar'   => ['ReporteController', 'exportar',   ['auth', 'role:Administrador,Supervisor']],
     ],
     'POST' => [
         // Autenticación
@@ -39,5 +43,8 @@ return [
         '/administrador/usuarios/crear' => ['UsuarioController', 'store', ['auth', 'role:Administrador']],
         '/administrador/usuarios/editar' => ['UsuarioController', 'update', ['auth', 'role:Administrador']],
         '/administrador/usuarios/estado' => ['UsuarioController', 'toggleEstado', ['auth', 'role:Administrador']],
+
+        // API
+        '/api/consultas' => ['ConsultaApiController', 'registrar', []],
     ],
 ];

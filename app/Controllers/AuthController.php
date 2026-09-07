@@ -117,18 +117,27 @@ class AuthController extends Controller
             $totalConsultas = 0; // Por si la tabla consulta aún no existe
         }
 
-        // --- 2. Operadores Activos ---
+        // --- 2. Cantidad de Operadores ---
         $totalOperadores = 0;
+        $operadoresPorEsp = [];
         try {
-            $stmtOp = $db->query("SELECT COUNT(*) FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE r.nombre_rol = 'Operador' AND u.estado = 1");
+            $stmtOp = $db->query("SELECT COUNT(*) FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE r.nombre_rol = 'Operador'");
             $totalOperadores = (int)$stmtOp->fetchColumn();
+
+            $stmtEsp = $db->query("SELECT e.nombre as especialidad, COUNT(u.id_usuario) as total FROM especialidad e LEFT JOIN usuario u ON e.id_especialidad = u.id_especialidad AND u.id_rol = (SELECT id_rol FROM rol WHERE nombre_rol = 'Operador' LIMIT 1) GROUP BY e.id_especialidad, e.nombre ORDER BY e.id_especialidad");
+            $operadoresPorEsp = $stmtEsp->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
             $totalOperadores = 0;
+            $operadoresPorEsp = [];
         }
 
         // --- 3. Trabajos de las APIs (Pendientes y Concluidos) ---
         $totalPendientes = 0;
+        $recPendCount    = 0;
+        $reclPendCount   = 0;
         $totalConcluidos = 0;
+        $recConCount     = 0;
+        $reclConCount    = 0;
         
         $apiConfig = require __DIR__ . '/../Config/api.php';
         $clientRec = new \App\Services\ApiClient($apiConfig['reconexiones']['base_url']);
@@ -137,42 +146,49 @@ class AuthController extends Controller
         // Reconexiones Pendientes
         $resRecPend = $clientRec->get('/reconexiones?estado=PENDIENTE');
         if ($resRecPend && isset($resRecPend['datos'])) {
-            $totalPendientes += count($resRecPend['datos']);
+            $recPendCount = count($resRecPend['datos']);
         } elseif (is_array($resRecPend)) {
-            $totalPendientes += count($resRecPend);
+            $recPendCount = count($resRecPend);
         }
 
         // Reclamos Pendientes
         $resReclPend = $clientRecl->get('/reclamos?estado=PENDIENTE');
         if ($resReclPend && isset($resReclPend['datos'])) {
-            $totalPendientes += count($resReclPend['datos']);
+            $reclPendCount = count($resReclPend['datos']);
         } elseif (is_array($resReclPend)) {
-            $totalPendientes += count($resReclPend);
+            $reclPendCount = count($resReclPend);
         }
+        $totalPendientes = $recPendCount + $reclPendCount;
 
         // Reconexiones Concluidas
         $resRecCon = $clientRec->get('/reconexiones?estado=CONCLUIDO');
         if ($resRecCon && isset($resRecCon['datos'])) {
-            $totalConcluidos += count($resRecCon['datos']);
+            $recConCount = count($resRecCon['datos']);
         } elseif (is_array($resRecCon)) {
-            $totalConcluidos += count($resRecCon);
+            $recConCount = count($resRecCon);
         }
 
         // Reclamos Concluidos
         $resReclCon = $clientRecl->get('/reclamos?estado=CONCLUIDO');
         if ($resReclCon && isset($resReclCon['datos'])) {
-            $totalConcluidos += count($resReclCon['datos']);
+            $reclConCount = count($resReclCon['datos']);
         } elseif (is_array($resReclCon)) {
-            $totalConcluidos += count($resReclCon);
+            $reclConCount = count($resReclCon);
         }
+        $totalConcluidos = $recConCount + $reclConCount;
 
         $this->view('dashboard/index', [
-            'title'           => 'Dashboard — COSMOL Reportes',
-            'usuario'         => $usuario,
-            'totalConsultas'  => $totalConsultas,
-            'totalOperadores' => $totalOperadores,
-            'totalPendientes' => $totalPendientes,
-            'totalConcluidos' => $totalConcluidos
+            'title'                     => 'Dashboard — COSMOL Reportes',
+            'usuario'                   => $usuario,
+            'totalConsultas'            => $totalConsultas,
+            'totalOperadores'           => $totalOperadores,
+            'operadoresPorEspecialidad' => $operadoresPorEsp,
+            'totalPendientes'           => $totalPendientes,
+            'recPendCount'              => $recPendCount,
+            'reclPendCount'             => $reclPendCount,
+            'totalConcluidos'           => $totalConcluidos,
+            'recConCount'               => $recConCount,
+            'reclConCount'              => $reclConCount
         ], 'main');
     }
 }

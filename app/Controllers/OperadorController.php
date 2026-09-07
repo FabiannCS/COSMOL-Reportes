@@ -197,18 +197,21 @@ class OperadorController extends Controller
             case 'Maestro de alcantarillado':
             case 'Agua Potable':
                 $observacionConclusion = isset($_POST['observacion_conclusion']) ? trim($_POST['observacion_conclusion']) : '';
-                $estado = isset($_POST['estado']) ? trim($_POST['estado']) : '';
+                $estado = isset($_POST['estado']) ? trim($_POST['estado']) : 'SOLUCIONADO';
+
+                // La API externa concatena automáticamente la glosa previa con " | CONCLUSIÓN: "
+                $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . $observacionConclusion;
+
+                $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1;
 
                 $dataPayload = [
-                    'id_trabajo' => $idTrabajo,
-                    'observacion' => $observacionConclusion,
-                    'estado' => $estado,
-                    'fecha_conclusion' => date('Y-m-d H:i:s'),
-                    'id_operador' => $_SESSION['usuario']['id_usuario']
+                    'usuario_conclucion' => $idUsuario,
+                    'usuario_reclamo'    => $idUsuario,
+                    'glosa'              => $glosaFinal
                 ];
                 
                 $client = new ApiClient($this->apiConfig['reclamos']['base_url']);
-                $resultado = $client->post('/reclamos/concluir', $dataPayload);
+                $resultado = $client->put('/reclamos/' . $idTrabajo, $dataPayload);
                 break;
         }
 
