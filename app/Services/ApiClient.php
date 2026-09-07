@@ -89,7 +89,14 @@ class ApiClient
             return null;
         }
 
-        $decoded = json_decode($response, true);
+        // Limpiar posible BOM UTF-8 y espacios iniciales que causan errores de sintaxis en json_decode
+        $cleanResponse = trim($response);
+        if (substr($cleanResponse, 0, 3) === "\xEF\xBB\xBF") {
+            $cleanResponse = substr($cleanResponse, 3);
+        }
+        $cleanResponse = trim($cleanResponse);
+
+        $decoded = json_decode($cleanResponse, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             error_log("ApiClient JSON Decode Error ({$method} {$url}): " . json_last_error_msg());
             return null;

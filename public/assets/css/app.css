@@ -56,6 +56,7 @@ body {
     display: flex;
     flex: 1;
     margin-top: var(--cosmol-navbar-height);
+    min-width: 0;
 }
 
 /* Menú lateral (Sidebar) */
@@ -174,11 +175,21 @@ body {
     min-height: calc(100vh - var(--cosmol-navbar-height));
     background-color: #f8fafc;
     transition: margin-left 0.3s ease-in-out;
+    min-width: 0;
 }
 
 .app-content {
     flex: 1;
     padding: 1.75rem;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+/* Utilidad responsive de ancho */
+@media (min-width: 576px) {
+    .w-sm-auto {
+        width: auto !important;
+    }
 }
 
 /* Pie de página (Footer) */
@@ -234,4 +245,73 @@ body {
     .app-footer {
         padding: 0.75rem 0.6rem;
     }
+}
+
+/* ==========================================================================
+   Vista de Gestión de Roles (Diseño de Tarjetas)
+   ========================================================================== */
+
+/* Responsive List (Roles) */
+.role-list-header { display: none; }
+@media (min-width: 992px) {
+    .role-list-header {
+        display: flex;
+        font-weight: bold;
+        color: #6c757d;
+        border-bottom: 2px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+}
+
+.role-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.role-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    border-color: rgba(13, 110, 253, 0.2);
+}
+
+@media (min-width: 992px) {
+    .role-card {
+        flex-direction: row;
+        align-items: center;
+        border-radius: 0;
+        box-shadow: none;
+        margin-bottom: 0;
+        padding: 1.25rem 1.5rem;
+        border: none;
+        border-bottom: 1px solid #f1f3f5;
+        gap: 0;
+    }
+    .role-card:last-child { border-bottom: none; }
+    .role-card:hover { transform: none; box-shadow: none; background-color: #f8f9fa; }
+}
+
+/* Columnas de Roles */
+.col-id { width: 5%; }
+.col-name { width: 25%; font-weight: 600; }
+.col-desc { width: 35%; color: #6c757d; font-size: 0.9rem; padding-right: 1rem; }
+.col-users { width: 15%; }
+
+.col-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.role-card .col-actions, .role-list-header .col-actions { width: 20%; }
+
+@media (max-width: 991.98px) {
+    .col-id, .col-name, .col-desc, .col-users {
+        width: 100% !important;
+    }
+    .col-actions { justify-content: flex-start; margin-top: 0.75rem; gap: 1rem; border-top: 1px solid #f1f3f5; padding-top: 1rem; }
 }

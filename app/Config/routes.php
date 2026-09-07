@@ -43,5 +43,8 @@ return [
         '/administrador/usuarios/crear' => ['UsuarioController', 'store', ['auth', 'role:Administrador']],
         '/administrador/usuarios/editar' => ['UsuarioController', 'update', ['auth', 'role:Administrador']],
         '/administrador/usuarios/estado' => ['UsuarioController', 'toggleEstado', ['auth', 'role:Administrador']],
+
+        // API
+        '/api/consultas' => ['ConsultaApiController', 'registrar', []],
     ],
 ];

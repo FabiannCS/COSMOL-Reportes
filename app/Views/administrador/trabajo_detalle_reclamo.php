@@ -9,9 +9,9 @@
  */
 ?>
 
-<div class="container-fluid py-4">
+<div class="container-fluid p-0">
     <!-- Encabezado con navegación -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">
                 <i class="bi bi-exclamation-circle-fill text-info me-2"></i>Reclamo #<?= htmlspecialchars(isset($trabajo['id_reclamo']) ? $trabajo['id_reclamo'] : '—', ENT_QUOTES, 'UTF-8') ?>

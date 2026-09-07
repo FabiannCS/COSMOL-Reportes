@@ -7,10 +7,10 @@
  */
 return [
     'reconexiones' => [
-        'base_url' => getenv('API_RECONEXIONES_URL') ?: '',
+        'base_url' => getenv('API_RECONEXIONES_URL') ?: 'http://api.cosmol.com.bo/api-consultas',
     ],
     'reclamos' => [
-        'base_url' => getenv('API_RECLAMOS_URL') ?: '',
+        'base_url' => getenv('API_RECLAMOS_URL') ?: 'http://api.cosmol.com.bo/api-consultas',
     ],
     'fotos' => [
         'base_url' => getenv('API_FOTOS_URL') ?: 'https://chatbot.cosmol.com.bo',

@@ -54,4 +54,11 @@ document.addEventListener('DOMContentLoaded', function () {
             closeSidebar();
         }
     });
+
+    // Cerrar sidebar y backdrop si se restaura la página desde bfcache
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            closeSidebar();
+        }
+    });
 });

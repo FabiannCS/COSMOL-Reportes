@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Supervisión de Trabajos</title>
+
+    <!-- Bootstrap 5.3 CSS Local -->
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+    
+    <!-- Bootstrap Icons Local -->
+    <link rel="stylesheet" href="/assets/vendor/bootstrap-icons/bootstrap-icons.min.css">
+
+    <!-- Estilos Propios de la Aplicación -->
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- Barra de Navegación Superior -->
+        <header class="app-header">
+    <div class="d-flex align-items-center me-auto">
+        <!-- Botón Toggle de Sidebar en móvil -->
+        <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-lg-none me-2" type="button" aria-label="Abrir menú">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+
+        <a class="navbar-brand" href="/dashboard">
+            <span>COSMOL <small class="text-muted fs-6 fw-normal d-none d-sm-inline">| Reportes</small></span>
+        </a>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <a href="/logout" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" title="Cerrar Sesión">
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="d-none d-sm-inline">Cerrar sesión</span>
+        </a>
+    </div>
+</header>
+
+        <!-- Backdrop para dispositivos móviles -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <div class="app-body">
+            <!-- Menú Lateral -->
+            <aside class="app-sidebar" id="appSidebar">
+    <!-- Navegación Principal -->
+    <ul class="sidebar-nav flex-grow-1">
+        <!-- Dashboard: Solo para Administrador y Supervisor -->
+                    <li class="nav-item">
+                <a class="nav-link active" href="/dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+        
+                    <!-- Módulo Seguridad -->
+            <li class="sidebar-section-title">Seguridad</li>
+
+            <li class="nav-item">
+                <a class="nav-link " href="/seguridad/roles">
+                    <i class="bi bi-shield-shaded"></i>
+                    <span>Roles y Permisos</span>
+                </a>
+            </li>
+
+            <!-- Módulo Administración Operativa -->
+            <li class="sidebar-section-title">Administración</li>
+
+            <li class="nav-item">
+                <a class="nav-link " href="/administrador/trabajos">
+                    <i class="bi bi-clipboard-data"></i>
+                    <span>Supervisión de Trabajos</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link " href="/administrador/usuarios">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>Gestión de Personal</span>
+                </a>
+            </li>
+
+            <!-- Módulo Reportes -->
+            <li class="sidebar-section-title">Reportes</li>
+
+            <li class="nav-item">
+                <a class="nav-link " href="/reportes/visualizar">
+                    <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                    <span>Consultas Chatbot</span>
+                </a>
+            </li>
+        
+        
+            </ul>
+
+    <!-- Tarjeta inferior de Usuario -->
+    <div class="sidebar-user-badge mt-auto">
+        <div class="user-avatar">
+            A        </div>
+        <div class="user-info">
+            <div class="user-name">admin</div>
+            <div class="user-role">Administrador</div>
+        </div>
+    </div>
+</aside>
+
+            <!-- Área de Contenido Principal -->
+            <div class="app-main">
+                <main class="app-content">
+                    
+<div class="container-fluid p-0">
+    <!-- Encabezado Responsive -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1 text-dark">
+                Supervisión de Trabajos
+            </h1>
+        </div>
+        <a href="/administrador/trabajos" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 shadow-sm w-100 w-sm-auto">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span>Actualizar</span>
+        </a>
+    </div>
+
+    <!-- Alertas de Error / Conexión -->
+    
+    <!-- Tarjetas de Resumen (Métricas) Responsive (2x2 en móviles, 4x1 en desktop) -->
+    <div class="row g-2 g-md-3 mb-3 mb-md-4">
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm border-start border-info border-4 h-100">
+                <div class="card-body p-2 p-md-3">
+                    <div class="text-muted small fw-bold text-truncate mb-1">Total Pendientes</div>
+                    <div class="h4 fw-bold mb-0 text-dark">29</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm border-start border-info border-4 h-100">
+                <div class="card-body p-2 p-md-3">
+                    <div class="text-muted small fw-bold text-truncate mb-1">Reconexiones</div>
+                    <div class="h4 fw-bold mb-0 text-dark">18</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm border-start border-info border-4 h-100">
+                <div class="card-body p-2 p-md-3">
+                    <div class="text-muted small fw-bold text-truncate mb-1">
+                        <i class="bi bi-droplet-fill text-info me-1"></i>Agua Potable
+                    </div>
+                    <div class="h4 fw-bold mb-0 text-dark">7</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm border-start border-success border-4 h-100">
+                <div class="card-body p-2 p-md-3">
+                    <div class="text-muted small fw-bold text-truncate mb-1">
+                        <i class="bi bi-moisture text-success me-1"></i>Alcantarillado
+                    </div>
+                    <div class="h4 fw-bold mb-0 text-dark">4</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla 1: Reconexiones Pendientes -->
+    <div class="card border-0 shadow-sm mb-4" id="tabla-reconexiones">
+        <div class="card-header bg-white border-bottom py-2 py-sm-3 px-3 px-sm-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center gap-2 fs-6 fs-sm-5">
+                <i class="bi bi-plug-fill text-warning"></i>
+                <span>Reconexiones Pendientes</span>
+            </h5>
+            <span class="badge bg-warning text-dark rounded-pill px-2 px-sm-3 py-1 py-sm-2 small">
+                18 pendientes
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3" style="width: 50px;">ID</th>
+                            <th scope="col" style="min-width: 180px;">Socio</th>
+                            <th scope="col" class="d-none d-md-table-cell" style="width: 150px;">Descripción</th>
+                            <th scope="col" style="min-width: 150px;">Ubicación</th>
+                            <th scope="col" class="d-none d-lg-table-cell text-center" style="width: 50px;">Zona</th>
+                            <th scope="col" class="d-none d-lg-table-cell text-center" style="width: 50px;">Ruta</th>
+                            <th scope="col" class="text-center pe-3" style="width: 115px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                                                                                                    <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #4                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=4" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #5                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=5" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #6                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=6" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #7                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=7" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #8                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=8" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #9                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.335748%2C-63.261418" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=9" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.335748%2C-63.261418" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #10                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            10.125.01.2                                            <span class="text-muted d-lg-none">(Z:7, R:5)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.335748%2C-63.261418" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        5                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=10" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.335748%2C-63.261418" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #11                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            MISERICORDIA AGUANTA EDDY FRANCO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 23807                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            7.68.71.0                                            <span class="text-muted d-lg-none">(Z:7, R:68)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391277%2C-63.2572528" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="LENY RIVERO LIMPIAS, AGUASERO,">
+                                                LENY RIVERO LIMPIAS, AGUASERO,                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        68                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=11" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391277%2C-63.2572528" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #12                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            COCA ELIDA ADELA MARQUEZ DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 562                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.4.70.0                                            <span class="text-muted d-lg-none">(Z:1, R:4)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391596%2C-63.2572489" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="I. PARADA 143                 ">
+                                                I. PARADA 143                                                             </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        4                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=12" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391596%2C-63.2572489" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #13                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark small">
+                                            CAMACHO MADY BECERRA DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 4352                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 150px;" title="">
+                                            N/A                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.35.12.0                                            <span class="text-muted d-lg-none">(Z:1, R:35)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392049%2C-63.2572596" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="CANOTO /TARIJA-EXCOM          ">
+                                                CANOTO /TARIJA-EXCOM                                                      </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        35                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=13" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392049%2C-63.2572596" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                        </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación Reconexiones -->
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 p-3 border-top bg-light">
+                    <div class="small text-muted">
+                        Página <strong>1</strong> de <strong>2</strong> (Total: 18)
+                    </div>
+                    <nav aria-label="Paginación Reconexiones">
+                        <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="?prec=0&precl=1#tabla-reconexiones" tabindex="-1" aria-disabled="true">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                                                            <li class="page-item active">
+                                    <a class="page-link" href="?prec=1&precl=1#tabla-reconexiones">1</a>
+                                </li>
+                                                            <li class="page-item ">
+                                    <a class="page-link" href="?prec=2&precl=1#tabla-reconexiones">2</a>
+                                </li>
+                                                        <li class="page-item ">
+                                <a class="page-link" href="?prec=2&precl=1#tabla-reconexiones" >
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                    </div>
+    </div>
+
+    <!-- Tabla 2: Reclamos Pendientes -->
+    <div class="card border-0 shadow-sm" id="tabla-reclamos">
+        <div class="card-header bg-white border-bottom py-2 py-sm-3 px-3 px-sm-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center gap-2 fs-6 fs-sm-5">
+                <i class="bi bi-exclamation-octagon-fill text-info"></i>
+                <span>Reclamos Pendientes</span>
+            </h5>
+            <span class="badge bg-info text-dark rounded-pill px-2 px-sm-3 py-1 py-sm-2 small">
+                11 pendientes
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3" style="width: 50px;">ID</th>
+                            <th scope="col" class="d-none d-sm-table-cell text-center" style="width: 105px;">Tipo</th>
+                            <th scope="col" style="min-width: 180px;">Socio</th>
+                            <th scope="col" class="d-none d-md-table-cell" style="width: 140px;">Descripción</th>
+                            <th scope="col" style="min-width: 150px;">Ubicación</th>
+                            <th scope="col" class="d-none d-lg-table-cell text-center" style="width: 50px;">Zona</th>
+                            <th scope="col" class="d-none d-lg-table-cell text-center" style="width: 50px;">Ruta</th>
+                            <th scope="col" class="text-center pe-3" style="width: 115px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                                                                                                    <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #6                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 small">
+                                            Agua Potable                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Agua Potable                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            PAZ ANTONIA RODRIGUEZ DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 558                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Fuga de agua">
+                                            Fuga de agua                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.4.66.0                                            <span class="text-muted d-lg-none">(Z:1, R:4)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392075%2C-63.2572577" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="I. PARADA / FLORIDA           ">
+                                                I. PARADA / FLORIDA                                                       </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        4                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=6" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392075%2C-63.2572577" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #7                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1 small">
+                                            Alcantarillado                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Alcantarillado                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            REA EMY LEIGUE DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 554                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Rebalse alcantarillado">
+                                            Rebalse alcantarillado                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.4.62.0                                            <span class="text-muted d-lg-none">(Z:1, R:4)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392171%2C-63.2572442" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="I. PARADA /FLORIDA            ">
+                                                I. PARADA /FLORIDA                                                        </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        4                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=7" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392171%2C-63.2572442" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #8                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 small">
+                                            Agua Potable                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Agua Potable                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            OSINAGA ROSA FRANCO VDA. DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 589                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Fuga de agua en el medidor">
+                                            Fuga de agua en el medidor                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            7.7.0.1                                            <span class="text-muted d-lg-none">(Z:7, R:7)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392%2C-63.2811" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="19 DE AGOSTO 155              ">
+                                                19 DE AGOSTO 155                                                          </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=8" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392%2C-63.2811" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #9                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 small">
+                                            Agua Potable                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Agua Potable                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            REA EMY LEIGUE DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 554                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Fuga de agua">
+                                            Fuga de agua                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.4.62.0                                            <span class="text-muted d-lg-none">(Z:1, R:4)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392244%2C-63.2572616" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="I. PARADA /FLORIDA            ">
+                                                I. PARADA /FLORIDA                                                        </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        4                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=9" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392244%2C-63.2572616" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #10                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 small">
+                                            Agua Potable                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Agua Potable                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            SENAS ROGELIO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 564                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Fuga de agua">
+                                            Fuga de agua                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.4.72.0                                            <span class="text-muted d-lg-none">(Z:1, R:4)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.33919%2C-63.2572599" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="I. PARADA                     ">
+                                                I. PARADA                                                                 </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        4                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=10" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.33919%2C-63.2572599" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #11                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 small">
+                                            Agua Potable                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Agua Potable                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            OSINAGA ROSA FRANCO VDA. DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 589                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Fuga de agua en el medidor">
+                                            Fuga de agua en el medidor                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            7.7.0.1                                            <span class="text-muted d-lg-none">(Z:7, R:7)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392%2C-63.2811" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="19 DE AGOSTO 155              ">
+                                                19 DE AGOSTO 155                                                          </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        7                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=11" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392%2C-63.2811" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #12                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1 small">
+                                            Alcantarillado                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Alcantarillado                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            LANDIVAR ASUNTA DESIDERIA CANDIA VDA. DE                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 223                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Alcantarilla trancada">
+                                            Alcantarilla trancada                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.2.64.0                                            <span class="text-muted d-lg-none">(Z:1, R:2)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392162%2C-63.2572486" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="21 DE MAYO ESQ. 1 DE MAYO     ">
+                                                21 DE MAYO ESQ. 1 DE MAYO                                                 </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        2                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=12" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3392162%2C-63.2572486" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #13                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 small">
+                                            Agua Potable                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Agua Potable                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            FRANCO LISBETH                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 220                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Fuga de agua">
+                                            Fuga de agua                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.2.62.0                                            <span class="text-muted d-lg-none">(Z:1, R:2)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391486%2C-63.2572185" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="21 DE MAYO-1MAYO/LIBERTAD     ">
+                                                21 DE MAYO-1MAYO/LIBERTAD                                                 </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        2                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=13" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391486%2C-63.2572185" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #14                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1 small">
+                                            Alcantarillado                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Alcantarillado                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            FRANCO LISBETH                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 220                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Alcantarilla trancada">
+                                            Alcantarilla trancada                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.2.62.0                                            <span class="text-muted d-lg-none">(Z:1, R:2)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391313%2C-63.2572304" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="21 DE MAYO-1MAYO/LIBERTAD     ">
+                                                21 DE MAYO-1MAYO/LIBERTAD                                                 </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        2                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=14" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391313%2C-63.2572304" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                                            <tr>
+                                    <td class="ps-3 fw-bold text-muted">
+                                        #15                                    </td>
+                                    <td class="d-none d-sm-table-cell text-center">
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1 small">
+                                            Alcantarillado                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-sm-none mb-1">
+                                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-1 py-0" style="font-size: 0.72rem;">
+                                                Alcantarillado                                            </span>
+                                        </div>
+                                        <div class="fw-semibold text-dark small">
+                                            BALCAZAR SOLETO MARIO                                        </div>
+                                                                                    <div class="text-muted font-monospace" style="font-size: 0.78rem;">
+                                                <i class="bi bi-person-badge me-1"></i>Cód. 330                                            </div>
+                                                                            </td>
+                                    <td class="d-none d-md-table-cell text-secondary small">
+                                        <div class="text-truncate" style="max-width: 140px;" title="Rebalse alcantarillado">
+                                            Rebalse alcantarillado                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold text-dark">
+                                            1.3.19.0                                            <span class="text-muted d-lg-none">(Z:1, R:3)</span>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391591%2C-63.2572272" 
+                                                   target="_blank" 
+                                                   class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none ms-1" 
+                                                   title="Ver mapa en nueva pestaña">
+                                                    <i class="bi bi-geo-alt-fill"></i> GPS
+                                                </a>
+                                                                                    </div>
+                                                                                    <div class="text-muted text-truncate d-none d-sm-block mt-1" style="max-width: 160px;" title="C.JUNIN 161                   ">
+                                                C.JUNIN 161                                                               </div>
+                                                                            </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        1                                    </td>
+                                    <td class="d-none d-lg-table-cell small text-muted text-center">
+                                        3                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=15" 
+                                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                               title="Ver Ficha Completa">
+                                                <i class="bi bi-eye"></i>
+                                                <span class="d-none d-sm-inline">Detalle</span>
+                                            </a>
+                                                                                            <a href="https://www.google.com/maps?q=-17.3391591%2C-63.2572272" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" 
+                                                   title="Abrir ubicación en Google Maps">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </a>
+                                                                                    </div>
+                                    </td>
+                                </tr>
+                                                                        </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación Reclamos -->
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 p-3 border-top bg-light">
+                    <div class="small text-muted">
+                        Página <strong>1</strong> de <strong>2</strong> (Total: 11)
+                    </div>
+                    <nav aria-label="Paginación Reclamos">
+                        <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="?prec=1&precl=0#tabla-reclamos" tabindex="-1" aria-disabled="true">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                                                            <li class="page-item active">
+                                    <a class="page-link" href="?prec=1&precl=1#tabla-reclamos">1</a>
+                                </li>
+                                                            <li class="page-item ">
+                                    <a class="page-link" href="?prec=1&precl=2#tabla-reclamos">2</a>
+                                </li>
+                                                        <li class="page-item ">
+                                <a class="page-link" href="?prec=1&precl=2#tabla-reclamos" >
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                    </div>
+    </div>
+</div>
+                </main>
+
+                <!-- Pie de Página -->
+                <footer class="app-footer">
+    <div class="container-fluid d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+        <span>&copy; 2026 <strong>COSMOL</strong> — Sistema de Reportes y Gestión de Trabajos</span>
+        <span class="text-muted small">Versión 1.0 (PHP 7.3)</span>
+    </div>
+</footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5.3 Bundle JS Local -->
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script de la Aplicación -->
+    <script src="/assets/js/app.js"></script>
+</body>
+</html>
