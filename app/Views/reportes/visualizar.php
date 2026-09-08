@@ -21,6 +21,9 @@ if (!empty($filtros['fecha_fin'])) {
 if (!empty($filtros['id_tipo'])) {
     $queryParams['id_tipo'] = $filtros['id_tipo'];
 }
+if (!empty($filtros['buscar'])) {
+    $queryParams['buscar'] = $filtros['buscar'];
+}
 
 $exportQuery = http_build_query($queryParams);
 $exportUrl   = '/reportes/exportar' . ($exportQuery ? '?' . $exportQuery : '');
@@ -44,10 +47,17 @@ $hasta = min($pagina * $limit, $totalRegistros);
             <p class="text-muted mb-0">Consultas y atenciones registradas mediante el chatbot de COSMOL.</p>
         </div>
         <div>
-            <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-success d-inline-flex align-items-center gap-2 shadow-sm">
-                <i class="bi bi-file-earmark-spreadsheet-fill"></i>
-                <span>Exportar a CSV</span>
-            </a>
+            <?php if (hasPermission('reportes.exportar')): ?>
+                <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-success d-inline-flex align-items-center gap-2 shadow-sm">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                    <span>Exportar a CSV</span>
+                </a>
+            <?php else: ?>
+                <button type="button" class="btn btn-secondary d-inline-flex align-items-center gap-2 shadow-sm disabled" disabled title="No posee permiso para exportar reportes">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                    <span>Exportar a CSV</span>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -61,6 +71,15 @@ $hasta = min($pagina * $limit, $totalRegistros);
         <div class="card-body p-3 p-md-4">
             <form action="/reportes/visualizar" method="GET" class="row g-3 align-items-end">
                 <div class="col-12 col-md-3">
+                    <label for="buscar" class="form-label fw-semibold small text-muted">Búsqueda</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="buscar" 
+                           name="buscar" 
+                           placeholder="Cód. o Nombre..."
+                           value="<?= htmlspecialchars($filtros['buscar'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
+                <div class="col-12 col-md-2">
                     <label for="fecha_inicio" class="form-label fw-semibold small text-muted">Fecha Inicio</label>
                     <input type="date" 
                            class="form-control" 
@@ -68,7 +87,7 @@ $hasta = min($pagina * $limit, $totalRegistros);
                            name="fecha_inicio" 
                            value="<?= htmlspecialchars($filtros['fecha_inicio'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                     <label for="fecha_fin" class="form-label fw-semibold small text-muted">Fecha Fin</label>
                     <input type="date" 
                            class="form-control" 
@@ -76,7 +95,7 @@ $hasta = min($pagina * $limit, $totalRegistros);
                            name="fecha_fin" 
                            value="<?= htmlspecialchars($filtros['fecha_fin'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                     <label for="id_tipo" class="form-label fw-semibold small text-muted">Tipo de Consulta</label>
                     <select class="form-select" id="id_tipo" name="id_tipo">
                         <option value="">Todos los tipos</option>
@@ -138,12 +157,16 @@ $hasta = min($pagina * $limit, $totalRegistros);
                                 <tr>
                                     <td class="px-4 py-3 fw-bold text-muted">#<?= (int)$row['id_consulta'] ?></td>
                                     <td class="py-3">
-                                        <span class="badge bg-light text-dark border font-monospace">
-                                            <i class="bi bi-person-badge me-1"></i><?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?>
-                                        </span>
+                                        <?php if (!empty($row['codigo_socio'])): ?>
+                                            <span class="badge bg-light text-dark border font-monospace">
+                                                <i class="bi bi-person-badge me-1"></i><?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-light text-muted border font-monospace">N/A</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="py-3 fw-semibold text-dark">
-                                        <?= htmlspecialchars($row['nombres'], ENT_QUOTES, 'UTF-8') ?>
+                                        <?= htmlspecialchars(!empty($row['nombres']) ? $row['nombres'] : 'Desconocido', ENT_QUOTES, 'UTF-8') ?>
                                     </td>
                                     <td class="py-3">
                                         <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1">

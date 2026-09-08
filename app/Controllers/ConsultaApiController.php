@@ -29,12 +29,24 @@ class ConsultaApiController extends Controller
         $codigoSocio = isset($input['codigo_socio']) ? (int)$input['codigo_socio'] : 0;
         $nombres     = isset($input['nombres']) ? trim($input['nombres']) : 'Socio';
         $idTipo      = isset($input['id_tipo']) ? (int)$input['id_tipo'] : null;
+
+        // Auto-detectar Reclamo si envían el JSON directamente de la API externa
+        if (!$idTipo) {
+            if (isset($input['id_tipo_reclamo'])) {
+                $idTipo = 4; // Registro de Reclamo
+            } elseif (isset($input['descripcion']) && stripos($input['descripcion'], 'recon') !== false) {
+                $idTipo = 5; // Solicitud de Reconexión
+            }
+        }
+
         $fecha       = isset($input['fecha_consulta']) ? $input['fecha_consulta'] : date('Y-m-d');
         $hora        = isset($input['hora_consulta']) ? $input['hora_consulta'] : date('H:i:s');
 
-        if ($codigoSocio <= 0 || !$idTipo) {
+        // Ya no capturamos datos operativos de trabajos, solo metadatos de la consulta
+        // Quitamos la validación de codigoSocio estricta por si el JSON del Reclamo no lo incluye
+        if (!$idTipo) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Parámetros obligatorios faltantes']);
+            echo json_encode(['status' => 'error', 'message' => 'No se pudo determinar el id_tipo o falta en la petición']);
             exit;
         }
 

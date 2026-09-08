@@ -49,6 +49,24 @@ class Permiso extends Model
         return $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
     }
 
+    /**
+     * Retorna los nombres clave de los permisos asignados a un rol.
+     *
+     * @param int $idRol
+     * @return array Array de strings con las claves de permisos (ej. ['usuarios.ver', 'trabajos.concluir'])
+     */
+    public function getClavesByRol($idRol)
+    {
+        $stmt = $this->db()->prepare(
+            "SELECT p.clave_permiso 
+             FROM permiso p 
+             INNER JOIN rol_permiso rp ON p.id_permiso = rp.id_permiso 
+             WHERE rp.id_rol = :id_rol"
+        );
+        $stmt->execute(['id_rol' => (int)$idRol]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+    }
+
     public function syncRolPermisos($idRol, array $permisosIds)
     {
         $db = $this->db();

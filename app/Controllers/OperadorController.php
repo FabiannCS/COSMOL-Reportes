@@ -116,17 +116,41 @@ class OperadorController extends Controller
         switch ($especialidad['nombre']) {
             case 'Reconexión':
                 $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
-                $respuesta = $client->get('/reconexiones?estado=PENDIENTE');
-                $lista = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
-                
                 $datos = null;
-                foreach ($lista as $item) {
-                    if (isset($item['id_reconexion']) && $item['id_reconexion'] == $idTrabajo) {
-                        $datos = $item;
-                        break;
+
+                // Intentar obtener directamente por ID (endpoint individual soportado por la API)
+                $respuestaDirecta = $client->get('/reconexiones/' . $idTrabajo);
+                if (isset($respuestaDirecta['datos']) && is_array($respuestaDirecta['datos'])) {
+                    $datos = $respuestaDirecta['datos'];
+                }
+
+                // Fallback: buscar en PENDIENTE si el endpoint individual falló
+                if (!$datos) {
+                    $respuesta = $client->get('/reconexiones?estado=PENDIENTE');
+                    $lista = isset($respuesta['datos']) ? $respuesta['datos'] : [];
+                    foreach ($lista as $item) {
+                        if (isset($item['id_reconexion']) && $item['id_reconexion'] == $idTrabajo) {
+                            $datos = $item;
+                            break;
+                        }
                     }
                 }
-                $vista = 'operador/reconexion_detalle';
+
+                // Fallback: buscar en CONCLUIDA (estado correcto en la API de reconexiones)
+                if (!$datos) {
+                    $respuestaConcluida = $client->get('/reconexiones?estado=CONCLUIDA');
+                    $listaConcluida = isset($respuestaConcluida['datos']) ? $respuestaConcluida['datos'] : [];
+                    foreach ($listaConcluida as $item) {
+                        if (isset($item['id_reconexion']) && $item['id_reconexion'] == $idTrabajo) {
+                            $datos = $item;
+                            break;
+                        }
+                    }
+                }
+                
+                $vista = (isset($datos['estado']) && strtoupper(trim($datos['estado'])) !== 'PENDIENTE') 
+                            ? 'operador/reconexion_concluido' 
+                            : 'operador/reconexion_detalle';
                 break;
                 
             case 'Maestro de alcantarillado':
@@ -142,7 +166,22 @@ class OperadorController extends Controller
                         break;
                     }
                 }
-                $vista = 'operador/reclamo_detalle';
+
+                // Si no está en PENDIENTE, buscar en CONCLUIDO (para el historial)
+                if (!$datos) {
+                    $respuestaConcluido = $client->get('/reclamos?estado=CONCLUIDO');
+                    $listaConcluida = isset($respuestaConcluido['datos']) ? $respuestaConcluido['datos'] : (is_array($respuestaConcluido) ? $respuestaConcluido : []);
+                    foreach ($listaConcluida as $item) {
+                        if (isset($item['id_reclamo']) && $item['id_reclamo'] == $idTrabajo) {
+                            $datos = $item;
+                            break;
+                        }
+                    }
+                }
+                
+                $vista = (isset($datos['estado']) && strtoupper(trim($datos['estado'])) !== 'PENDIENTE') 
+                            ? 'operador/reclamo_concluido' 
+                            : 'operador/reclamo_detalle';
                 break;
         }
 
@@ -197,7 +236,7 @@ class OperadorController extends Controller
             case 'Maestro de alcantarillado':
             case 'Agua Potable':
                 $observacionConclusion = isset($_POST['observacion_conclusion']) ? trim($_POST['observacion_conclusion']) : '';
-                $estado = isset($_POST['estado']) ? trim($_POST['estado']) : 'SOLUCIONADO';
+                $estado = isset($_POST['estado']) ? trim($_POST['estado']) : 'CONCLUIDO';
 
                 // La API externa concatena automáticamente la glosa previa con " | CONCLUSIÓN: "
                 $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . $observacionConclusion;
@@ -225,5 +264,72 @@ class OperadorController extends Controller
 
         $_SESSION['mensaje'] = 'Trabajo concluido correctamente.';
         $this->redirect('/operador/trabajos');
+    }
+
+    public function historial()
+    {
+        $especialidad = $this->getEspecialidadOperador();
+
+        if (!$especialidad) {
+            $_SESSION['error'] = 'No tienes una especialidad asignada. Contacta al administrador.';
+            $this->redirect('/');
+        }
+
+        $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 0;
+        
+        $datos = null;
+        $error = null;
+        $vista = 'operador/historial';
+
+        // Historial
+        switch ($especialidad['nombre']) {
+            case 'Reconexión':
+                $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
+                // La API usa el estado 'CONCLUIDA' (femenino) para reconexiones concluidas
+                $respuesta = $client->get('/reconexiones?estado=CONCLUIDA');
+                $todos = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
+                
+                // Filtrar por el operador que ejecutó la reconexión (usuario_reconexion se actualiza correctamente por la API)
+                $datos = array_filter($todos, function($item) use ($idUsuario) {
+                    $esDelUsuario = isset($item['usuario_reconexion']) && $item['usuario_reconexion'] == $idUsuario;
+                    $estado = strtoupper(trim($item['estado'] ?? ''));
+                    $esConcluida = $estado === 'CONCLUIDA' || $estado === 'CONCLUIDO';
+                    return $esDelUsuario && $esConcluida;
+                });
+                break;
+                
+            case 'Maestro de alcantarillado':
+            case 'Agua Potable':
+                $client = new ApiClient($this->apiConfig['reclamos']['base_url']);
+                $respuesta = $client->get('/reclamos?estado=CONCLUIDO'); 
+                $todos = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
+                
+                $tipoReclamo = ($especialidad['nombre'] === 'Agua Potable') ? 2 : 3;
+                
+                $datos = array_filter($todos, function($item) use ($idUsuario, $tipoReclamo) {
+                    $esDelTipo = isset($item['id_tipo_reclamo']) && (int)$item['id_tipo_reclamo'] === $tipoReclamo;
+                    $noEsPendiente = isset($item['estado']) && $item['estado'] !== 'PENDIENTE';
+                    $esDelUsuario = (isset($item['usuario_conclucion']) && $item['usuario_conclucion'] == $idUsuario) || 
+                                    (isset($item['usuario_reclamo']) && $item['usuario_reclamo'] == $idUsuario);
+                                    
+                    return $esDelTipo && $noEsPendiente && $esDelUsuario;
+                });
+                break;
+                
+            default:
+                $error = 'Especialidad no reconocida o no soportada.';
+                break;
+        }
+
+        if ($datos === null && empty($error)) {
+            $error = 'Hubo un error al comunicarse con el servidor de trabajos. Intente más tarde.';
+        }
+
+        $this->view($vista, [
+            'title' => 'Historial de Trabajos - ' . $especialidad['nombre'],
+            'especialidad' => $especialidad['nombre'],
+            'trabajos' => $datos,
+            'error' => $error
+        ], 'main');
     }
 }

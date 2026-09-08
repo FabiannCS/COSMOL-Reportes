@@ -19,7 +19,8 @@ class UsuarioController extends Controller
         $rolModel = new Rol();
         $especialidadModel = new Especialidad();
 
-        $usuarios = $usuarioModel->all();
+        $buscar = isset($_GET['buscar']) ? trim($_GET['buscar']) : null;
+        $usuarios = $usuarioModel->all($buscar);
         $roles = $rolModel->allActive();
         $especialidades = $especialidadModel->getAll();
 
@@ -79,7 +80,8 @@ class UsuarioController extends Controller
             'paginaActual'    => $paginaActual,
             'totalPaginas'    => $totalPaginas,
             'mensaje'         => $mensaje,
-            'error'           => $error
+            'error'           => $error,
+            'buscar'          => $buscar
         ], 'main');
     }
 

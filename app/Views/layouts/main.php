@@ -6,6 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title><?= htmlspecialchars(isset($title) ? $title : 'COSMOL Reportes', ENT_QUOTES, 'UTF-8') ?></title>
 
+    <!-- Favicon / Logo -->
+    <link rel="icon" type="image/jpeg" href="/assets/img/logo.jpeg">
+
     <!-- Bootstrap 5.3 CSS Local -->
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
     

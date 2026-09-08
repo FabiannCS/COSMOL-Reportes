@@ -31,9 +31,10 @@
 
     <?php if ($trabajo): ?>
     <div class="row g-4">
-        <!-- Información del Socio -->
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
+        <!-- Columna de Información -->
+        <div class="col-lg-7 d-flex flex-column gap-4">
+            <!-- Información del Socio -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <h6 class="mb-0 "><i class="bi bi-person-badge me-2"></i>Información del Socio</h6>
                 </div>
@@ -53,11 +54,9 @@
                     </dl>
                 </div>
             </div>
-        </div>
 
-        <!-- Ubicación y Coordenadas -->
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
+            <!-- Ubicación y Coordenadas -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicación</h6>
                 </div>
@@ -87,25 +86,26 @@
                     </dl>
                 </div>
             </div>
-        </div>
 
-        <!-- Fotografía -->
-        <?php
-        $foto = isset($trabajo['foto']) ? $trabajo['foto'] : '';
-        $fotoUrl = '';
-        if (!empty($foto)) {
-            $fotoUrl = rtrim($apiFotoBaseUrl, '/') . '/' . ltrim($foto, '/');
-        }
-        ?>
-        <?php if (!empty($fotoUrl)): ?>
-        <div class="col-12">
+            <!-- Fotografía -->
+            <?php
+            $foto = isset($trabajo['foto']) ? $trabajo['foto'] : '';
+            $fotoUrl = '';
+            if (!empty($foto)) {
+                $fotoUrl = rtrim($apiFotoBaseUrl, '/') . '/' . ltrim($foto, '/');
+            }
+            ?>
+            <?php if (!empty($fotoUrl)): ?>
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <h6 class="mb-0"><i class="bi bi-image me-2"></i>Fotografía Adjunta</h6>
                 </div>
                 <div class="card-body text-center">
                     <img src="<?= htmlspecialchars($fotoUrl, ENT_QUOTES, 'UTF-8') ?>" 
-                         alt="Foto del trabajo" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+                         alt="Foto del trabajo" 
+                         loading="lazy"
+                         decoding="async"
+                         class="img-fluid rounded shadow-sm" style="max-height: 400px;">
                     <div class="mt-2">
                         <a href="<?= htmlspecialchars($fotoUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-arrows-fullscreen me-1"></i>Ver tamaño completo
@@ -113,8 +113,67 @@
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
+
+        <!-- Columna de Conclusión -->
+        <div class="col-lg-5">
+            <?php 
+                $estadoReconexion = strtoupper(trim(isset($trabajo['estado']) ? $trabajo['estado'] : '')); 
+                $esConcluida = ($estadoReconexion === 'CONCLUIDA' || $estadoReconexion === 'CONCLUIDO');
+            ?>
+            
+            <?php if ($esConcluida): ?>
+            <div class="card shadow-sm h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> Reconexión Concluida</h5>
+                </div>
+                <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                    <i class="bi bi-shield-check display-1 text-success mb-3"></i>
+                    <h4 class="text-success mb-3">Trabajo Finalizado</h4>
+                    <p class="text-muted mb-0">Esta reconexión ya fue procesada y guardada en el sistema central. No se puede modificar.</p>
+                </div>
+            </div>
+            <?php else: ?>
+            <div class="card shadow-sm h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-check2-square"></i> Concluir Trabajo</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (hasPermission('trabajos.concluir')): ?>
+                    <form action="/administrador/trabajos/concluir" method="POST" id="form-concluir">
+                        <input type="hidden" name="tipo" value="reconexion">
+                        <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reconexion'] ?? '') ?>">
+                        
+                        <div class="mb-4">
+                            <label for="lecturacion" class="form-label fw-bold">Lecturación <span class="text-danger">*</span></label>
+                            <input type="text" name="lecturacion" id="lecturacion" class="form-control" placeholder="Ingrese el valor de la lecturación..." required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="glosa" class="form-label fw-bold">Glosa / Observación <span class="text-danger">*</span></label>
+                            <textarea name="glosa" id="glosa" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación..." required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send"></i> Enviar Conclusión
+                            </button>
+                        </div>
+                    </form>
+                    <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="bi bi-shield-slash fs-1 text-muted d-block mb-2"></i>
+                        <p class="text-muted fw-semibold mb-3">No cuenta con los permisos necesarios para concluir este trabajo.</p>
+                        <button type="button" class="btn btn-secondary btn-lg disabled" disabled title="Permiso denegado">
+                            <i class="bi bi-lock-fill me-1"></i> Conclusión Bloqueada
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
     </div>
     <?php endif; ?>
 </div>

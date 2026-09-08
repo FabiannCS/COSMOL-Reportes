@@ -5,28 +5,14 @@
  * @var array|null $trabajos
  * @var string|null $error
  */
-
-$mensaje = isset($_SESSION['mensaje']) ? $_SESSION['mensaje'] : null;
-unset($_SESSION['mensaje']);
-
-$sesionError = isset($_SESSION['error']) ? $_SESSION['error'] : null;
-unset($_SESSION['error']);
 ?>
-
-<div class="mb-4 text-center">
-    <h2 class="h4 text-wrap text-break mb-0">Trabajos pendientes - <?= htmlspecialchars($especialidad) ?></h2>
+<div class="mb-4">
+    <h2 class="h4 text-wrap text-break mb-0 text-center">Historial de Trabajos - <?= htmlspecialchars($especialidad) ?></h2>
 </div>
 
-<?php if ($mensaje): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i> <?= htmlspecialchars($mensaje) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
-
-<?php if ($error || $sesionError): ?>
+<?php if ($error): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i> <?= htmlspecialchars($error ?: $sesionError) ?>
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> <?= htmlspecialchars($error) ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
@@ -37,25 +23,26 @@ unset($_SESSION['error']);
 </style>
 
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-primary text-white py-3 text-center">
-        <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Reclamos Pendientes</h5>
+    <div class="card-header bg-secondary text-white py-3">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Trabajos Concluidos</h5>
     </div>
     <div class="card-body bg-light p-3 p-md-4">
         <?php if ($trabajos === null): ?>
             <div class="p-4 text-center text-muted">
                 <i class="bi bi-cloud-slash display-4 d-block mb-3"></i>
-                <p>No se pudo establecer conexión con el servidor de reclamos.</p>
+                <p>No se pudo establecer conexión con el servidor.</p>
             </div>
         <?php elseif (empty($trabajos)): ?>
             <div class="p-4 text-center text-muted">
                 <i class="bi bi-inbox display-4 d-block mb-3"></i>
-                <p>No hay reclamos pendientes para su especialidad en este momento.</p>
+                <p>No tienes trabajos en tu historial.</p>
             </div>
         <?php else: ?>
             <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
                 <?php foreach ($trabajos as $t): ?>
-                    <?php
-                        $tipo = 'reclamo';
+                    <?php 
+                        $tipo = ($especialidad === 'Reconexión') ? 'reconexion' : 'reclamo';
+                        $is_historial = true;
                         include __DIR__ . '/partials/trabajo_card.php';
                     ?>
                 <?php endforeach; ?>
@@ -63,4 +50,3 @@ unset($_SESSION['error']);
         <?php endif; ?>
     </div>
 </div>
-

@@ -9,11 +9,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Extensiones PHP: PDO + PostgreSQL
-RUN docker-php-ext-install pdo pdo_pgsql
+# Extensiones PHP: PDO + PostgreSQL + OPcache
+RUN docker-php-ext-install pdo pdo_pgsql opcache
 
-# mod_rewrite para .htaccess
-RUN a2enmod rewrite
+# Configuración de OPcache para desarrollo de alto rendimiento
+RUN echo '[opcache]\n\
+opcache.enable=1\n\
+opcache.enable_cli=0\n\
+opcache.memory_consumption=128\n\
+opcache.interned_strings_buffer=8\n\
+opcache.max_accelerated_files=4000\n\
+opcache.validate_timestamps=1\n\
+opcache.revalidate_freq=2\n\
+opcache.fast_shutdown=1' > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
+# Módulos Apache: rewrite, deflate (compresión), expires (caché), headers
+RUN a2enmod rewrite deflate expires headers \
+    && echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
 # DocumentRoot → public/ (app/ queda inaccesible por URL)
 RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \

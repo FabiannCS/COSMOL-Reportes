@@ -24,27 +24,6 @@ class AdministradorController extends Controller
         $this->apiConfig = require __DIR__ . '/../Config/api.php';
     }
 
-    /**
-     * Verifica sesión activa con rol Administrador.
-     * El middleware ya garantiza esto, pero se revalida internamente
-     * como medida de defensa en profundidad.
-     */
-    private function verificarAdmin()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $rol = isset($_SESSION['usuario']['nombre_rol'])
-            ? $_SESSION['usuario']['nombre_rol']
-            : null;
-
-        if ($rol !== 'Administrador') {
-            $_SESSION['error'] = 'Acceso denegado.';
-            $this->redirect('/dashboard');
-        }
-    }
-
     // ─── 2. Supervisión Global de Trabajos ──────────────────────────
 
     /**
@@ -56,25 +35,28 @@ class AdministradorController extends Controller
      */
     public function trabajos()
     {
-        $this->verificarAdmin();
 
         $reconexiones  = [];
         $reclamos      = [];
         $errores       = [];
 
-        // ── Reconexiones pendientes ─────────────────────────────────
-        $clientRec = new ApiClient($this->apiConfig['reconexiones']['base_url']);
-        $respRec   = $clientRec->get('/reconexiones?estado=PENDIENTE');
+        // ── Peticiones paralelas a APIs externas (Reconexiones y Reclamos) ─────────
+        $clientRec  = new ApiClient($this->apiConfig['reconexiones']['base_url']);
+        $clientRecl = new ApiClient($this->apiConfig['reclamos']['base_url']);
+
+        $respuestas = ApiClient::getMultiFromClients([
+            'reconexiones' => [$clientRec, '/reconexiones?estado=PENDIENTE'],
+            'reclamos'     => [$clientRecl, '/reclamos?estado=PENDIENTE'],
+        ]);
+
+        $respRec  = isset($respuestas['reconexiones']) ? $respuestas['reconexiones'] : null;
+        $respRecl = isset($respuestas['reclamos']) ? $respuestas['reclamos'] : null;
 
         if ($respRec === null) {
             $errores[] = 'No se pudo conectar con la API de Reconexiones.';
         } else {
             $reconexiones = isset($respRec['datos']) ? $respRec['datos'] : (is_array($respRec) ? $respRec : []);
         }
-
-        // ── Reclamos pendientes (todos, luego separamos) ────────────
-        $clientRecl = new ApiClient($this->apiConfig['reclamos']['base_url']);
-        $respRecl   = $clientRecl->get('/reclamos?estado=PENDIENTE');
 
         if ($respRecl === null) {
             $errores[] = 'No se pudo conectar con la API de Reclamos.';
@@ -134,7 +116,6 @@ class AdministradorController extends Controller
      */
     public function trabajoDetalle()
     {
-        $this->verificarAdmin();
 
         $tipo = isset($_GET['tipo']) ? trim($_GET['tipo']) : '';
         $id   = isset($_GET['id'])   ? trim($_GET['id'])   : '';
@@ -151,15 +132,40 @@ class AdministradorController extends Controller
         switch ($tipo) {
             case 'reconexion':
                 $client    = new ApiClient($this->apiConfig['reconexiones']['base_url']);
-                $respuesta = $client->get('/reconexiones?estado=PENDIENTE');
-                $lista     = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
+                
+                // Intentar obtener directamente por ID
+                $respuestaDirecta = $client->get('/reconexiones/' . $id);
+                if (isset($respuestaDirecta['datos']) && is_array($respuestaDirecta['datos'])) {
+                    $datos = $respuestaDirecta['datos'];
+                }
 
-                foreach ($lista as $item) {
-                    if (isset($item['id_reconexion']) && $item['id_reconexion'] == $id) {
-                        $datos = $item;
-                        break;
+                // Fallback: PENDIENTE
+                if (!$datos) {
+                    $respuesta = $client->get('/reconexiones?estado=PENDIENTE');
+                    $lista     = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
+                    foreach ($lista as $item) {
+                        if (isset($item['id_reconexion']) && $item['id_reconexion'] == $id) {
+                            $datos = $item;
+                            break;
+                        }
                     }
                 }
+
+                // Fallback: CONCLUIDA
+                if (!$datos) {
+                    $respuesta = $client->get('/reconexiones?estado=CONCLUIDA');
+                    $lista     = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
+                    foreach ($lista as $item) {
+                        if (isset($item['id_reconexion']) && $item['id_reconexion'] == $id) {
+                            $datos = $item;
+                            break;
+                        }
+                    }
+                }
+
+                // Si está concluido mostramos el detalle pero con la vista de finalizado o la de detalle normal
+                // En este caso el admin no puede volver a concluir algo concluido, pero la vista de detalle
+                // normal del administrador tiene el form de conclusión. Vamos a bloquearlo en la vista.
                 $vista = 'administrador/trabajo_detalle_reconexion';
                 break;
 
@@ -174,6 +180,19 @@ class AdministradorController extends Controller
                         break;
                     }
                 }
+
+                // Fallback: CONCLUIDO
+                if (!$datos) {
+                    $respuesta = $client->get('/reclamos?estado=CONCLUIDO');
+                    $lista     = isset($respuesta['datos']) ? $respuesta['datos'] : (is_array($respuesta) ? $respuesta : []);
+                    foreach ($lista as $item) {
+                        if (isset($item['id_reclamo']) && $item['id_reclamo'] == $id) {
+                            $datos = $item;
+                            break;
+                        }
+                    }
+                }
+
                 $vista = 'administrador/trabajo_detalle_reclamo';
                 break;
 
@@ -197,6 +216,130 @@ class AdministradorController extends Controller
             'tipo'           => $tipo,
             'apiFotoBaseUrl' => $apiFotoBaseUrl,
             'error'          => $error,
+        ], 'main');
+    }
+
+    /**
+     * POST /administrador/trabajos/concluir
+     *
+     * Permite al administrador concluir un trabajo (reconexión o reclamo)
+     * enviando los datos a la API externa correspondiente.
+     */
+    public function concluir()
+    {
+
+        $tipo = isset($_POST['tipo']) ? trim($_POST['tipo']) : null;
+        $idTrabajo = isset($_POST['id_trabajo']) ? trim($_POST['id_trabajo']) : null;
+        
+        if (!$idTrabajo || !$tipo) {
+            $_SESSION['error'] = 'Solicitud inválida.';
+            $this->redirect('/administrador/trabajos');
+        }
+
+        $resultado = null;
+
+        if ($tipo === 'reconexion') {
+            $glosa = isset($_POST['glosa']) ? trim($_POST['glosa']) : '';
+            $lecturacion = isset($_POST['lecturacion']) ? trim($_POST['lecturacion']) : '';
+            
+            $dataPayload = [
+                'usuario_reconexion' => isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1,
+                'lectura_reconexion' => is_numeric($lecturacion) ? (int)$lecturacion : $lecturacion,
+                'glosa'              => $glosa
+            ];
+            
+            $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
+            $resultado = $client->put('/reconexiones/' . $idTrabajo, $dataPayload);
+
+        } elseif ($tipo === 'reclamo') {
+            $observacionConclusion = isset($_POST['observacion_conclusion']) ? trim($_POST['observacion_conclusion']) : '';
+            $estado = isset($_POST['estado']) ? trim($_POST['estado']) : 'CONCLUIDO';
+
+            // La API externa concatena automáticamente la glosa previa con " | CONCLUSIÓN: "
+            $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . $observacionConclusion;
+
+            $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1;
+
+            $dataPayload = [
+                'usuario_conclucion' => $idUsuario,
+                'usuario_reclamo'    => $idUsuario,
+                'glosa'              => $glosaFinal
+            ];
+            
+            $client = new ApiClient($this->apiConfig['reclamos']['base_url']);
+            $resultado = $client->put('/reclamos/' . $idTrabajo, $dataPayload);
+        } else {
+            $_SESSION['error'] = 'Tipo de trabajo no válido.';
+            $this->redirect('/administrador/trabajos');
+        }
+
+        if ($resultado === null || (is_array($resultado) && isset($resultado['estado']) && $resultado['estado'] === 'error')) {
+            $msgError = (is_array($resultado) && !empty($resultado['mensaje']))
+                ? $resultado['mensaje']
+                : 'Hubo un error al concluir el trabajo en el servidor externo. Intente nuevamente.';
+            $_SESSION['error'] = $msgError;
+        } else {
+            $_SESSION['mensaje'] = 'Trabajo concluido correctamente.';
+        }
+        
+        $this->redirect('/administrador/trabajos');
+    }
+
+    /**
+     * GET /administrador/historial
+     *
+     * Muestra el historial de trabajos que han sido concluidos
+     * por el Administrador/Supervisor actual.
+     */
+    public function historial()
+    {
+
+        $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 0;
+
+        $reconexionesConcluidas = [];
+        $reclamosConcluidos     = [];
+        $errores                = [];
+
+        // ── Peticiones paralelas a APIs externas (Reconexiones y Reclamos Concluidos) ─────────
+        $clientRec  = new ApiClient($this->apiConfig['reconexiones']['base_url']);
+        $clientRecl = new ApiClient($this->apiConfig['reclamos']['base_url']);
+
+        $respuestas = ApiClient::getMultiFromClients([
+            'reconexiones' => [$clientRec, '/reconexiones?estado=CONCLUIDA'],
+            'reclamos'     => [$clientRecl, '/reclamos?estado=CONCLUIDO'],
+        ]);
+
+        $respRec  = isset($respuestas['reconexiones']) ? $respuestas['reconexiones'] : null;
+        $respRecl = isset($respuestas['reclamos']) ? $respuestas['reclamos'] : null;
+
+        if ($respRec === null) {
+            $errores[] = 'No se pudo conectar con la API de Reconexiones.';
+        } else {
+            $todasRec = isset($respRec['datos']) ? $respRec['datos'] : (is_array($respRec) ? $respRec : []);
+            
+            $reconexionesConcluidas = array_filter($todasRec, function($item) use ($idUsuario) {
+                return (isset($item['usuario_reconexion']) && $item['usuario_reconexion'] == $idUsuario);
+            });
+        }
+
+        if ($respRecl === null) {
+            $errores[] = 'No se pudo conectar con la API de Reclamos.';
+        } else {
+            $todosRecl = isset($respRecl['datos']) ? $respRecl['datos'] : (is_array($respRecl) ? $respRecl : []);
+            
+            $reclamosConcluidos = array_filter($todosRecl, function($item) use ($idUsuario) {
+                return (
+                    (isset($item['usuario_conclucion']) && $item['usuario_conclucion'] == $idUsuario) ||
+                    (isset($item['usuario_reclamo']) && $item['usuario_reclamo'] == $idUsuario)
+                );
+            });
+        }
+
+        $this->view('administrador/historial', [
+            'title'        => 'Historial de Trabajos Concluidos',
+            'reconexiones' => $reconexionesConcluidas,
+            'reclamos'     => $reclamosConcluidos,
+            'errores'      => $errores,
         ], 'main');
     }
 }

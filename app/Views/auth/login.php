@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($title) ? htmlspecialchars($title) : 'COSMOL Reportes' ?></title>
+    <!-- Favicon / Logo -->
+    <link rel="icon" type="image/jpeg" href="/assets/img/logo.jpeg">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif; background: #f1f5f9; color: #1e293b; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
@@ -21,8 +23,10 @@
 </head>
 <body>
     <div class="login-card">
-        <h1 class="logo-title">COSMOL</h1>
-        <p class="subtitle">Sistema de Reportes y Gestión de Trabajos</p>
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <img src="/assets/img/logo.jpeg" alt="COSMOL Logo" style="max-width: 220px; height: auto; display: block; margin: 0 auto;">
+        </div>
+        <p class="subtitle">Gestión de consultas Chatbot</p>
 
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem;">
@@ -44,7 +48,7 @@
             <button type="submit" class="btn-submit">Ingresar al Sistema</button>
         </form>
 
-        <p class="footer-text">COSMOL 2026</p>
+        <p class="footer-text">COSMOL RL.</p>
     </div>
 </body>
 </html>

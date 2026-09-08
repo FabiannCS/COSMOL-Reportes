@@ -99,16 +99,29 @@ $totalPermisosAsignados = is_array($permisosAsignados) ? count($permisosAsignado
                     </div>
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMarcarTodosGlobal">
-                        <i class="bi bi-check-all me-1"></i>Marcar Todos
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnDesmarcarTodosGlobal">
-                        <i class="bi bi-dash-square me-1"></i>Desmarcar Todos
-                    </button>
-                    <button type="submit" class="btn btn-primary px-4 d-inline-flex align-items-center gap-2 shadow-sm">
-                        <i class="bi bi-save"></i>
-                        <span>Guardar Cambios</span>
-                    </button>
+                    <?php if (hasPermission('roles.permisos')): ?>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMarcarTodosGlobal">
+                            <i class="bi bi-check-all me-1"></i>Marcar Todos
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnDesmarcarTodosGlobal">
+                            <i class="bi bi-dash-square me-1"></i>Desmarcar Todos
+                        </button>
+                        <button type="submit" class="btn btn-primary px-4 d-inline-flex align-items-center gap-2 shadow-sm">
+                            <i class="bi bi-save"></i>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-sm btn-outline-secondary disabled" disabled>
+                            <i class="bi bi-check-all me-1"></i>Marcar Todos
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary disabled" disabled>
+                            <i class="bi bi-dash-square me-1"></i>Desmarcar Todos
+                        </button>
+                        <button type="button" class="btn btn-secondary px-4 d-inline-flex align-items-center gap-2 shadow-sm disabled" disabled title="No posee permiso para modificar la matriz de permisos">
+                            <i class="bi bi-save"></i>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -183,7 +196,8 @@ $totalPermisosAsignados = is_array($permisosAsignados) ? count($permisosAsignado
                                                    value="<?= $idPermiso ?>" 
                                                    id="permiso_<?= $idPermiso ?>"
                                                    style="cursor: pointer;"
-                                                   <?= $estaMarcado ? 'checked' : '' ?>>
+                                                   <?= $estaMarcado ? 'checked' : '' ?>
+                                                   <?= hasPermission('roles.permisos') ? '' : 'disabled' ?>>
                                             <label class="form-check-label flex-grow-1" for="permiso_<?= $idPermiso ?>" style="cursor: pointer;">
                                                 <div class="fw-semibold text-dark fs-6"><?= htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') ?></div>
                                                 <code class="small text-primary bg-white px-1 py-1 rounded border border-primary border-opacity-25"><?= htmlspecialchars($clave, ENT_QUOTES, 'UTF-8') ?></code>

@@ -24,10 +24,17 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
             <p class="text-muted small mb-0">Administración de cuentas de acceso, asignación de roles y especialidades.</p>
         </div>
         <div>
-            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Nuevo Usuario</span>
-            </button>
+            <?php if (hasPermission('usuarios.crear')): ?>
+                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Nuevo Usuario</span>
+                </button>
+            <?php else: ?>
+                <button type="button" class="btn btn-secondary d-inline-flex align-items-center gap-2 shadow-sm disabled" disabled title="No posee permiso para registrar usuarios">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Nuevo Usuario</span>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -50,73 +57,52 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
 
     <!-- Tarjetas de Métricas -->
     <div class="row g-3 g-xl-4 mb-4">
-        <!-- Total Usuarios -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Usuarios</span>
-                        <span class="h3 fw-bold mb-0 text-dark"><?= (int)$totalUsuarios ?></span>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-people-fill fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Activos -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Activos</span>
-                        <span class="h3 fw-bold mb-0 text-success"><?= (int)$activos ?></span>
-                    </div>
-                    <div class="bg-success bg-opacity-10 text-success rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-person-check-fill fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Inactivos -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Inactivos</span>
-                        <span class="h3 fw-bold mb-0 text-danger"><?= (int)$inactivos ?></span>
-                    </div>
-                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-person-x-fill fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Especialidades -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Especialidades</span>
-                        <span class="h3 fw-bold mb-0 text-dark"><?= count($porEspecialidad) ?></span>
-                    </div>
-                    <div class="bg-info bg-opacity-10 text-info rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-diagram-3-fill fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <?php
+            $statTitle = 'Total Usuarios';
+            $statValue = (int)$totalUsuarios;
+            $statColor = 'primary';
+            $statIcon  = 'bi-people-fill';
+            include __DIR__ . '/../layouts/partials/stat_card.php';
+        ?>
+        <?php
+            $statTitle = 'Activos';
+            $statValue = (int)$activos;
+            $statColor = 'success';
+            $statIcon  = 'bi-person-check-fill';
+            $statValueColor = 'text-success';
+            include __DIR__ . '/../layouts/partials/stat_card.php';
+        ?>
+        <?php
+            $statTitle = 'Inactivos';
+            $statValue = (int)$inactivos;
+            $statColor = 'danger';
+            $statIcon  = 'bi-person-x-fill';
+            $statValueColor = 'text-danger';
+            include __DIR__ . '/../layouts/partials/stat_card.php';
+        ?>
+        <?php
+            $statTitle = 'Especialidades';
+            $statValue = count($porEspecialidad);
+            $statColor = 'info';
+            $statIcon  = 'bi-diagram-3-fill';
+            $statValueColor = 'text-dark';
+            include __DIR__ . '/../layouts/partials/stat_card.php';
+        ?>
     </div>
 
     <!-- Tarjeta Principal con Tabla de Usuarios -->
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" id="tabla-usuarios">
-        <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <h5 class="card-title fw-bold mb-0 text-dark">
                 Usuarios Registrados
             </h5>
+            <form action="" method="GET" class="d-flex w-auto m-0">
+                <input type="text" name="buscar" class="form-control form-control-sm me-2" placeholder="Buscar por usuario..." value="<?= htmlspecialchars($buscar ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <button type="submit" class="btn btn-sm btn-primary">Buscar</button>
+                <?php if (!empty($buscar)): ?>
+                    <a href="/administrador/usuarios" class="btn btn-sm btn-outline-secondary ms-1" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
+            </form>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -202,24 +188,30 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                     <td class="text-end pe-4 text-nowrap">
                                         <div class="d-inline-flex gap-1 align-items-center">
                                             <!-- Botón Editar -->
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-primary rounded-pill px-3"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#modalEditarUsuario"
-                                                    data-id="<?= $idUsuario ?>"
-                                                    data-username="<?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-id-rol="<?= $idRol ?>"
-                                                    data-id-especialidad="<?= htmlspecialchars(isset($u['id_especialidad']) ? $u['id_especialidad'] : '', ENT_QUOTES, 'UTF-8') ?>"
-                                                    title="Editar Usuario">
-                                                <i class="bi bi-pencil-square me-1"></i><span>Editar</span>
-                                            </button>
+                                            <?php if (hasPermission('usuarios.editar')): ?>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-primary rounded-pill px-3"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#modalEditarUsuario"
+                                                        data-id="<?= $idUsuario ?>"
+                                                        data-username="<?= htmlspecialchars($username, ENT_QUOTES, 'UTF-8') ?>"
+                                                        data-id-rol="<?= $idRol ?>"
+                                                        data-id-especialidad="<?= htmlspecialchars(isset($u['id_especialidad']) ? $u['id_especialidad'] : '', ENT_QUOTES, 'UTF-8') ?>"
+                                                        title="Editar Usuario">
+                                                    <i class="bi bi-pencil-square me-1"></i><span>Editar</span>
+                                                </button>
+                                            <?php else: ?>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 disabled" disabled title="No posee permiso para editar usuarios">
+                                                    <i class="bi bi-pencil-square me-1"></i><span>Editar</span>
+                                                </button>
+                                            <?php endif; ?>
 
                                             <!-- Botón Cambiar Estado (Toggle) -->
                                             <?php if ($esPropio): ?>
                                                 <button type="button" class="btn btn-sm btn-light border text-muted rounded-pill px-2" disabled title="No puedes desactivar tu propia cuenta activa">
                                                     <i class="bi bi-toggle-on"></i>
                                                 </button>
-                                            <?php else: ?>
+                                            <?php elseif (hasPermission('usuarios.estado')): ?>
                                                 <form action="/administrador/usuarios/estado" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de <?= ($estado === 1) ? 'desactivar' : 'activar' ?> al usuario \'<?= htmlspecialchars(addslashes($username), ENT_QUOTES, 'UTF-8') ?>\'?');">
                                                     <input type="hidden" name="id_usuario" value="<?= $idUsuario ?>">
                                                     <input type="hidden" name="nuevo_estado" value="<?= ($estado === 1) ? 0 : 1 ?>">
@@ -233,6 +225,10 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                                         </button>
                                                     <?php endif; ?>
                                                 </form>
+                                            <?php else: ?>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 disabled" disabled title="No posee permiso para cambiar el estado de usuarios">
+                                                    <i class="bi bi-toggle-<?= ($estado === 1) ? 'on' : 'off' ?>"></i>
+                                                </button>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -251,17 +247,17 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                     <nav aria-label="Navegación de páginas">
                         <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
                             <li class="page-item <?= ($paginaActual <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?p=<?= $paginaActual - 1 ?>#tabla-usuarios" <?= ($paginaActual <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                <a class="page-link" href="?p=<?= $paginaActual - 1 ?><?= !empty($buscar) ? '&buscar=' . urlencode($buscar) : '' ?>#tabla-usuarios" <?= ($paginaActual <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
                             <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
                                 <li class="page-item <?= ($i === $paginaActual) ? 'active' : '' ?>">
-                                    <a class="page-link" href="?p=<?= $i ?>#tabla-usuarios"><?= $i ?></a>
+                                    <a class="page-link" href="?p=<?= $i ?><?= !empty($buscar) ? '&buscar=' . urlencode($buscar) : '' ?>#tabla-usuarios"><?= $i ?></a>
                                 </li>
                             <?php endfor; ?>
                             <li class="page-item <?= ($paginaActual >= $totalPaginas) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?p=<?= $paginaActual + 1 ?>#tabla-usuarios" <?= ($paginaActual >= $totalPaginas) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                                <a class="page-link" href="?p=<?= $paginaActual + 1 ?><?= !empty($buscar) ? '&buscar=' . urlencode($buscar) : '' ?>#tabla-usuarios" <?= ($paginaActual >= $totalPaginas) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>

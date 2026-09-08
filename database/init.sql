@@ -101,3 +101,12 @@ INSERT INTO rol_permiso (id_rol, id_permiso)
 SELECT 1, id_permiso FROM permiso
 ON CONFLICT DO NOTHING;
 
+-- Índices de alto rendimiento para acelerar reportes, filtros y consultas del dashboard
+CREATE INDEX IF NOT EXISTS idx_consulta_fecha ON consulta(fecha_consulta);
+CREATE INDEX IF NOT EXISTS idx_consulta_id_tipo ON consulta(id_tipo);
+CREATE INDEX IF NOT EXISTS idx_consulta_codigo_socio ON consulta(codigo_socio);
+CREATE INDEX IF NOT EXISTS idx_consulta_id_usuario ON consulta(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_usuario_id_rol ON usuario(id_rol);
+CREATE INDEX IF NOT EXISTS idx_usuario_id_especialidad ON usuario(id_especialidad);
+CREATE INDEX IF NOT EXISTS idx_rol_permiso_id_permiso ON rol_permiso(id_permiso);
+

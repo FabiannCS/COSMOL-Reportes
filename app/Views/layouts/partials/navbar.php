@@ -10,8 +10,9 @@ $homeUrl       = ($rolActual === 'Operador') ? '/operador/trabajos' : '/dashboar
             <i class="bi bi-list fs-5"></i>
         </button>
 
-        <a class="navbar-brand" href="<?= $homeUrl ?>">
-            <span>COSMOL <small class="text-muted fs-6 fw-normal d-none d-sm-inline">| Reportes</small></span>
+        <a class="navbar-brand d-flex align-items-center gap-2" href="<?= $homeUrl ?>">
+            <img src="/assets/img/logo.jpeg" alt="COSMOL Logo" style="height: 32px; width: auto; object-fit: contain;">
+            <span class="text-muted fs-6 fw-normal d-none d-sm-inline">| Reportes</span>
         </a>
     </div>
 

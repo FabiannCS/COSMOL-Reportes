@@ -49,12 +49,16 @@ class AuthController extends Controller
         $user = $usuarioModel->findByUsername($username);
 
         if ($user && password_verify($password, $user['password_hash'])) {
+            $permisoModel = new \App\Models\Permiso();
+            $permisos = $permisoModel->getClavesByRol($user['id_rol']);
+
             // Guardar datos del usuario en sesión (sin el hash de contraseña)
             $_SESSION['usuario'] = [
                 'id_usuario' => $user['id_usuario'],
                 'username'   => $user['username'],
                 'id_rol'     => $user['id_rol'],
-                'nombre_rol' => $user['nombre_rol']
+                'nombre_rol' => $user['nombre_rol'],
+                'permisos'   => $permisos
             ];
 
             // Redirigir según el rol del usuario
@@ -107,12 +111,34 @@ class AuthController extends Controller
             $this->redirect('/operador/trabajos');
         }
 
-        // --- 1. Total Consultas ---
+        // --- 1. Total Consultas y Evolución (Últimos 7 días) ---
         $db = \App\Core\Database::getInstance();
         $totalConsultas = 0;
+        $consultas7Dias = [];
+        
+        // Inicializar últimos 7 días con 0
+        for ($i = 6; $i >= 0; $i--) {
+            $consultas7Dias[date('Y-m-d', strtotime("-$i days"))] = 0;
+        }
+
         try {
             $stmt = $db->query("SELECT COUNT(*) FROM consulta");
             $totalConsultas = (int)$stmt->fetchColumn();
+
+            $stmtDias = $db->query("
+                SELECT fecha_consulta, COUNT(*) as total 
+                FROM consulta 
+                WHERE fecha_consulta >= CURRENT_DATE - INTERVAL '6 days' 
+                GROUP BY fecha_consulta 
+                ORDER BY fecha_consulta ASC
+            ");
+            
+            $resultadosDias = $stmtDias->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($resultadosDias as $row) {
+                if (isset($consultas7Dias[$row['fecha_consulta']])) {
+                    $consultas7Dias[$row['fecha_consulta']] = (int)$row['total'];
+                }
+            }
         } catch (\Exception $e) {
             $totalConsultas = 0; // Por si la tabla consulta aún no existe
         }
@@ -131,7 +157,7 @@ class AuthController extends Controller
             $operadoresPorEsp = [];
         }
 
-        // --- 3. Trabajos de las APIs (Pendientes y Concluidos) ---
+        // --- 3. Trabajos de las APIs (Pendientes y Concluidos) en Paralelo ---
         $totalPendientes = 0;
         $recPendCount    = 0;
         $reclPendCount   = 0;
@@ -143,8 +169,16 @@ class AuthController extends Controller
         $clientRec = new \App\Services\ApiClient($apiConfig['reconexiones']['base_url']);
         $clientRecl = new \App\Services\ApiClient($apiConfig['reclamos']['base_url']);
 
+        // Ejecución concurrente de las 4 peticiones a las APIs externas
+        $respuestasMulti = \App\Services\ApiClient::getMultiFromClients([
+            'rec_pend'  => [$clientRec, '/reconexiones?estado=PENDIENTE'],
+            'recl_pend' => [$clientRecl, '/reclamos?estado=PENDIENTE'],
+            'rec_con'   => [$clientRec, '/reconexiones?estado=CONCLUIDA'],
+            'recl_con'  => [$clientRecl, '/reclamos?estado=CONCLUIDO'],
+        ]);
+
         // Reconexiones Pendientes
-        $resRecPend = $clientRec->get('/reconexiones?estado=PENDIENTE');
+        $resRecPend = isset($respuestasMulti['rec_pend']) ? $respuestasMulti['rec_pend'] : null;
         if ($resRecPend && isset($resRecPend['datos'])) {
             $recPendCount = count($resRecPend['datos']);
         } elseif (is_array($resRecPend)) {
@@ -152,7 +186,7 @@ class AuthController extends Controller
         }
 
         // Reclamos Pendientes
-        $resReclPend = $clientRecl->get('/reclamos?estado=PENDIENTE');
+        $resReclPend = isset($respuestasMulti['recl_pend']) ? $respuestasMulti['recl_pend'] : null;
         if ($resReclPend && isset($resReclPend['datos'])) {
             $reclPendCount = count($resReclPend['datos']);
         } elseif (is_array($resReclPend)) {
@@ -161,7 +195,7 @@ class AuthController extends Controller
         $totalPendientes = $recPendCount + $reclPendCount;
 
         // Reconexiones Concluidas
-        $resRecCon = $clientRec->get('/reconexiones?estado=CONCLUIDO');
+        $resRecCon = isset($respuestasMulti['rec_con']) ? $respuestasMulti['rec_con'] : null;
         if ($resRecCon && isset($resRecCon['datos'])) {
             $recConCount = count($resRecCon['datos']);
         } elseif (is_array($resRecCon)) {
@@ -169,7 +203,7 @@ class AuthController extends Controller
         }
 
         // Reclamos Concluidos
-        $resReclCon = $clientRecl->get('/reclamos?estado=CONCLUIDO');
+        $resReclCon = isset($respuestasMulti['recl_con']) ? $respuestasMulti['recl_con'] : null;
         if ($resReclCon && isset($resReclCon['datos'])) {
             $reclConCount = count($resReclCon['datos']);
         } elseif (is_array($resReclCon)) {
@@ -188,7 +222,8 @@ class AuthController extends Controller
             'reclPendCount'             => $reclPendCount,
             'totalConcluidos'           => $totalConcluidos,
             'recConCount'               => $recConCount,
-            'reclConCount'              => $reclConCount
+            'reclConCount'              => $reclConCount,
+            'consultas7Dias'            => $consultas7Dias
         ], 'main');
     }
 }

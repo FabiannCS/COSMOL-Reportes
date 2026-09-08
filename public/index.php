@@ -1,16 +1,10 @@
 <?php
 
-/**
- * COSMOL Reportes — Front Controller
- * Punto de entrada único de la aplicación
- */
-
 define('BASE_PATH', dirname(__DIR__));
+date_default_timezone_set('America/La_Paz');
 
-// 1. Cargar Autoloader de Composer
 $autoloadPath = BASE_PATH . '/vendor/autoload.php';
 if (!file_exists($autoloadPath)) {
-    // Si aún no se ha corrido composer install, fallback a autoloader manual simple
     spl_autoload_register(function ($class) {
         $prefix = 'App\\';
         $baseDir = BASE_PATH . '/app/';
@@ -26,6 +20,12 @@ if (!file_exists($autoloadPath)) {
     });
 } else {
     require_once $autoloadPath;
+}
+
+// 1.5 Cargar funciones helper globales
+$helpersPath = BASE_PATH . '/app/Core/helpers.php';
+if (file_exists($helpersPath)) {
+    require_once $helpersPath;
 }
 
 // 2. Cargar variables de entorno desde .env

@@ -133,53 +133,16 @@ unset($_SESSION['error']);
             </div>
         </div>
 
-        <!-- Columna de Conclusión (Editable) -->
+        <!-- Columna de Conclusión (Historial) -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm h-100 border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-check2-square"></i> Concluir Trabajo</h5>
+            <div class="card shadow-sm h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> Trabajo Concluido</h5>
                 </div>
-                <div class="card-body">
-                    <form action="/operador/concluir" method="POST" id="form-concluir">
-                        <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reconexion'] ?? '') ?>">
-                        
-                        <div class="mb-4">
-                            <label for="lecturacion" class="form-label fw-bold">Lecturación <span class="text-danger">*</span></label>
-                            <input type="text" name="lecturacion" id="lecturacion" class="form-control" placeholder="Ingrese el valor de la lecturación..." required>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="glosa" class="form-label fw-bold">Glosa / Observación <span class="text-danger">*</span></label>
-                            <textarea name="glosa" id="glosa" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación..." required></textarea>
-                            <div class="form-text">Esta información actualizará el registro en el sistema central.</div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
-                                <i class="bi bi-send"></i> Enviar Conclusión
-                            </button>
-                        </div>
-
-                        <!-- Modal Confirmación -->
-                        <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-labelledby="modalConfirmarLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="modalConfirmarLabel">Confirmar Conclusión</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        ¿Estás seguro de que deseas enviar esta conclusión al servidor? <br>
-                                        <strong>Esta acción registrará el trabajo permanentemente.</strong>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary">Sí, enviar conclusión</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                    <i class="bi bi-shield-check display-1 text-success mb-3"></i>
+                    <h4 class="text-success mb-3">Reconexión registrada</h4>
+                    <p class="text-muted mb-0">Los detalles y la conclusión de este trabajo ya fueron enviados al sistema central y no pueden ser modificados desde esta pantalla.</p>
                 </div>
             </div>
         </div>

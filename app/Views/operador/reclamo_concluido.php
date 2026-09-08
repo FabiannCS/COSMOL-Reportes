@@ -153,59 +153,16 @@ unset($_SESSION['error']);
             </div>
         </div>
 
-        <!-- Columna de Conclusión (Editable) -->
+        <!-- Columna de Conclusión (Historial) -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm h-100 border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-check2-square"></i> Concluir Reclamo</h5>
+            <div class="card shadow-sm h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> Reclamo Concluido</h5>
                 </div>
-                <div class="card-body">
-                    <form action="/operador/concluir" method="POST" id="form-concluir">
-                        <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reclamo'] ?? '') ?>">
-                        <input type="hidden" name="glosa_anterior" value="<?= htmlspecialchars($trabajo['glosa'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                        
-                        <div class="mb-4">
-                            <label for="estado" class="form-label fw-bold">Estado Final <span class="text-danger">*</span></label>
-                            <select name="estado" id="estado" class="form-select" required>
-                                <option value="" disabled selected>Seleccione un estado...</option>
-                                <option value="CONCLUIDO">CONCLUIDO</option>
-                                <option value="NO CONCLUIDO">NO CONCLUIDO</option>
-                                <option value="NO PROCEDENTE">NO PROCEDENTE</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="observacion_conclusion" class="form-label fw-bold">Informe Técnico del Operador <span class="text-danger">*</span></label>
-                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="5" placeholder="Detalle la reparación realizada, estado de las tuberías o razón por la cual no se pudo solucionar..." required></textarea>
-                            <div class="form-text">Esta información será registrada en el historial del reclamo.</div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
-                                <i class="bi bi-send"></i> Enviar Informe y Concluir
-                            </button>
-                        </div>
-
-                        <!-- Modal Confirmación -->
-                        <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-labelledby="modalConfirmarLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="modalConfirmarLabel">Confirmar Conclusión</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        ¿Estás seguro de que deseas enviar este informe al servidor? <br>
-                                        <strong>Esta acción dará por concluido este reclamo.</strong>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary">Sí, enviar informe</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                    <i class="bi bi-shield-check display-1 text-success mb-3"></i>
+                    <h4 class="text-success mb-3">Reclamo ya solucionado</h4>
+                    <p class="text-muted mb-0">El informe técnico de este reclamo ya fue registrado en el sistema central y no puede ser modificado desde esta pantalla.</p>
                 </div>
             </div>
         </div>

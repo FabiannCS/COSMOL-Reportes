@@ -53,7 +53,12 @@ class Reporte extends Model
             $params[':id_tipo'] = $filtros['id_tipo'];
         }
 
-        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC";
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " ORDER BY c.id_consulta DESC";
         
         $sql .= " LIMIT :limit OFFSET :offset";
 
@@ -100,6 +105,11 @@ class Reporte extends Model
             $params[':id_tipo'] = $filtros['id_tipo'];
         }
 
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
         $stmt = $this->db()->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
@@ -136,7 +146,12 @@ class Reporte extends Model
             $params[':id_tipo'] = $filtros['id_tipo'];
         }
 
-        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC";
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " ORDER BY c.id_consulta DESC";
 
         $stmt = $this->db()->prepare($sql);
         $stmt->execute($params);

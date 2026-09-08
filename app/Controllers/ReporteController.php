@@ -31,11 +31,13 @@ class ReporteController extends Controller
         $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
         $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
         $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
 
         $filtros = [
             'fecha_inicio' => $fechaInicio,
             'fecha_fin'    => $fechaFin,
             'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
         ];
 
         // 2. Parámetros de paginación
@@ -44,7 +46,7 @@ class ReporteController extends Controller
             $pagina = 1;
         }
 
-        $limit = 15;
+        $limit = 10;
         $offset = ($pagina - 1) * $limit;
 
         // 3. Consultar datos al modelo
@@ -79,11 +81,13 @@ class ReporteController extends Controller
         $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
         $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
         $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
 
         $filtros = [
             'fecha_inicio' => $fechaInicio,
             'fecha_fin'    => $fechaFin,
             'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
         ];
 
         $consultas = $this->reporteModel->getAllConsultasExport($filtros);
@@ -98,7 +102,7 @@ class ReporteController extends Controller
         fputs($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         // Encabezados del CSV
-        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Tipo', 'Fecha', 'Hora', 'Atendido por']);
+        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Tipo', 'Fecha', 'Hora', 'Atendido por', 'Descripción', 'Ubicación', 'Zona', 'Ruta', 'Glosa', 'Coordenadas GPS']);
 
         // Escribir filas de datos
         foreach ($consultas as $row) {
@@ -109,7 +113,13 @@ class ReporteController extends Controller
                 $row['tipo'],
                 $row['fecha_consulta'],
                 $row['hora_consulta'],
-                !empty($row['username']) ? $row['username'] : 'Chatbot'
+                !empty($row['username']) ? $row['username'] : 'Chatbot',
+                $row['descripcion'],
+                $row['ubicacion'],
+                $row['zona'],
+                $row['ruta'],
+                $row['glosa'],
+                $row['coordenadas_gps']
             ]);
         }
 
