@@ -31,11 +31,15 @@ if (file_exists($helpersPath)) {
 // 2. Cargar variables de entorno desde .env
 function loadEnv($envFile)
 {
-    if (!file_exists($envFile)) {
+    if (!file_exists($envFile) || !is_readable($envFile)) {
         return;
     }
 
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $lines = @file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!is_array($lines)) {
+        return;
+    }
+
     foreach ($lines as $line) {
         $line = trim($line);
         if ($line === '' || strpos($line, '#') === 0) {
@@ -73,6 +77,7 @@ if ($debug === 'true' || $debug === '1') {
     error_reporting(E_ALL);
 } else {
     ini_set('display_errors', '0');
+    ini_set('display_startup_errors', '0');
     error_reporting(0);
 }
 
