@@ -142,6 +142,7 @@
                 <div class="card-body">
                     <?php if (hasPermission('trabajos.concluir')): ?>
                     <form action="/administrador/trabajos/concluir" method="POST" id="form-concluir">
+                        <?= csrfField(); ?>
                         <input type="hidden" name="tipo" value="reconexion">
                         <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reconexion'] ?? '') ?>">
                         

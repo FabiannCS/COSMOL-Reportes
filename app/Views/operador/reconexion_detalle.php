@@ -141,6 +141,7 @@ unset($_SESSION['error']);
                 </div>
                 <div class="card-body">
                     <form action="/operador/concluir" method="POST" id="form-concluir">
+                        <?= csrfField(); ?>
                         <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reconexion'] ?? '') ?>">
                         
                         <div class="mb-4">

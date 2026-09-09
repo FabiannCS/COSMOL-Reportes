@@ -213,6 +213,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                                                 </button>
                                             <?php elseif (hasPermission('usuarios.estado')): ?>
                                                 <form action="/administrador/usuarios/estado" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de <?= ($estado === 1) ? 'desactivar' : 'activar' ?> al usuario \'<?= htmlspecialchars(addslashes($username), ENT_QUOTES, 'UTF-8') ?>\'?');">
+                                                    <?= csrfField(); ?>
                                                     <input type="hidden" name="id_usuario" value="<?= $idUsuario ?>">
                                                     <input type="hidden" name="nuevo_estado" value="<?= ($estado === 1) ? 0 : 1 ?>">
                                                     <?php if ($estado === 1): ?>
@@ -280,6 +281,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form action="/administrador/usuarios/crear" method="POST">
+                <?= csrfField(); ?>
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="crear_username" class="form-label fw-semibold text-dark">Nombre de Usuario <span class="text-danger">*</span></label>
@@ -343,6 +345,7 @@ $sesionUserId = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usua
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form action="/administrador/usuarios/editar" method="POST">
+                <?= csrfField(); ?>
                 <input type="hidden" name="id_usuario" id="edit_usuario_id" value="">
                 <div class="modal-body p-4">
                     <div class="mb-3">

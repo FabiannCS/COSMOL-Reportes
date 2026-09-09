@@ -81,6 +81,7 @@ $totalPermisosAsignados = is_array($permisosAsignados) ? count($permisosAsignado
 
     <!-- Formulario de Guardado de Permisos -->
     <form action="/seguridad/roles/permisos" method="POST" id="formPermisos">
+        <?= csrfField(); ?>
         <input type="hidden" name="id_rol" value="<?= $idRolActual ?>">
 
         <!-- Banner Informativo del Rol Seleccionado y Barra de Acciones -->

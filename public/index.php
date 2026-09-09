@@ -76,8 +76,29 @@ if ($debug === 'true' || $debug === '1') {
     error_reporting(0);
 }
 
-// 4. Iniciar sesión PHP
+// 4. Iniciar y endurecer sesión PHP
 if (session_status() === PHP_SESSION_NONE) {
+    $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_httponly', '1');
+
+    if (PHP_VERSION_ID >= 70300) {
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path'     => '/',
+            'domain'   => '',
+            'secure'   => $isHttps,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    } else {
+        ini_set('session.cookie_secure', $isHttps ? '1' : '0');
+        session_set_cookie_params(0, '/; SameSite=Lax', '', $isHttps, true);
+    }
+
     session_start();
 }
 

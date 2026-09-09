@@ -34,23 +34,23 @@ return [
     ],
     'POST' => [
         // Autenticación
-        '/login' => ['AuthController', 'login', []],
+        '/login' => ['AuthController', 'login', ['csrf']],
 
         // Acciones de Roles y Permisos
-        '/seguridad/roles/crear'    => ['RolController', 'store',           ['auth', 'permission:roles.crear']],
-        '/seguridad/roles/editar'   => ['RolController', 'update',          ['auth', 'permission:roles.editar']],
-        '/seguridad/roles/permisos' => ['RolController', 'guardarPermisos', ['auth', 'permission:roles.permisos']],
+        '/seguridad/roles/crear'    => ['RolController', 'store',           ['auth', 'permission:roles.crear', 'csrf']],
+        '/seguridad/roles/editar'   => ['RolController', 'update',          ['auth', 'permission:roles.editar', 'csrf']],
+        '/seguridad/roles/permisos' => ['RolController', 'guardarPermisos', ['auth', 'permission:roles.permisos', 'csrf']],
 
         // Operador
-        '/operador/concluir' => ['OperadorController', 'concluir', ['auth', 'permission:trabajos.concluir']],
+        '/operador/concluir' => ['OperadorController', 'concluir', ['auth', 'permission:trabajos.concluir', 'csrf']],
 
         // Administrador
-        '/administrador/trabajos/concluir' => ['AdministradorController', 'concluir', ['auth', 'permission:trabajos.concluir']],
+        '/administrador/trabajos/concluir' => ['AdministradorController', 'concluir', ['auth', 'permission:trabajos.concluir', 'csrf']],
 
         // Acciones de Usuarios
-        '/administrador/usuarios/crear'  => ['UsuarioController', 'store',        ['auth', 'permission:usuarios.crear']],
-        '/administrador/usuarios/editar' => ['UsuarioController', 'update',       ['auth', 'permission:usuarios.editar']],
-        '/administrador/usuarios/estado' => ['UsuarioController', 'toggleEstado', ['auth', 'permission:usuarios.estado']],
+        '/administrador/usuarios/crear'  => ['UsuarioController', 'store',        ['auth', 'permission:usuarios.crear', 'csrf']],
+        '/administrador/usuarios/editar' => ['UsuarioController', 'update',       ['auth', 'permission:usuarios.editar', 'csrf']],
+        '/administrador/usuarios/estado' => ['UsuarioController', 'toggleEstado', ['auth', 'permission:usuarios.estado', 'csrf']],
 
         // API
         '/api/consultas' => ['ConsultaApiController', 'registrar', []],

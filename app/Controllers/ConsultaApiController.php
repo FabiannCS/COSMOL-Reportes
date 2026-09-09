@@ -72,8 +72,16 @@ class ConsultaApiController extends Controller
                 'message' => 'Consulta registrada'
             ]);
         } catch (\Exception $e) {
+            error_log("Error en ConsultaApiController::registrar: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(['status' => 'error', 'message' => 'Error interno al guardar', 'details' => $e->getMessage()]);
+
+            $debug = getenv('APP_DEBUG');
+            $response = ['status' => 'error', 'message' => 'Error interno al guardar'];
+            if ($debug === 'true' || $debug === '1') {
+                $response['details'] = $e->getMessage();
+            }
+
+            echo json_encode($response);
         }
         exit;
     }

@@ -35,6 +35,7 @@
         <?php endif; ?>
 
         <form action="/login" method="POST">
+            <?= csrfField(); ?>
             <div class="form-group">
                 <label for="username">Usuario</label>
                 <input type="text" id="username" name="username" class="form-control" placeholder="Ingresa tu usuario" required autofocus>

@@ -158,6 +158,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form action="/seguridad/roles/crear" method="POST">
+                <?= csrfField(); ?>
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="crear_nombre_rol" class="form-label fw-semibold text-dark">Nombre del Rol <span class="text-danger">*</span></label>
@@ -190,6 +191,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form action="/seguridad/roles/editar" method="POST">
+                <?= csrfField(); ?>
                 <input type="hidden" name="id_rol" id="edit_rol_id" value="">
                 <div class="modal-body p-4">
                     <div class="mb-3">
