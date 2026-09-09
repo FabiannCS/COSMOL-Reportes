@@ -1,7 +1,8 @@
 FROM php:7.3-apache
 
-# Configurar repositorios de Debian Bullseye por HTTPS
-RUN echo 'deb https://deb.debian.org/debian bullseye main' > /etc/apt/sources.list \
+# Configurar repositorios de Debian Bullseye por HTTPS y deshabilitar chequeo de expiración
+RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until \
+    && echo 'deb https://deb.debian.org/debian bullseye main' > /etc/apt/sources.list \
     && echo 'deb https://security.debian.org/debian-security bullseye-security main' >> /etc/apt/sources.list
 
 # Instalar libpq-dev para compilar pdo_pgsql
