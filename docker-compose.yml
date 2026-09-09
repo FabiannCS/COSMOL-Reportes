@@ -3,9 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cosmol_app
+    container_name: cosmol_reportes_app
     ports:
-      - 8081:80
+      - "8081:80"
     volumes:
       - .:/var/www/html
     depends_on:
@@ -14,7 +14,7 @@ services:
       - .env
   db:
     image: postgres:16
-    container_name: cosmol_db
+    container_name: cosmol_reportes_db
     ports:
       - "5434:5432"
     environment:
@@ -27,3 +27,5 @@ services:
 
 volumes:
   pgdata:
+    name: cosmol_reportes_pgdata
+
