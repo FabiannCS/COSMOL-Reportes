@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: cosmol_reportes_app
     ports:
-      - "8081:80"
+      - "8082:80"
     volumes:
       - .:/var/www/html
     depends_on:
