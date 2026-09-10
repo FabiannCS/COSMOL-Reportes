@@ -6,7 +6,7 @@ $homeUrl       = ($rolActual === 'Operador') ? '/operador/trabajos' : '/dashboar
 <header class="app-header">
     <div class="d-flex align-items-center me-auto">
         <!-- Botón Toggle de Sidebar en móvil -->
-        <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-lg-none me-2" type="button" aria-label="Abrir menú">
+        <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-lg-none me-2" type="button" aria-label="Abrir menú" title="Abrir menú">
             <i class="bi bi-list fs-5"></i>
         </button>
 
@@ -17,9 +17,12 @@ $homeUrl       = ($rolActual === 'Operador') ? '/operador/trabajos' : '/dashboar
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <a href="/logout" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" title="Cerrar Sesión">
+        <span class="text-secondary d-none d-md-inline" style="font-size: 0.875rem;">
+            <i class="bi bi-person-fill me-1"></i> USUARIO: <?= htmlspecialchars($rolActual) ?>
+        </span>
+        
+        <a href="/logout" class="btn btn-sm d-flex align-items-center gap-1 hoover" title="Cerrar Sesión">
             <i class="bi bi-box-arrow-right"></i>
-            <span class="d-none d-sm-inline">Cerrar sesión</span>
         </a>
     </div>
 </header>

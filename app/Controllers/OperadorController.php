@@ -34,8 +34,11 @@ class OperadorController extends Controller
         $especialidad = $this->getEspecialidadOperador();
 
         if (!$especialidad) {
-            $_SESSION['error'] = 'No tienes una especialidad asignada. Contacta al administrador.';
-            $this->redirect('/');
+            $this->view('operador/sin_especialidad', [
+                'title' => 'Sin Especialidad — COSMOL Reportes',
+                'error' => 'No tienes una especialidad asignada en el sistema.'
+            ], 'main');
+            return;
         }
 
         $datos = null;
@@ -271,8 +274,11 @@ class OperadorController extends Controller
         $especialidad = $this->getEspecialidadOperador();
 
         if (!$especialidad) {
-            $_SESSION['error'] = 'No tienes una especialidad asignada. Contacta al administrador.';
-            $this->redirect('/');
+            $this->view('operador/sin_especialidad', [
+                'title' => 'Sin Especialidad — COSMOL Reportes',
+                'error' => 'No tienes una especialidad asignada en el sistema.'
+            ], 'main');
+            return;
         }
 
         $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 0;
