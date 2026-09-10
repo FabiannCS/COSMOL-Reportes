@@ -145,9 +145,34 @@ unset($_SESSION['error']);
                         <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reconexion'] ?? '') ?>">
                         
                         <div class="mb-4">
+                            <label for="estado" class="form-label fw-bold">Estado <span class="text-danger">*</span></label>
+                            <select name="estado" id="estado" class="form-select" required onchange="toggleReconexionFields()">
+                                <option value="CONCLUIDO" selected>Concluido</option>
+                                <option value="NO CONCLUIDO">No Concluido (Pendiente)</option>
+                                <option value="NO PROCEDENTE">No Procedente</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4" id="div-lecturacion">
                             <label for="lecturacion" class="form-label fw-bold">Lecturación <span class="text-danger">*</span></label>
                             <input type="text" name="lecturacion" id="lecturacion" class="form-control" placeholder="Ingrese el valor de la lecturación..." required>
                         </div>
+                        
+                        <script>
+                            function toggleReconexionFields() {
+                                const estado = document.getElementById('estado').value;
+                                const lecturacion = document.getElementById('lecturacion');
+                                const divLecturacion = document.getElementById('div-lecturacion');
+                                
+                                if (estado === 'CONCLUIDO') {
+                                    divLecturacion.style.display = 'block';
+                                    lecturacion.required = true;
+                                } else {
+                                    divLecturacion.style.display = 'none';
+                                    lecturacion.required = false;
+                                }
+                            }
+                        </script>
 
                         <div class="mb-4">
                             <label for="glosa" class="form-label fw-bold">Glosa / Observación <span class="text-danger">*</span></label>

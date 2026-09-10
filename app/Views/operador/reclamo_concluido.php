@@ -155,16 +155,43 @@ unset($_SESSION['error']);
 
         <!-- Columna de Conclusión (Historial) -->
         <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm h-100 border-success">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> Reclamo Concluido</h5>
+            <?php 
+                $estCalc = function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($trabajo) : ($trabajo['estado'] ?? 'CONCLUIDO');
+            ?>
+            <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                <div class="card shadow-sm h-100 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Trabajo No Concluido</h5>
+                    </div>
+                    <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-x-octagon-fill display-1 text-danger mb-3"></i>
+                        <h4 class="text-danger mb-3">Registrado como No Concluido</h4>
+                        <p class="text-muted mb-0">Este trabajo fue finalizado por el operador sin concluir la reparación. El informe técnico quedó registrado en el sistema.</p>
+                    </div>
                 </div>
-                <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
-                    <i class="bi bi-shield-check display-1 text-success mb-3"></i>
-                    <h4 class="text-success mb-3">Reclamo ya solucionado</h4>
-                    <p class="text-muted mb-0">El informe técnico de este reclamo ya fue registrado en el sistema central y no puede ser modificado desde esta pantalla.</p>
+            <?php elseif ($estCalc === 'NO PROCEDENTE'): ?>
+                <div class="card shadow-sm h-100 border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-slash-circle"></i> Reclamo No Procedente</h5>
+                    </div>
+                    <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-slash-circle display-1 text-secondary mb-3"></i>
+                        <h4 class="text-secondary mb-3">No Procedente</h4>
+                        <p class="text-muted mb-0">Este reclamo fue marcado como no procedente o falsa alarma.</p>
+                    </div>
                 </div>
-            </div>
+            <?php else: ?>
+                <div class="card shadow-sm h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> Reclamo Concluido</h5>
+                    </div>
+                    <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-shield-check display-1 text-success mb-3"></i>
+                        <h4 class="text-success mb-3">Reclamo ya solucionado</h4>
+                        <p class="text-muted mb-0">El informe técnico de este reclamo ya fue registrado en el sistema central y no puede ser modificado desde esta pantalla.</p>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

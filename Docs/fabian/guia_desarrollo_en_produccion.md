@@ -149,7 +149,7 @@ docker-compose -f docker-compose.prod.yml up -d --build
    ```
 
 3. **Prueba funcional en el navegador:**
-   - Iniciar sesión en `http://chatbot.cosmol.com.bo:8081` (o la URL de producción configurada).
+   - Iniciar sesión en `https://chatbot.cosmol.com.bo:8081` (con certificado SSL gestionado por Caddy).
    - Navegar al módulo nuevo/modificado.
    - Probar el envío de un formulario para verificar que el token CSRF y la sesión respondan correctamente.
 

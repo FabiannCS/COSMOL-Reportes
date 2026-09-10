@@ -65,9 +65,16 @@ $isActive = function ($path) use ($currentUri) {
 
             <?php if ($hasPermission('trabajos.ver')): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= $isActive('/administrador/trabajos') && !$isActive('/administrador/trabajos/detalle') ? 'active' : '' ?>" href="/administrador/trabajos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Supervisión de Trabajos">
+                    <a class="nav-link <?= ($isActive('/administrador/trabajos') && !$isActive('/administrador/trabajos/detalle') && !$isActive('/administrador/trabajos-no-concluidos')) ? 'active' : '' ?>" href="/administrador/trabajos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Supervisión de Trabajos">
                         <i class="bi bi-clipboard-data"></i>
                         <span style="color: #f8fafc;">Supervisión de Trabajos</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?= $isActive('/administrador/trabajos-no-concluidos') ?>" href="/administrador/trabajos-no-concluidos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Trabajos No Concluidos">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span style="color: #f8fafc;">Trabajos No Concluidos</span>
                     </a>
                 </li>
 

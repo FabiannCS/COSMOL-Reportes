@@ -39,7 +39,7 @@ unset($_SESSION['error']);
                 <div class="card-body bg-light">
                     
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">ID Reclamo</label>
+                        <label class="form-label text-muted small fw-bold mb-1">Nro de Reclamo</label>
                         <input type="text" class="form-control bg-e9ecef" value="#<?= htmlspecialchars($trabajo['id_reclamo'] ?? 'N/A') ?>" readonly disabled>
                     </div>
 
@@ -49,26 +49,74 @@ unset($_SESSION['error']);
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">Solicitante</label>
-                        <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars(!empty($trabajo['cod_socio']) ? $trabajo['cod_socio'] . ' - ' : '') ?><?= htmlspecialchars(trim($trabajo['nombre_socio'] ?? 'No especificado')) ?>" readonly disabled>
+                        <label class="form-label text-muted small fw-bold mb-1">Socio Solicitante</label>
+                        <input type="text" class="form-control bg-e9ecef" value="Cod. <?= htmlspecialchars(!empty($trabajo['cod_socio']) ? $trabajo['cod_socio'] . ' - ' : '') ?><?= htmlspecialchars(trim($trabajo['nombre_socio'] ?? 'No especificado')) ?>" readonly disabled>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">Ubicación (U-Z-R)</label>
-                        <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['ubicacion'] ?? '') ?> (Z: <?= htmlspecialchars($trabajo['zona'] ?? '') ?>, R: <?= htmlspecialchars($trabajo['ruta'] ?? '') ?>)" readonly disabled>
-                    </div>
-
-                    <?php if (!empty($trabajo['direccion_predio'])): ?>
+                    <!-- SECCIÓN: DATOS DE SISTEMA -->
+                    <div class="alert alert-secondary border-0 p-3 mb-4 rounded-3 bg-opacity-50">
+                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2"><i class="bi bi-house-door me-1"></i> 1. Dirección del Socio Registrada en Sistema</h6>
+                        
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold mb-1">Dirección del Predio</label>
-                            <textarea class="form-control bg-e9ecef" rows="2" readonly disabled><?= htmlspecialchars($trabajo['direccion_predio']) ?></textarea>
+                            <label class="form-label text-muted small fw-bold mb-1">Ubicación Técnica</label>
+                            <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['ubicacion'] ?? '') ?> (Zona: <?= htmlspecialchars($trabajo['zona'] ?? '') ?>, Ruta: <?= htmlspecialchars($trabajo['ruta'] ?? '') ?>)" readonly disabled>
                         </div>
-                    <?php endif; ?>
+
+                        <?php if (!empty($trabajo['direccion_predio'])): ?>
+                            <div class="mb-0">
+                                <label class="form-label text-muted small fw-bold mb-1">Dirección fija del Socio</label>
+                                <textarea class="form-control bg-e9ecef" rows="2" readonly disabled><?= htmlspecialchars($trabajo['direccion_predio']) ?></textarea>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- SECCIÓN: REPORTE EN CAMPO -->
+                    <h6 class="fw-bold mb-3 border-bottom border-primary border-opacity-25 pb-2 text-primary">2.- Reporte del Problema Enviado por el Socio</h6>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">Glosa / Mensaje del Cliente</label>
+                        <label class="form-label text-muted small fw-bold mb-1">Mensaje del Cliente</label>
                         <textarea class="form-control bg-e9ecef text-dark" rows="3" readonly disabled><?= htmlspecialchars($trabajo['glosa'] ?? 'Sin mensaje del cliente') ?></textarea>
                     </div>
+
+                    <!-- GPS SECTION CON MAPA -->
+                    <?php if (!empty($trabajo['coordenadas_gps'])): ?>
+                        <?php 
+                            $coordsLimpia = preg_replace('/\s+/', '', $trabajo['coordenadas_gps']); 
+                            $urlVerMapa = "https://www.google.com/maps?q={$coordsLimpia}";
+                            $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coordsLimpia}";
+                            // URL para embeber el mapa directamente en la página
+                            $urlIframe  = "https://maps.google.com/maps?q={$coordsLimpia}&hl=es&z=15&output=embed";
+                        ?>
+                        <div class="mb-4 p-3 border border-danger border-opacity-25 rounded-3 bg-white shadow-sm">
+                            <label class="form-label text-danger small fw-bold mb-2"><i class="bi bi-geo-alt-fill"></i> Ubicación Física del Reclamo (GPS)</label>
+                            
+                            <div class="alert alert-warning border-warning p-2 mb-3 small text-dark d-flex align-items-center">
+                                <i class="bi bi-info-circle-fill fs-5 me-2 text-warning"></i> 
+                                <div>
+                                    <strong>¡Atención Plomero!</strong> Esta es la ubicación desde donde el socio envió el reclamo. <span class="text-danger fw-bold">Puede ser distinta a su casa.</span> ¡Guíese por esta dirección!
+                                </div>
+                            </div>
+                            
+                            <!-- Mapa Embebido de Google Maps -->
+                            <div class="ratio ratio-16x9 mb-3 border rounded overflow-hidden shadow-sm">
+                                <iframe src="<?= htmlspecialchars($urlIframe) ?>" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-light text-muted small" style="font-size: 15px;">Coordenadas:</span>
+                                <input type="text" class="form-control bg-e9ecef text-center fw-bold" style="font-size: 15px;" value="<?=htmlspecialchars($trabajo['coordenadas_gps']) ?>" readonly disabled>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="<?= htmlspecialchars($urlVerMapa) ?>" target="_blank" class="btn btn-outline-secondary flex-fill">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Abrir en Maps
+                                </a>
+                                <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="btn btn-success flex-fill shadow-sm fw-bold">
+                                    <i class="bi bi-sign-turn-right-fill me-1"></i> Iniciar Ruta GPS
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Fotografía Adjunta -->
                     <div class="mb-3">
@@ -100,11 +148,6 @@ unset($_SESSION['error']);
                                 <div id="foto_error_<?= $fotoId ?>" style="display: none;" class="alert alert-warning small py-2 mb-2">
                                     <i class="bi bi-exclamation-circle text-warning me-1"></i> No se pudo cargar la vista previa de la imagen.
                                 </div>
-                                <div>
-                                    <a href="<?= htmlspecialchars($fotoUrl) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-box-arrow-up-right me-1"></i> Ver Imagen Completa
-                                    </a>
-                                </div>
                             </div>
                         <?php else: ?>
                             <div class="p-3 bg-white rounded border text-muted small text-center">
@@ -113,42 +156,6 @@ unset($_SESSION['error']);
                             </div>
                         <?php endif; ?>
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold mb-1">Origen del Registro</label>
-                            <div>
-                                <?php if (isset($trabajo['usuario_registro']) && $trabajo['usuario_registro'] == 2): ?>
-                                    <span class="badge bg-info text-dark w-100 p-2"><i class="bi bi-robot"></i> Bot de WhatsApp</span>
-                                <?php else: ?>
-                                    <span class="badge bg-secondary w-100 p-2"><i class="bi bi-person"></i> Presencial / Admin</span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <?php if (!empty($trabajo['coordenadas_gps'])): ?>
-                        <?php 
-                            $coordsLimpia = preg_replace('/\s+/', '', $trabajo['coordenadas_gps']); 
-                            $urlVerMapa = "https://www.google.com/maps?q={$coordsLimpia}";
-                            $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coordsLimpia}";
-                        ?>
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold mb-1">Coordenadas GPS y Navegación</label>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text bg-white"><i class="bi bi-geo-alt-fill text-danger"></i></span>
-                                <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['coordenadas_gps']) ?>" readonly disabled>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a href="<?= htmlspecialchars($urlVerMapa) ?>" target="_blank" class="btn btn-sm btn-outline-primary flex-fill">
-                                    <i class="bi bi-map me-1"></i> Ver Ubicación
-                                </a>
-                                <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="btn btn-sm btn-outline-success flex-fill">
-                                    <i class="bi bi-sign-turn-right-fill me-1"></i> Trazar Ruta (Cómo llegar)
-                                </a>
-                            </div>
-                        </div>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -156,7 +163,7 @@ unset($_SESSION['error']);
         <!-- Columna de Conclusión (Editable) -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100 border-primary">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header text-white color-cosmol">
                     <h5 class="mb-0"><i class="bi bi-check2-square"></i> Concluir Reclamo</h5>
                 </div>
                 <div class="card-body">
@@ -169,20 +176,20 @@ unset($_SESSION['error']);
                             <label for="estado" class="form-label fw-bold">Estado Final <span class="text-danger">*</span></label>
                             <select name="estado" id="estado" class="form-select" required>
                                 <option value="" disabled selected>Seleccione un estado...</option>
-                                <option value="CONCLUIDO">CONCLUIDO</option>
-                                <option value="NO CONCLUIDO">NO CONCLUIDO</option>
-                                <option value="NO PROCEDENTE">NO PROCEDENTE</option>
+                                <option value="CONCLUIDO">CONCLUIDO (Solucionado)</option>
+                                <option value="NO CONCLUIDO">NO CONCLUIDO (Pendiente)</option>
+                                <option value="NO PROCEDENTE">NO PROCEDENTE (Descartado / Falsa Alarma)</option>
                             </select>
                         </div>
 
                         <div class="mb-4">
                             <label for="observacion_conclusion" class="form-label fw-bold">Informe Técnico del Operador <span class="text-danger">*</span></label>
-                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="5" placeholder="Detalle la reparación realizada, estado de las tuberías o razón por la cual no se pudo solucionar..." required></textarea>
+                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="5" placeholder="Detalle la reparación realizada o razón por la cual no se pudo solucionar..." required></textarea>
                             <div class="form-text">Esta información será registrada en el historial del reclamo.</div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
+                            <button type="button" class="btn btn-primary btn-lg color-cosmol" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
                                 <i class="bi bi-send"></i> Enviar Informe y Concluir
                             </button>
                         </div>

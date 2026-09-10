@@ -215,6 +215,18 @@ class ApiClient
 
         if ($httpCode >= 400) {
             error_log("ApiClient HTTP Error ({$context}): Status {$httpCode} - Response: {$response}");
+            
+            // Intentar decodificar la respuesta JSON de error para que los controladores conozcan el mensaje exacto
+            $cleanResponse = trim((string)$response);
+            if (substr($cleanResponse, 0, 3) === "\xEF\xBB\xBF") {
+                $cleanResponse = substr($cleanResponse, 3);
+            }
+            $cleanResponse = trim($cleanResponse);
+            $decoded = json_decode($cleanResponse, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
             return null;
         }
 
@@ -250,4 +262,58 @@ class ApiClient
 
         return $url;
     }
+
+    /**
+     * Determina el estado real/operativo de un trabajo (reconexión o reclamo)
+     * analizando tanto el campo 'estado' como las anotaciones en la 'glosa'
+     * (ej. [NO CONCLUIDO], [NO PROCEDENTE], [SOLUCIONADO]).
+     *
+     * @param array|null $item
+     * @return string 'PENDIENTE' | 'NO CONCLUIDO' | 'NO PROCEDENTE' | 'CONCLUIDO' | 'CONCLUIDA'
+     */
+    public static function determinarEstadoTrabajo($item)
+    {
+        if (!is_array($item)) {
+            return 'PENDIENTE';
+        }
+
+        $estadoRaw = strtoupper(trim(isset($item['estado']) ? (string)$item['estado'] : ''));
+        $glosa = strtoupper(isset($item['glosa']) ? (string)$item['glosa'] : '');
+
+        // 1. Si el estado explícito es PENDIENTE
+        if ($estadoRaw === 'PENDIENTE') {
+            return 'PENDIENTE';
+        }
+
+        // 2. No concluido (en estado o glosa)
+        if (
+            $estadoRaw === 'NO CONCLUIDO' || 
+            strpos($glosa, '[NO CONCLUIDO]') !== false || 
+            (strpos($glosa, 'CONCLUSIÓN:') !== false && strpos($glosa, 'NO CONCLUIDO') !== false)
+        ) {
+            return 'NO CONCLUIDO';
+        }
+
+        // 3. No procedente / Falsa alarma
+        if (
+            $estadoRaw === 'NO PROCEDENTE' || 
+            strpos($glosa, '[NO PROCEDENTE]') !== false || 
+            strpos($glosa, '[FALSA_ALARMA]') !== false || 
+            strpos($glosa, '[FALSA ALARMA]') !== false
+        ) {
+            return 'NO PROCEDENTE';
+        }
+
+        // 4. Concluido / Solucionado
+        if ($estadoRaw === 'CONCLUIDA') {
+            return 'CONCLUIDA';
+        }
+
+        if ($estadoRaw === 'CONCLUIDO' || strpos($glosa, '[SOLUCIONADO]') !== false || strpos($glosa, '[CONCLUIDO]') !== false) {
+            return 'CONCLUIDO';
+        }
+
+        return !empty($estadoRaw) ? $estadoRaw : 'PENDIENTE';
+    }
 }
+

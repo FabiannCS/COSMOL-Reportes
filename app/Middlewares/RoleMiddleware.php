@@ -28,14 +28,9 @@ class RoleMiddleware
         $userRole = isset($_SESSION['usuario']['nombre_rol']) ? $_SESSION['usuario']['nombre_rol'] : '';
 
         if (!empty($allowedRoles) && !in_array($userRole, $allowedRoles, true)) {
-            if ($userRole === 'Operador') {
-                header('Location: /operador/trabajos');
-                exit;
-            }
-
-            http_response_code(403);
-            echo "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>403 Acceso Denegado</title></head><body style='font-family:sans-serif; text-align:center; padding:3rem;'><h1>403 — Acceso Denegado</h1><p>No posee el rol suficiente para acceder a esta sección.</p><a href='/dashboard'>Volver al Panel Principal</a></body></html>";
-            exit;
+            $rolesList = implode(', ', $allowedRoles);
+            $mensaje = "Esta sección está reservada exclusivamente para usuarios con rol [{$rolesList}]. Tu rol actual es [{$userRole}].";
+            renderErrorView(403, 'Rol Insuficiente', $mensaje);
         }
     }
 }

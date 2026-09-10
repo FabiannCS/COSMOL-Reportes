@@ -44,23 +44,9 @@ class PermissionMiddleware
         }
 
         if (!$hasPermission) {
-            $_SESSION['error'] = 'No cuenta con los permisos necesarios para realizar esta acción.';
-
-            $userRole = isset($_SESSION['usuario']['nombre_rol']) ? $_SESSION['usuario']['nombre_rol'] : '';
-            $referer  = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-
-            if (!empty($referer) && strpos($referer, isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '') !== false) {
-                header("Location: {$referer}");
-                exit;
-            }
-
-            if ($userRole === 'Operador') {
-                header('Location: /operador/trabajos');
-                exit;
-            }
-
-            header('Location: /dashboard');
-            exit;
+            $permList = implode(', ', $requiredPermissions);
+            $mensaje = "No cuentas con los permisos necesarios ({$permList}) para acceder a esta sección. Si requieres acceso, solicita al Administrador del Sistema que configure tus permisos.";
+            renderErrorView(403, 'Acceso Denegado', $mensaje);
         }
     }
 }

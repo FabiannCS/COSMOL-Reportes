@@ -139,25 +139,38 @@
         <!-- Columna de Conclusión -->
         <div class="col-lg-5">
             <?php 
-                $estadoReclamo = strtoupper(trim(isset($trabajo['estado']) ? $trabajo['estado'] : '')); 
-                $esConcluido = ($estadoReclamo === 'CONCLUIDA' || $estadoReclamo === 'CONCLUIDO');
+                $estadoRaw = strtoupper(trim(isset($trabajo['estado']) ? (string)$trabajo['estado'] : ''));
+                $estadoCalculado = isset($trabajo['estado_calculado']) 
+                    ? $trabajo['estado_calculado'] 
+                    : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($trabajo) : 'PENDIENTE');
+                
+                $tieneEstadoPendienteLocal = !empty($trabajo['estado_interno']);
+                $esEstadoNoConcluido = ($estadoCalculado === 'NO CONCLUIDO' || $estadoCalculado === 'NO PROCEDENTE' || $tieneEstadoPendienteLocal);
+
+                // Solo bloqueamos como solo-lectura si la API dice CONCLUIDO/CONCLUIDA Y NO es un estado NO CONCLUIDO / NO PROCEDENTE
+                $esFinalizadoEnApi = ($estadoRaw === 'CONCLUIDO' || $estadoRaw === 'CONCLUIDA') && !$esEstadoNoConcluido;
             ?>
             
-            <?php if ($esConcluido): ?>
-            <div class="card shadow-sm h-100 border-success">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> Reclamo Concluido</h5>
+            <?php if ($esFinalizadoEnApi): ?>
+                <div class="card shadow-sm h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-check-circle-fill me-2"></i>Reclamo Concluido</h5>
+                    </div>
+                    <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-shield-check display-1 text-success mb-3"></i>
+                        <h4 class="text-success mb-2">Trabajo Finalizado</h4>
+                        <p class="text-muted mb-0">Este reclamo ya fue solucionado y guardado en el sistema central de COSMOL.</p>
+                    </div>
                 </div>
-                <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
-                    <i class="bi bi-shield-check display-1 text-success mb-3"></i>
-                    <h4 class="text-success mb-3">Trabajo Finalizado</h4>
-                    <p class="text-muted mb-0">Este reclamo ya fue procesado y guardado en el sistema central. No se puede modificar.</p>
-                </div>
-            </div>
             <?php else: ?>
             <div class="card shadow-sm h-100 border-info">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-check2-square"></i> Concluir Trabajo</h5>
+                    <h5 class="mb-0">
+                        <i class="bi bi-check2-square me-2"></i>Concluir Trabajo 
+                        <?php if(!empty($trabajo['estado_interno'])): ?>
+                            <span class="badge bg-warning ms-2"><?= htmlspecialchars($trabajo['estado_interno']) ?></span>
+                        <?php endif; ?>
+                    </h5>
                 </div>
                 <div class="card-body">
                     <?php if (hasPermission('trabajos.concluir')): ?>
@@ -166,24 +179,31 @@
                         <input type="hidden" name="tipo" value="reclamo">
                         <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reclamo'] ?? '') ?>">
                         
+                        <?php if(!empty($trabajo['glosa_interna'])): ?>
+                            <div class="alert alert-warning mb-4">
+                                <strong>Informe previo (<?= htmlspecialchars($trabajo['estado_interno']) ?>):</strong><br>
+                                <?= nl2br(htmlspecialchars($trabajo['glosa_interna'])) ?>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="mb-4">
-                            <label for="estado" class="form-label fw-bold">Estado <span class="text-danger">*</span></label>
+                            <label for="estado" class="form-label fw-bold">Estado Final <span class="text-danger">*</span></label>
                             <select name="estado" id="estado" class="form-select" required>
-                                <option value="" disabled selected>Seleccione un estado...</option>
-                                <option value="CONCLUIDO">CONCLUIDO</option>
-                                <option value="NO CONCLUIDO">NO CONCLUIDO</option>
-                                <option value="NO PROCEDENTE">NO PROCEDENTE</option>
+                                <option value="CONCLUIDO" selected>CONCLUIDO (Solucionado)</option>
+                                <option value="NO CONCLUIDO">NO CONCLUIDO (Pendiente)</option>
+                                <option value="NO PROCEDENTE">NO PROCEDENTE (Descartado / Falsa Alarma)</option>
                             </select>
                         </div>
 
                         <div class="mb-4">
-                            <label for="observacion_conclusion" class="form-label fw-bold">Glosa / Observación <span class="text-danger">*</span></label>
-                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación..." required></textarea>
+                            <label for="observacion_conclusion" class="form-label fw-bold">Informe Técnico / Observación <span class="text-danger">*</span></label>
+                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación técnica..." required></textarea>
+                            <div class="form-text">Si selecciona CONCLUIDO, esta conclusión actualizará el estado permanentemente en el servidor central de COSMOL.</div>
                         </div>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-info text-white btn-lg">
-                                <i class="bi bi-send"></i> Enviar Conclusión
+                                <i class="bi bi-send me-1"></i> Enviar Conclusión
                             </button>
                         </div>
                     </form>

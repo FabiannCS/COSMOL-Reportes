@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Models\Especialidad;
 use App\Services\ApiClient;
+use App\Models\TrabajoSeguimiento;
 
 class OperadorController extends Controller
 {
@@ -88,6 +89,24 @@ class OperadorController extends Controller
 
         if ($datos === null && empty($error)) {
             $error = 'Hubo un error al comunicarse con el servidor de trabajos. Intente más tarde.';
+        } else if (is_array($datos)) {
+            // Filtrar los trabajos que ya fueron marcados localmente como NO CONCLUIDO o NO PROCEDENTE
+            $seguimientoModel = new TrabajoSeguimiento();
+            $tipoTrabajo = ($especialidad['nombre'] === 'Reconexión') ? 'reconexion' : 'reclamo';
+            $seguimientos = $seguimientoModel->obtenerTodosPorTipo($tipoTrabajo);
+            
+            $idSeguimientos = [];
+            foreach ($seguimientos as $seg) {
+                $idSeguimientos[] = $seg->id_trabajo;
+            }
+
+            $datos = array_filter($datos, function($item) use ($idSeguimientos, $tipoTrabajo) {
+                $idItem = ($tipoTrabajo === 'reconexion') ? ($item['id_reconexion'] ?? null) : ($item['id_reclamo'] ?? null);
+                if ($idItem && in_array($idItem, $idSeguimientos)) {
+                    return false; // Ocultar de la lista de pendientes porque ya se gestionó localmente
+                }
+                return true;
+            });
         }
 
         $this->view($vista, [
@@ -220,41 +239,58 @@ class OperadorController extends Controller
         }
 
         $resultado = null;
+        $seguimientoModel = new TrabajoSeguimiento();
+        $tipoTrabajo = ($especialidad['nombre'] === 'Reconexión') ? 'reconexion' : 'reclamo';
+        
+        $estado = isset($_POST['estado']) ? trim($_POST['estado']) : 'CONCLUIDO';
+        $glosa = isset($_POST['glosa']) ? trim($_POST['glosa']) : ''; // Para reconexiones
+        $observacionConclusion = isset($_POST['observacion_conclusion']) ? trim($_POST['observacion_conclusion']) : ''; // Para reclamos
+        
+        $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . ($especialidad['nombre'] === 'Reconexión' ? $glosa : $observacionConclusion);
 
-        switch ($especialidad['nombre']) {
-            case 'Reconexión':
-                $glosa = isset($_POST['glosa']) ? trim($_POST['glosa']) : '';
-                $lecturacion = isset($_POST['lecturacion']) ? trim($_POST['lecturacion']) : '';
-                
-                $dataPayload = [
-                    'usuario_reconexion' => isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1,
-                    'lectura_reconexion' => is_numeric($lecturacion) ? (int)$lecturacion : $lecturacion,
-                    'glosa'              => $glosa
-                ];
-                
-                $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
-                $resultado = $client->put('/reconexiones/' . $idTrabajo, $dataPayload);
-                break;
-                
-            case 'Maestro de alcantarillado':
-            case 'Agua Potable':
-                $observacionConclusion = isset($_POST['observacion_conclusion']) ? trim($_POST['observacion_conclusion']) : '';
-                $estado = isset($_POST['estado']) ? trim($_POST['estado']) : 'CONCLUIDO';
+        if ($estado === 'NO CONCLUIDO' || $estado === 'NO PROCEDENTE') {
+            // Guardar localmente
+            $exito = $seguimientoModel->registrarSeguimiento($idTrabajo, $tipoTrabajo, $estado, $glosaFinal);
+            if (!$exito) {
+                $_SESSION['error'] = 'Error al registrar el seguimiento local.';
+                $this->redirect("/operador/detalle?id={$idTrabajo}");
+            }
+            $resultado = ['estado' => 'exito', 'mensaje' => 'Registrado localmente'];
+        } else {
+            // Guardar en la API (CONCLUIDO)
+            switch ($especialidad['nombre']) {
+                case 'Reconexión':
+                    $lecturacion = isset($_POST['lecturacion']) ? trim($_POST['lecturacion']) : '';
+                    
+                    $dataPayload = [
+                        'usuario_reconexion' => isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1,
+                        'lectura_reconexion' => is_numeric($lecturacion) ? (int)$lecturacion : $lecturacion,
+                        'glosa'              => $glosaFinal
+                    ];
+                    
+                    $client = new ApiClient($this->apiConfig['reconexiones']['base_url']);
+                    $resultado = $client->put('/reconexiones/' . $idTrabajo, $dataPayload);
+                    break;
+                    
+                case 'Maestro de alcantarillado':
+                case 'Agua Potable':
+                    $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1;
 
-                // La API externa concatena automáticamente la glosa previa con " | CONCLUSIÓN: "
-                $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . $observacionConclusion;
+                    $dataPayload = [
+                        'usuario_conclucion' => $idUsuario,
+                        'usuario_reclamo'    => $idUsuario,
+                        'glosa'              => $glosaFinal
+                    ];
+                    
+                    $client = new ApiClient($this->apiConfig['reclamos']['base_url']);
+                    $resultado = $client->put('/reclamos/' . $idTrabajo, $dataPayload);
+                    break;
+            }
 
-                $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : 1;
-
-                $dataPayload = [
-                    'usuario_conclucion' => $idUsuario,
-                    'usuario_reclamo'    => $idUsuario,
-                    'glosa'              => $glosaFinal
-                ];
-                
-                $client = new ApiClient($this->apiConfig['reclamos']['base_url']);
-                $resultado = $client->put('/reclamos/' . $idTrabajo, $dataPayload);
-                break;
+            if ($resultado !== null && (!is_array($resultado) || (isset($resultado['estado']) && $resultado['estado'] !== 'error'))) {
+                // Si la API lo aceptó, limpiamos el registro local (por si antes fue NO CONCLUIDO)
+                $seguimientoModel->eliminarSeguimiento($idTrabajo, $tipoTrabajo);
+            }
         }
 
         if ($resultado === null || (is_array($resultado) && isset($resultado['estado']) && $resultado['estado'] === 'error')) {

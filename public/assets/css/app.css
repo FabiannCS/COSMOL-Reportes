@@ -64,6 +64,9 @@ body {
     color: red;
 }
 
+.color-cosmol{
+    background-color: #0284c7;
+}
 /* Botón Toggle del Sidebar */
 .sidebar-toggle-btn {
     border-color: #cbd5e1;

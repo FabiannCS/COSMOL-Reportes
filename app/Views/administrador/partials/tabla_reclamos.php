@@ -51,10 +51,16 @@
                             $codSocio    = isset($recl['cod_socio']) ? trim($recl['cod_socio']) : '';
                             $nombreSocio = isset($recl['nombre_socio']) ? trim($recl['nombre_socio']) : '';
                             $coords      = isset($recl['coordenadas_gps']) ? preg_replace('/\s+/', '', $recl['coordenadas_gps']) : '';
+                            $estCalc     = isset($recl['estado_calculado']) ? $recl['estado_calculado'] : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($recl) : 'PENDIENTE');
                             ?>
                             <tr>
                                 <td class="ps-2 ps-sm-3 fw-bold text-muted">
                                     #<?= htmlspecialchars(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '—', ENT_QUOTES, 'UTF-8') ?>
+                                    <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                                        <div class="d-sm-none mt-1">
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.72rem;">No Concluido</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="d-none d-sm-table-cell text-center">
                                     <span class="badge bg-<?= $tipoBadge ?>-subtle text-<?= $tipoBadge ?>-emphasis border border-<?= $tipoBadge ?>-subtle px-2 py-1 small">
@@ -69,6 +75,11 @@
                                     </div>
                                     <div class="fw-semibold text-dark small text-wrap text-break">
                                         <?= htmlspecialchars($nombreSocio ? $nombreSocio : 'Sin nombre', ENT_QUOTES, 'UTF-8') ?>
+                                        <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1 d-none d-sm-inline-block">
+                                                <i class="bi bi-exclamation-circle-fill me-1"></i>No Concluido
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                     <?php if ($codSocio): ?>
                                         <div class="text-muted font-monospace" style="font-size: 0.78rem;">
@@ -108,12 +119,21 @@
                                 </td>
                                 <td class="text-center pe-2 pe-sm-3">
                                     <div class="d-inline-flex gap-1">
-                                        <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>" 
-                                            class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
-                                            title="Concluir Reclamo">
-                                            <i class="bi bi-play-circle"></i>
-                                            <span class="d-none d-sm-inline">Concluir</span>
-                                        </a>
+                                        <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>" 
+                                                class="btn btn-sm btn-outline-warning text-dark d-inline-flex align-items-center gap-1" 
+                                                title="Editar / Concluir Reclamo">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span class="d-none d-sm-inline">Editar</span>
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>" 
+                                                class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                                title="Concluir Reclamo">
+                                                <i class="bi bi-play-circle"></i>
+                                                <span class="d-none d-sm-inline">Concluir</span>
+                                            </a>
+                                        <?php endif; ?>
                                         <?php if (!empty($coords)): ?>
                                             <a href="https://www.google.com/maps?q=<?= urlencode($coords) ?>" 
                                                 target="_blank" 
