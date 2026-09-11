@@ -145,12 +145,40 @@ class AdministradorController extends Controller
     public function trabajoDetalle()
     {
 
-        $tipo = isset($_GET['tipo']) ? trim($_GET['tipo']) : '';
-        $id   = isset($_GET['id'])   ? trim($_GET['id'])   : '';
+        $tipo   = isset($_GET['tipo'])   ? trim($_GET['tipo'])   : '';
+        $id     = isset($_GET['id'])     ? trim($_GET['id'])     : '';
+        $origen = isset($_GET['origen']) ? trim($_GET['origen']) : '';
+
+        // Determinar URL de retorno según el origen
+        $urlVolver   = '/administrador/trabajos';
+        $textoVolver = 'Volver';
+
+        if ($origen === 'historial' || $origen === 'concluidos') {
+            $urlVolver = '/administrador/historial';
+            $origen    = 'historial';
+        } elseif ($origen === 'no_concluidos' || $origen === 'trabajos-no-concluidos') {
+            $urlVolver = '/administrador/trabajos-no-concluidos';
+            $origen    = 'no_concluidos';
+        } elseif ($origen === 'trabajos' || $origen === 'pendientes') {
+            $urlVolver = '/administrador/trabajos';
+            $origen    = 'trabajos';
+        } elseif (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
+            $refererPath = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH);
+            if ($refererPath === '/administrador/historial') {
+                $urlVolver = '/administrador/historial';
+                $origen    = 'historial';
+            } elseif ($refererPath === '/administrador/trabajos-no-concluidos') {
+                $urlVolver = '/administrador/trabajos-no-concluidos';
+                $origen    = 'no_concluidos';
+            } elseif ($refererPath === '/administrador/trabajos') {
+                $urlVolver = '/administrador/trabajos';
+                $origen    = 'trabajos';
+            }
+        }
 
         if ($tipo === '' || $id === '') {
             $_SESSION['error'] = 'Parámetros de trabajo incompletos.';
-            $this->redirect('/administrador/trabajos');
+            $this->redirect($urlVolver);
         }
 
         $datos = null;
@@ -231,7 +259,7 @@ class AdministradorController extends Controller
 
         if ($datos === null && $error === null) {
             $_SESSION['error'] = 'No se pudo encontrar el trabajo solicitado.';
-            $this->redirect('/administrador/trabajos');
+            $this->redirect($urlVolver);
         }
 
         if ($datos !== null) {
@@ -248,6 +276,9 @@ class AdministradorController extends Controller
             'tipo'           => $tipo,
             'apiFotoBaseUrl' => $apiFotoBaseUrl,
             'error'          => $error,
+            'urlVolver'      => $urlVolver,
+            'textoVolver'    => $textoVolver,
+            'origen'         => $origen,
         ], 'main');
     }
 
@@ -260,12 +291,20 @@ class AdministradorController extends Controller
     public function concluir()
     {
 
-        $tipo = isset($_POST['tipo']) ? trim($_POST['tipo']) : null;
+        $tipo      = isset($_POST['tipo'])      ? trim($_POST['tipo'])      : null;
         $idTrabajo = isset($_POST['id_trabajo']) ? trim($_POST['id_trabajo']) : null;
+        $origen    = isset($_POST['origen'])    ? trim($_POST['origen'])    : '';
+
+        $urlRedirect = '/administrador/trabajos';
+        if ($origen === 'historial' || $origen === 'concluidos') {
+            $urlRedirect = '/administrador/historial';
+        } elseif ($origen === 'no_concluidos' || $origen === 'trabajos-no-concluidos') {
+            $urlRedirect = '/administrador/trabajos-no-concluidos';
+        }
         
         if (!$idTrabajo || !$tipo) {
             $_SESSION['error'] = 'Solicitud inválida.';
-            $this->redirect('/administrador/trabajos');
+            $this->redirect($urlRedirect);
         }
 
         $resultado = null;
@@ -282,7 +321,8 @@ class AdministradorController extends Controller
             $exito = $seguimientoModel->registrarSeguimiento($idTrabajo, $tipo, $estado, $glosaFinal);
             if (!$exito) {
                 $_SESSION['error'] = 'Error al registrar el seguimiento local.';
-                $this->redirect("/administrador/trabajos/detalle?tipo={$tipo}&id={$idTrabajo}");
+                $paramOrigen = ($origen !== '') ? '&origen=' . urlencode($origen) : '';
+                $this->redirect("/administrador/trabajos/detalle?tipo={$tipo}&id={$idTrabajo}{$paramOrigen}");
             }
             $resultado = ['estado' => 'exito', 'mensaje' => 'Registrado localmente'];
         } else {
@@ -312,7 +352,7 @@ class AdministradorController extends Controller
                 $resultado = $client->put('/reclamos/' . $idTrabajo, $dataPayload);
             } else {
                 $_SESSION['error'] = 'Tipo de trabajo no válido.';
-                $this->redirect('/administrador/trabajos');
+                $this->redirect($urlRedirect);
             }
 
             if ($resultado !== null && (!is_array($resultado) || (isset($resultado['estado']) && $resultado['estado'] !== 'error'))) {
@@ -338,7 +378,7 @@ class AdministradorController extends Controller
             $_SESSION['mensaje'] = 'Trabajo concluido correctamente.';
         }
         
-        $this->redirect('/administrador/trabajos');
+        $this->redirect($urlRedirect);
     }
 
     /**

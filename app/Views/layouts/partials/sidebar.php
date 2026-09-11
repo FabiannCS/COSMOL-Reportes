@@ -52,7 +52,7 @@ $isActive = function ($path) use ($currentUri) {
             <li class="sidebar-section-title">Seguridad</li>
 
             <li class="nav-item">
-                <a class="nav-link <?= ($isActive('/seguridad/roles') || $isActive('/seguridad/permisos')) ?>" href="/seguridad/roles" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Roles y Permisos">
+                <a class="nav-link <?= ($isActive('/seguridad/roles') || $isActive('/seguridad/permisos')) ? 'active' : '' ?>" href="/seguridad/roles" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Roles y Permisos">
                     <i class="bi bi-shield-shaded"></i>
                     <span style="color: #f8fafc;">Roles y Permisos</span>
                 </a>
@@ -64,22 +64,35 @@ $isActive = function ($path) use ($currentUri) {
             <li class="sidebar-section-title">Administración</li>
 
             <?php if ($hasPermission('trabajos.ver')): ?>
+                <?php
+                $isDetalle = ($currentUri === '/administrador/trabajos/detalle');
+                $origenNav = isset($_GET['origen']) ? trim($_GET['origen']) : '';
+
+                $activeTrabajos = (!$isDetalle && $isActive('/administrador/trabajos') && !$isActive('/administrador/trabajos-no-concluidos'))
+                    || ($isDetalle && ($origenNav === 'trabajos' || $origenNav === '' || $origenNav === 'pendientes'));
+
+                $activeNoConcluidos = (!$isDetalle && $isActive('/administrador/trabajos-no-concluidos'))
+                    || ($isDetalle && ($origenNav === 'no_concluidos' || $origenNav === 'trabajos-no-concluidos'));
+
+                $activeHistorial = (!$isDetalle && $isActive('/administrador/historial'))
+                    || ($isDetalle && ($origenNav === 'historial' || $origenNav === 'concluidos'));
+                ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= ($isActive('/administrador/trabajos') && !$isActive('/administrador/trabajos/detalle') && !$isActive('/administrador/trabajos-no-concluidos')) ? 'active' : '' ?>" href="/administrador/trabajos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Supervisión de Trabajos">
+                    <a class="nav-link <?= $activeTrabajos ? 'active' : '' ?>" href="/administrador/trabajos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Supervisión de Trabajos">
                         <i class="bi bi-clipboard-data"></i>
                         <span style="color: #f8fafc;">Supervisión de Trabajos</span>
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <?= $isActive('/administrador/trabajos-no-concluidos') ?>" href="/administrador/trabajos-no-concluidos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Trabajos No Concluidos">
+                    <a class="nav-link <?= $activeNoConcluidos ? 'active' : '' ?>" href="/administrador/trabajos-no-concluidos" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Trabajos No Concluidos">
                         <i class="bi bi-exclamation-triangle"></i>
                         <span style="color: #f8fafc;">Trabajos No Concluidos</span>
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <?= $isActive('/administrador/historial') ?>" href="/administrador/historial" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Trabajos Concluidos">
+                    <a class="nav-link <?= $activeHistorial ? 'active' : '' ?>" href="/administrador/historial" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Trabajos Concluidos">
                         <i class="bi bi-clock-history"></i>
                         <span style="color: #f8fafc;">Trabajos Concluidos</span>
                     </a>

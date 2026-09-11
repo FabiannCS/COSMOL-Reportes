@@ -59,8 +59,8 @@ body {
     margin-top: var(--cosmol-navbar-height);
     min-width: 0;
 }
+
 .hoover {
-    
     color: red;
 }
 

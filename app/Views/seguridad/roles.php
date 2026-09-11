@@ -6,22 +6,25 @@
  * @var string|null $mensaje Mensaje de éxito flash.
  * @var string|null $error Mensaje de error flash.
  */
+
+$roles = isset($roles) ? $roles : [];
+$totalRoles = count($roles);
 ?>
 <div class="container-fluid p-0">
     <!-- Encabezado de Página -->
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
         <div>
-            <h1 class="h2 fw-bold mb-1 text-dark">Gestión de Roles</h1>
+            <h1 class="h3 fw-bold mb-1 text-dark">Gestión de Roles</h1>
             <p class="text-muted small mb-0">Definición de perfiles de usuario y niveles de autorización para los módulos.</p>
         </div>
         <div>
             <?php if (hasPermission('roles.crear')): ?>
-                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearRol">
+                <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#modalCrearRol">
                     <i class="bi bi-shield-plus"></i>
                     <span>Nuevo Rol</span>
                 </button>
             <?php else: ?>
-                <button type="button" class="btn btn-secondary d-inline-flex align-items-center gap-2 shadow-sm disabled" disabled title="No posee permiso para crear roles">
+                <button type="button" class="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1 shadow-sm disabled w-100 w-sm-auto" disabled title="No posee permiso para crear roles">
                     <i class="bi bi-shield-plus"></i>
                     <span>Nuevo Rol</span>
                 </button>
@@ -31,18 +34,18 @@
 
     <!-- Mensajes Flash de Retroalimentación -->
     <?php if (!empty($mensaje)): ?>
-        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-            <div><?= htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+            <div class="small flex-grow-1"><?= htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') ?></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($error)): ?>
-        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-            <div><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-3 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-5 flex-shrink-0"></i>
+            <div class="small flex-grow-1"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
     <?php endif; ?>
 
@@ -50,10 +53,10 @@
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
             <h5 class="card-title fw-bold mb-0 text-dark">
-                <i class="bi bi-shield-shaded me-2 text-primary"></i>Roles Configurados
+                Roles Registrados
             </h5>
             <span class="badge bg-primary rounded-pill px-3 py-2">
-                Total: <?= count($roles) ?> roles
+                Total: <?= $totalRoles ?> roles
             </span>
         </div>
         <div class="card-body p-0">
@@ -64,8 +67,8 @@
                             <th class="ps-4 text-nowrap" style="width: 70px;">ID</th>
                             <th class="text-nowrap">Nombre del Rol</th>
                             <th class="text-nowrap">Descripción</th>
-                            <th class="text-nowrap">Usuarios Asignados</th>
-                            <th class="text-end pe-4 text-nowrap" style="min-width: 200px;">Acciones</th>
+                            <th class="text-nowrap text-center">Usuarios Asignados</th>
+                            <th class="text-end pe-4 text-nowrap" style="min-width: 180px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -91,36 +94,38 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="fw-semibold text-dark"><?= htmlspecialchars($nombreRol, ENT_QUOTES, 'UTF-8') ?></span>
                                             <?php if ($esProtegido): ?>
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-2" title="Rol protegido del sistema">
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-25 rounded-pill px-2" title="Rol protegido del sistema">
                                                     <i class="bi bi-lock-fill me-1"></i>Sistema
                                                 </span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td class="text-muted" style="max-width: 300px;">
+                                    <td class="text-muted small" style="max-width: 320px;">
                                         <?= htmlspecialchars($descripcion, ENT_QUOTES, 'UTF-8') ?>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle rounded-pill px-3 py-1">
+                                    <td class="text-center">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1">
                                             <i class="bi bi-people-fill me-1"></i>
                                             <?= $totalUsuarios ?> <?= ($totalUsuarios === 1) ? 'usuario' : 'usuarios' ?>
                                         </span>
                                     </td>
                                     <td class="text-end pe-4 text-nowrap">
-                                        <div class="d-inline-flex gap-1 align-items-center">
+                                        <div class="d-inline-flex gap-1 align-items-center justify-content-end">
                                             <?php if (hasPermission('roles.permisos')): ?>
-                                                <a href="/seguridad/permisos?rol=<?= $idRol ?>" class="btn btn-sm btn-primary rounded-pill px-3" title="Gestionar Permisos">
-                                                    <i class="bi bi-shield-lock-fill me-1"></i><span>Permisos</span>
+                                                <a href="/seguridad/permisos?rol=<?= $idRol ?>" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Gestionar Permisos">
+                                                    <i class="bi bi-shield-lock-fill"></i>
+                                                    <span>Permisos</span>
                                                 </a>
                                             <?php else: ?>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 disabled" disabled title="No posee permiso para gestionar permisos">
-                                                    <i class="bi bi-shield-lock-fill me-1"></i><span>Permisos</span>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 disabled" disabled title="No posee permiso para gestionar permisos">
+                                                    <i class="bi bi-shield-lock-fill"></i>
+                                                    <span>Permisos</span>
                                                 </button>
                                             <?php endif; ?>
 
                                             <?php if (hasPermission('roles.editar')): ?>
                                                 <button type="button" 
-                                                        class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                        class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#modalEditarRol"
                                                         data-id="<?= $idRol ?>"
@@ -128,11 +133,13 @@
                                                         data-descripcion="<?= htmlspecialchars($descripcion, ENT_QUOTES, 'UTF-8') ?>"
                                                         data-protegido="<?= $esProtegido ? '1' : '0' ?>"
                                                         title="Editar Rol">
-                                                    <i class="bi bi-pencil-square me-1"></i><span>Editar</span>
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    <span>Editar</span>
                                                 </button>
                                             <?php else: ?>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 disabled" disabled title="No posee permiso para editar roles">
-                                                    <i class="bi bi-pencil-square me-1"></i><span>Editar</span>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 disabled" disabled title="No posee permiso para editar roles">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    <span>Editar</span>
                                                 </button>
                                             <?php endif; ?>
                                         </div>
@@ -256,3 +263,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+

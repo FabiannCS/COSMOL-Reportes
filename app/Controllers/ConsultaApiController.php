@@ -16,7 +16,7 @@ class ConsultaApiController extends Controller
 
         // Header headers generally arrive as HTTP_...
         // For standard setup in apache with php-fpm, headers like X-Reportes-Token become HTTP_X_REPORTES_TOKEN
-        
+
         if ($tokenRecibido !== $tokenEsperado) {
             http_response_code(401);
             echo json_encode(['status' => 'error', 'message' => 'Token no autorizado']);
@@ -42,7 +42,6 @@ class ConsultaApiController extends Controller
         $fecha       = isset($input['fecha_consulta']) ? $input['fecha_consulta'] : date('Y-m-d');
         $hora        = isset($input['hora_consulta']) ? $input['hora_consulta'] : date('H:i:s');
 
-        // Ya no capturamos datos operativos de trabajos, solo metadatos de la consulta
         // Quitamos la validación de codigoSocio estricta por si el JSON del Reclamo no lo incluye
         if (!$idTipo) {
             http_response_code(400);

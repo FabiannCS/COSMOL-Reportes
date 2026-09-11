@@ -97,14 +97,14 @@
                                 <td class="text-center pe-2 pe-sm-3">
                                     <div class="d-inline-flex gap-1">
                                         <?php if ($estCalc === 'NO CONCLUIDO'): ?>
-                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>" 
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>&origen=trabajos" 
                                                 class="btn btn-sm btn-outline-warning text-dark d-inline-flex align-items-center gap-1" 
                                                 title="Editar / Concluir Reconexión">
                                                 <i class="bi bi-pencil-square"></i>
                                                 <span class="d-none d-sm-inline">Editar</span>
                                             </a>
                                         <?php else: ?>
-                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>" 
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>&origen=trabajos" 
                                                 class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
                                                 title="Concluir Reconexión">
                                                 <i class="bi bi-play-circle"></i>

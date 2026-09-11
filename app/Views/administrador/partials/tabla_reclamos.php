@@ -120,14 +120,14 @@
                                 <td class="text-center pe-2 pe-sm-3">
                                     <div class="d-inline-flex gap-1">
                                         <?php if ($estCalc === 'NO CONCLUIDO'): ?>
-                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>" 
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>&origen=trabajos" 
                                                 class="btn btn-sm btn-outline-warning text-dark d-inline-flex align-items-center gap-1" 
                                                 title="Editar / Concluir Reclamo">
                                                 <i class="bi bi-pencil-square"></i>
                                                 <span class="d-none d-sm-inline">Editar</span>
                                             </a>
                                         <?php else: ?>
-                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>" 
+                                            <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode(isset($recl['id_reclamo']) ? $recl['id_reclamo'] : '') ?>&origen=trabajos" 
                                                 class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
                                                 title="Concluir Reclamo">
                                                 <i class="bi bi-play-circle"></i>

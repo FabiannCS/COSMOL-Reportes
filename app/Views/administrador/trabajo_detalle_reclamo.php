@@ -4,9 +4,14 @@
  * @var array $trabajo
  * @var string $apiFotoBaseUrl
  * @var string $error
+ * @var string $urlVolver
+ * @var string $textoVolver
+ * @var string $origen
  * Muestra la ficha completa de un reclamo en modo solo lectura.
  * Los datos ($trabajo, $apiFotoBaseUrl) son inyectados por AdministradorController::trabajoDetalle()
  */
+$urlVolver = isset($urlVolver) && !empty($urlVolver) ? $urlVolver : '/administrador/trabajos';
+$origen    = isset($origen) ? $origen : '';
 ?>
 
 <div class="container-fluid p-0">
@@ -18,8 +23,8 @@
             </h1>
             <p class="text-muted mb-0">Ficha supervisada — Solo lectura</p>
         </div>
-        <a href="/administrador/trabajos" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Volver a Supervisión
+        <a href="<?= htmlspecialchars($urlVolver, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver
         </a>
     </div>
 
@@ -34,106 +39,149 @@
         <!-- Columna de Información -->
         <div class="col-lg-7 d-flex flex-column gap-4">
             <!-- Información del Reclamo -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent border-0">
-                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información del Reclamo</h6>
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información del Reclamo</h5>
                 </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5 text-muted">Tipo de Reclamo</dt>
-                        <dd class="col-sm-7">
-                            <?php
-                            $tipoReclamo = '—';
-                            $tipoBadge   = 'secondary';
-                            if (isset($trabajo['id_tipo_reclamo'])) {
-                                if ((int)$trabajo['id_tipo_reclamo'] === 2) {
-                                    $tipoReclamo = 'Agua Potable';
-                                    $tipoBadge   = 'info';
-                                } elseif ((int)$trabajo['id_tipo_reclamo'] === 3) {
-                                    $tipoReclamo = 'Alcantarillado';
-                                    $tipoBadge   = 'success';
-                                } else {
-                                    $tipoReclamo = 'Tipo ' . $trabajo['id_tipo_reclamo'];
-                                }
+                <div class="card-body bg-light">
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Tipo de Reclamo</label>
+                        <?php
+                        $tipoReclamo = '—';
+                        if (isset($trabajo['id_tipo_reclamo'])) {
+                            if ((int)$trabajo['id_tipo_reclamo'] === 2) {
+                                $tipoReclamo = 'Agua Potable';
+                            } elseif ((int)$trabajo['id_tipo_reclamo'] === 3) {
+                                $tipoReclamo = 'Alcantarillado';
+                            } else {
+                                $tipoReclamo = 'Tipo ' . $trabajo['id_tipo_reclamo'];
                             }
-                            ?>
-                            <span class="badge bg-<?= $tipoBadge ?>"><?= htmlspecialchars($tipoReclamo, ENT_QUOTES, 'UTF-8') ?></span>
-                        </dd>
+                        }
+                        ?>
+                        <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($tipoReclamo) ?>" readonly disabled>
+                    </div>
 
-                        <dt class="col-sm-5 text-muted">Código de Socio</dt>
-                        <dd class="col-sm-7 fw-bold"><?= htmlspecialchars(isset($trabajo['cod_socio']) ? $trabajo['cod_socio'] : '—', ENT_QUOTES, 'UTF-8') ?></dd>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Nro de Reclamo</label>
+                        <input type="text" class="form-control bg-e9ecef" value="#<?= htmlspecialchars($trabajo['id_reclamo'] ?? 'N/A') ?>" readonly disabled>
+                    </div>
 
-                        <dt class="col-sm-5 text-muted">Nombre</dt>
-                        <dd class="col-sm-7"><?= htmlspecialchars(isset($trabajo['nombre_socio']) ? $trabajo['nombre_socio'] : '—', ENT_QUOTES, 'UTF-8') ?></dd>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Descripción Técnica</label>
+                        <input type="text" class="form-control bg-e9ecef fw-bold text-dark" value="<?= htmlspecialchars($trabajo['descripcion'] ?? 'N/A') ?>" readonly disabled>
+                    </div>
 
-                        <dt class="col-sm-5 text-muted">Descripción</dt>
-                        <dd class="col-sm-7"><?= htmlspecialchars(isset($trabajo['descripcion']) ? $trabajo['descripcion'] : '—', ENT_QUOTES, 'UTF-8') ?></dd>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Socio Solicitante</label>
+                        <input type="text" class="form-control bg-e9ecef" value="Cod. <?= htmlspecialchars(!empty($trabajo['cod_socio']) ? $trabajo['cod_socio'] . ' - ' : '') ?><?= htmlspecialchars(trim($trabajo['nombre_socio'] ?? 'No especificado')) ?>" readonly disabled>
+                    </div>
 
-                        <dt class="col-sm-5 text-muted">Glosa del Cliente</dt>
-                        <dd class="col-sm-7"><?= htmlspecialchars(isset($trabajo['glosa']) ? $trabajo['glosa'] : '—', ENT_QUOTES, 'UTF-8') ?></dd>
-                    </dl>
-                </div>
-            </div>
+                    <!-- SECCIÓN: DATOS DE SISTEMA -->
+                    <div class="alert alert-secondary border-0 p-3 mb-4 rounded-3 bg-opacity-50">
+                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2"><i class="bi bi-house-door me-1"></i> 1. Dirección del Socio Registrada en Sistema</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Ubicación Técnica</label>
+                            <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['ubicacion'] ?? '') ?> (Zona: <?= htmlspecialchars($trabajo['zona'] ?? '') ?>, Ruta: <?= htmlspecialchars($trabajo['ruta'] ?? '') ?>)" readonly disabled>
+                        </div>
 
-            <!-- Ubicación y Coordenadas -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent border-0">
-                    <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicación</h6>
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5 text-muted">U-Z-R</dt>
-                        <dd class="col-sm-7">
-                            <?= htmlspecialchars(isset($trabajo['ubicacion']) ? $trabajo['ubicacion'] : '—', ENT_QUOTES, 'UTF-8') ?>
-                            — Zona <?= htmlspecialchars(isset($trabajo['zona']) ? $trabajo['zona'] : '—', ENT_QUOTES, 'UTF-8') ?>
-                            / Ruta <?= htmlspecialchars(isset($trabajo['ruta']) ? $trabajo['ruta'] : '—', ENT_QUOTES, 'UTF-8') ?>
-                        </dd>
+                        <?php if (!empty($trabajo['direccion_predio']) || !empty($trabajo['direccion'])): ?>
+                            <div class="mb-0">
+                                <label class="form-label text-muted small fw-bold mb-1">Dirección fija del Socio</label>
+                                <textarea class="form-control bg-e9ecef" rows="2" readonly disabled><?= htmlspecialchars($trabajo['direccion_predio'] ?? $trabajo['direccion'] ?? '') ?></textarea>
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
-                        <dt class="col-sm-5 text-muted">Dirección</dt>
-                        <dd class="col-sm-7"><?= htmlspecialchars(isset($trabajo['direccion']) ? $trabajo['direccion'] : '—', ENT_QUOTES, 'UTF-8') ?></dd>
+                    <!-- SECCIÓN: REPORTE EN CAMPO -->
+                    <h6 class="fw-bold mb-3 border-bottom border-primary border-opacity-25 pb-2 text-primary">2.- Reporte del Problema Enviado por el Socio</h6>
 
-                        <dt class="col-sm-5 text-muted">Coordenadas GPS</dt>
-                        <dd class="col-sm-7">
-                            <?php if (!empty($trabajo['coordenadas_gps'])): ?>
-                                <code><?= htmlspecialchars($trabajo['coordenadas_gps'], ENT_QUOTES, 'UTF-8') ?></code>
-                                <a href="https://www.google.com/maps?q=<?= urlencode($trabajo['coordenadas_gps']) ?>" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                    <i class="bi bi-map me-1"></i>Ver Mapa
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Mensaje del Cliente</label>
+                        <textarea class="form-control bg-e9ecef text-dark" rows="3" readonly disabled><?= htmlspecialchars($trabajo['glosa'] ?? 'Sin mensaje del cliente') ?></textarea>
+                    </div>
+
+                    <!-- GPS SECTION CON MAPA -->
+                    <?php if (!empty($trabajo['coordenadas_gps'])): ?>
+                        <?php 
+                            $coordsLimpia = preg_replace('/\s+/', '', $trabajo['coordenadas_gps']); 
+                            $urlVerMapa = "https://www.google.com/maps?q={$coordsLimpia}";
+                            $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coordsLimpia}";
+                            // URL para embeber el mapa directamente en la página
+                            $urlIframe  = "https://maps.google.com/maps?q={$coordsLimpia}&hl=es&z=15&output=embed";
+                        ?>
+                        <div class="mb-4 p-3 border border-danger border-opacity-25 rounded-3 bg-white shadow-sm">
+                            <label class="form-label text-danger small fw-bold mb-2"><i class="bi bi-geo-alt-fill"></i> Ubicación Física del Reclamo (GPS)</label>
+                            
+                            <div class="alert alert-warning border-warning p-2 mb-3 small text-dark d-flex align-items-center">
+                                <i class="bi bi-info-circle-fill fs-5 me-2 text-warning"></i> 
+                                <div>
+                                    <strong>¡Atención!</strong> Esta es la ubicación desde donde el socio envió el reclamo. <span class="text-danger fw-bold">Puede ser distinta a su casa.</span> ¡Guíese por esta dirección!
+                                </div>
+                            </div>
+                            
+                            <!-- Mapa Embebido de Google Maps -->
+                            <div class="ratio ratio-16x9 mb-3 border rounded overflow-hidden shadow-sm">
+                                <iframe src="<?= htmlspecialchars($urlIframe) ?>" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-light text-muted small" style="font-size: 15px;">Coordenadas:</span>
+                                <input type="text" class="form-control bg-e9ecef text-center fw-bold" style="font-size: 15px;" value="<?=htmlspecialchars($trabajo['coordenadas_gps']) ?>" readonly disabled>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="<?= htmlspecialchars($urlVerMapa) ?>" target="_blank" class="btn btn-outline-secondary flex-fill">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Abrir en Maps
                                 </a>
-                            <?php else: ?>
-                                <span class="text-muted">Sin coordenadas</span>
-                            <?php endif; ?>
-                        </dd>
-                    </dl>
-                </div>
-            </div>
+                                <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="btn btn-success flex-fill shadow-sm fw-bold">
+                                    <i class="bi bi-sign-turn-right-fill me-1"></i> Iniciar Ruta GPS
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
-            <!-- Fotografía -->
-            <?php
-            $foto = isset($trabajo['foto']) ? $trabajo['foto'] : '';
-            $fotoUrl = '';
-            if (!empty($foto)) {
-                $fotoUrl = rtrim($apiFotoBaseUrl, '/') . '/' . ltrim($foto, '/');
-            }
-            ?>
-            <?php if (!empty($fotoUrl)): ?>
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent border-0">
-                    <h6 class="mb-0"><i class="bi bi-image me-2"></i>Fotografía Adjunta</h6>
-                </div>
-                <div class="card-body text-center">
-                    <img src="<?= htmlspecialchars($fotoUrl, ENT_QUOTES, 'UTF-8') ?>" 
-                         alt="Foto del reclamo" 
-                         loading="lazy"
-                         decoding="async"
-                         class="img-fluid rounded shadow-sm" style="max-height: 400px;">
-                    <div class="mt-2">
-                        <a href="<?= htmlspecialchars($fotoUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-arrows-fullscreen me-1"></i>Ver tamaño completo
-                        </a>
+                    <!-- Fotografía Adjunta -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Fotografía del Reclamo</label>
+                        <?php if (!empty($trabajo['foto'])): ?>
+                            <?php 
+                                $fotoRaw = trim($trabajo['foto']);
+                                if (strpos($fotoRaw, 'http://') === 0 || strpos($fotoRaw, 'https://') === 0) {
+                                    $fotoUrl = $fotoRaw;
+                                } else {
+                                    if (strpos($fotoRaw, '/uploads/') === false && strpos($fotoRaw, 'uploads/') === false) {
+                                        $fotoRaw = '/uploads/reclamos/' . ltrim($fotoRaw, '/');
+                                    }
+                                    $base = !empty($apiFotoBaseUrl) ? rtrim($apiFotoBaseUrl, '/') : '';
+                                    $fotoUrl = $base . '/' . ltrim($fotoRaw, '/');
+                                }
+                                $fotoId = htmlspecialchars($trabajo['id_reclamo'] ?? '0');
+                            ?>
+                            <div class="border rounded p-2 bg-white text-center shadow-sm">
+                                <a href="<?= htmlspecialchars($fotoUrl) ?>" target="_blank" title="Clic para ampliar en pestaña nueva">
+                                    <img src="<?= htmlspecialchars($fotoUrl) ?>" 
+                                         alt="Foto del reclamo" 
+                                         loading="lazy"
+                                         decoding="async"
+                                         class="img-fluid rounded border mb-2" 
+                                         style="max-height: 240px; width: auto; object-fit: contain;"
+                                         onerror="this.style.display='none'; document.getElementById('foto_error_<?= $fotoId ?>').style.display='block';">
+                                </a>
+                                <div id="foto_error_<?= $fotoId ?>" style="display: none;" class="alert alert-warning small py-2 mb-2">
+                                    <i class="bi bi-exclamation-circle text-warning me-1"></i> No se pudo cargar la vista previa de la imagen.
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="p-3 bg-white rounded border text-muted small text-center">
+                                <i class="bi bi-camera-slash display-6 d-block mb-1 text-secondary opacity-50"></i>
+                                El socio no adjuntó fotografía en este reclamo.
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-            <?php endif; ?>
         </div>
 
         <!-- Columna de Conclusión -->
@@ -163,8 +211,8 @@
                     </div>
                 </div>
             <?php else: ?>
-            <div class="card shadow-sm h-100 border-info">
-                <div class="card-header bg-info text-white">
+            <div class="card shadow-sm h-100 border-primary">
+                <div class="card-header color-cosmol text-white">
                     <h5 class="mb-0">
                         <i class="bi bi-check2-square me-2"></i>Concluir Trabajo 
                         <?php if(!empty($trabajo['estado_interno'])): ?>
@@ -178,6 +226,7 @@
                         <?= csrfField(); ?>
                         <input type="hidden" name="tipo" value="reclamo">
                         <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reclamo'] ?? '') ?>">
+                        <input type="hidden" name="origen" value="<?= htmlspecialchars($origen, ENT_QUOTES, 'UTF-8') ?>">
                         
                         <?php if(!empty($trabajo['glosa_interna'])): ?>
                             <div class="alert alert-warning mb-4">
@@ -188,21 +237,22 @@
 
                         <div class="mb-4">
                             <label for="estado" class="form-label fw-bold">Estado Final <span class="text-danger">*</span></label>
+                            <?php $estadoActual = isset($trabajo['estado_interno']) ? $trabajo['estado_interno'] : 'NO CONCLUIDO'; ?>
                             <select name="estado" id="estado" class="form-select" required>
-                                <option value="CONCLUIDO" selected>CONCLUIDO (Solucionado)</option>
-                                <option value="NO CONCLUIDO">NO CONCLUIDO (Pendiente)</option>
-                                <option value="NO PROCEDENTE">NO PROCEDENTE (Descartado / Falsa Alarma)</option>
+                                <option value="CONCLUIDO" <?= $estadoActual === 'CONCLUIDO' ? 'selected' : '' ?>>CONCLUIDO</option>
+                                <option value="NO CONCLUIDO" <?= $estadoActual === 'NO CONCLUIDO' ? 'selected' : '' ?>>NO CONCLUIDO</option>
+                                <option value="NO PROCEDENTE" <?= $estadoActual === 'NO PROCEDENTE' ? 'selected' : '' ?>>NO PROCEDENTE</option>
                             </select>
                         </div>
 
                         <div class="mb-4">
                             <label for="observacion_conclusion" class="form-label fw-bold">Informe Técnico / Observación <span class="text-danger">*</span></label>
-                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación técnica..." required></textarea>
+                            <textarea name="observacion_conclusion" id="observacion_conclusion" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación técnica..." required><?= htmlspecialchars($trabajo['glosa_interna'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
                             <div class="form-text">Si selecciona CONCLUIDO, esta conclusión actualizará el estado permanentemente en el servidor central de COSMOL.</div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-info text-white btn-lg">
+                            <button type="submit" class="btn color-cosmol text-white btn-lg">
                                 <i class="bi bi-send me-1"></i> Enviar Conclusión
                             </button>
                         </div>
@@ -223,3 +273,12 @@
     </div>
     <?php endif; ?>
 </div>
+
+<style>
+    /* Diferenciación visual clara para campos de solo lectura */
+    .bg-e9ecef {
+        background-color: #e9ecef !important;
+        opacity: 1;
+        cursor: not-allowed;
+    }
+</style>

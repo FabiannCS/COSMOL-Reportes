@@ -61,11 +61,11 @@ unset($_SESSION['error']);
                 <i class="bi bi-journal-check text-success me-2 fs-4"></i>
                 Registro Global de Actividades
             </h5>
-            <form action="" method="GET" class="d-flex w-auto m-0">
+            <form action="" method="GET" class="d-flex w-100 w-md-auto m-0">
                 <input type="text" name="buscar" class="form-control form-control-sm me-2" placeholder="Buscar por socio, código u operador..." value="<?= htmlspecialchars($buscar, ENT_QUOTES, 'UTF-8') ?>">
                 <button type="submit" class="btn btn-sm btn-primary">Buscar</button>
                 <?php if (!empty($buscar)): ?>
-                    <a href="/administrador/historial" class="btn btn-sm btn-outline-secondary ms-1" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+                    <a href="/administrador/historial" class="btn btn-sm btn-outline-secondary ms-1 flex-shrink-0" title="Limpiar"><i class="bi bi-x-lg"></i></a>
                 <?php endif; ?>
             </form>
         </div>
@@ -139,7 +139,7 @@ unset($_SESSION['error']);
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <a href="/administrador/trabajos/detalle?tipo=<?= urlencode($trabajo['tipo_trabajo']) ?>&id=<?= urlencode($id_str) ?>" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                                        <a href="/administrador/trabajos/detalle?tipo=<?= urlencode($trabajo['tipo_trabajo']) ?>&id=<?= urlencode($id_str) ?>&origen=historial" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
                                             <i class="bi bi-eye"></i> Ver Detalles
                                         </a>
                                     </td>
@@ -156,8 +156,8 @@ unset($_SESSION['error']);
                     Mostrando <?= count($trabajos) ?> de <?= $totalTrabajos ?> resultados (Página <?= $p ?> de <?= $totalPaginas ?: 1 ?>)
                 </div>
                 <?php if ($totalPaginas > 1): ?>
-                    <nav aria-label="Paginación de historial">
-                        <ul class="pagination pagination-sm mb-0">
+                    <nav aria-label="Paginación de historial" class="overflow-auto w-100 mt-2 mt-md-0">
+                        <ul class="pagination pagination-sm flex-wrap justify-content-md-end mb-0">
                             <li class="page-item <?= ($p <= 1) ? 'disabled' : '' ?>">
                                 <a class="page-link" href="?p=<?= $p - 1 ?><?= !empty($buscar) ? '&buscar=' . urlencode($buscar) : '' ?>" <?= ($p <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>Anterior</a>
                             </li>
