@@ -119,37 +119,12 @@ class Router
      */
     private function notFound()
     {
-        http_response_code(404);
-        $basePath = defined('BASE_PATH') ? BASE_PATH : dirname(dirname(__DIR__));
-        $custom404 = $basePath . '/app/Views/errors/404.php';
-
-        if (file_exists($custom404)) {
-            require $custom404;
-            return;
+        if (function_exists('renderErrorView')) {
+            renderErrorView(404, 'Página No Encontrada', 'La ruta solicitada no existe o no se encuentra disponible en este momento.');
         }
 
-        echo '<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>404 — Página no encontrada</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #334155; }
-        .card { background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; max-width: 420px; }
-        h1 { font-size: 3rem; margin: 0 0 0.5rem; color: #0284c7; }
-        p { margin-bottom: 1.5rem; color: #64748b; }
-        a { display: inline-block; background: #0284c7; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 500; }
-        a:hover { background: #0369a1; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>404</h1>
-        <h2>Página no encontrada</h2>
-        <p>La ruta solicitada no existe o no se encuentra disponible en este momento.</p>
-        <a href="/">Volver al inicio</a>
-    </div>
-</body>
-</html>';
+        http_response_code(404);
+        echo '404 Página no encontrada';
+        exit;
     }
 }

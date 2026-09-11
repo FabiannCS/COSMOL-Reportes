@@ -23,10 +23,11 @@ return [
         '/perfil' => ['PerfilController', 'index', ['auth']],
 
         // Administrador / Supervisión
-        '/administrador/usuarios'         => ['UsuarioController', 'index',                ['auth', 'role:Administrador,Supervisor', 'permission:usuarios.ver']],
-        '/administrador/trabajos'         => ['AdministradorController', 'trabajos',       ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
-        '/administrador/trabajos/detalle' => ['AdministradorController', 'trabajoDetalle', ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
-        '/administrador/historial'        => ['AdministradorController', 'historial',      ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/usuarios'               => ['UsuarioController', 'index',                ['auth', 'role:Administrador,Supervisor', 'permission:usuarios.ver']],
+        '/administrador/trabajos'               => ['AdministradorController', 'trabajos',       ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/trabajos-no-concluidos' => ['AdministradorController', 'trabajosNoConcluidos', ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/trabajos/detalle'       => ['AdministradorController', 'trabajoDetalle', ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/historial'              => ['AdministradorController', 'historial',      ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
 
         // Módulo de Reportes
         '/reportes/visualizar' => ['ReporteController', 'visualizar', ['auth', 'permission:reportes.ver']],

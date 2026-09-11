@@ -125,3 +125,14 @@ CREATE INDEX IF NOT EXISTS idx_usuario_id_rol ON usuario(id_rol);
 CREATE INDEX IF NOT EXISTS idx_usuario_id_especialidad ON usuario(id_especialidad);
 CREATE INDEX IF NOT EXISTS idx_rol_permiso_id_permiso ON rol_permiso(id_permiso);
 
+-- Tabla para seguimiento interno de trabajos pendientes (NO CONCLUIDO / NO PROCEDENTE)
+CREATE TABLE IF NOT EXISTS trabajo_seguimiento (
+    id SERIAL PRIMARY KEY,
+    id_trabajo INT NOT NULL,
+    tipo_trabajo VARCHAR(50) NOT NULL, -- 'reclamo' o 'reconexion'
+    estado_interno VARCHAR(50) NOT NULL, -- 'NO CONCLUIDO' o 'NO PROCEDENTE'
+    glosa_interna TEXT,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (id_trabajo, tipo_trabajo)
+);
+CREATE INDEX IF NOT EXISTS idx_trabajo_seguimiento_tipo_id ON trabajo_seguimiento(tipo_trabajo, id_trabajo);

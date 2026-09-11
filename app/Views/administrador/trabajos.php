@@ -66,7 +66,7 @@ unset($_SESSION['error']);
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm border-start border-primary border-4 h-100 py-3">
                 <div class="card-body text-center">
-                    <div class="text-xs fw-bold text-primary text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                    <div class="text-xs fw-bold text-dark text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
                         Total Pendientes
                     </div>
                     <div class="display-5 fw-bold text-dark mb-0">
@@ -78,9 +78,9 @@ unset($_SESSION['error']);
 
         <!-- Reconexiones -->
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm border-start border-warning border-4 h-100 py-3">
+            <div class="card border-0 shadow-sm border-start border-primary border-4 h-100 py-3">
                 <div class="card-body text-center">
-                    <div class="text-xs fw-bold text-warning text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                    <div class="text-xs fw-bold text-dark text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
                         Reconexiones Pendientes
                     </div>
                     <div class="display-5 fw-bold text-dark mb-0">
@@ -92,9 +92,9 @@ unset($_SESSION['error']);
 
         <!-- Agua Potable -->
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm border-start border-info border-4 h-100 py-3">
+            <div class="card border-0 shadow-sm border-start border-primary border-4 h-100 py-3">
                 <div class="card-body text-center">
-                    <div class="text-xs fw-bold text-info text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                    <div class="text-xs fw-bold text-dark text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
                         Agua Potable Pendiente
                     </div>
                     <div class="display-5 fw-bold text-dark mb-0">
@@ -106,9 +106,9 @@ unset($_SESSION['error']);
 
         <!-- Alcantarillado -->
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm border-start border-success border-4 h-100 py-3">
+            <div class="card border-0 shadow-sm border-start border-primary border-4 h-100 py-3">
                 <div class="card-body text-center">
-                    <div class="text-xs fw-bold text-success text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                    <div class="text-xs fw-bold text-dark text-uppercase mb-2" style="font-size: 0.9rem; letter-spacing: 0.5px;">
                         Alcantarillados Pendientes
                     </div>
                     <div class="display-5 fw-bold text-dark mb-0">

@@ -9,16 +9,19 @@
 
 $is_historial = $is_historial ?? false;
 $id_trabajo = $t['id_reclamo'] ?? $t['id_reconexion'] ?? 'N/A';
-$estado = strtoupper(trim($t['estado'] ?? 'PENDIENTE'));
+$estado = function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($t) : strtoupper(trim($t['estado'] ?? 'PENDIENTE'));
 
 $badgeClass = 'bg-warning text-dark';
 $borderClass = 'border-warning';
 if ($estado === 'CONCLUIDA' || $estado === 'CONCLUIDO') {
     $badgeClass = 'bg-success text-white';
     $borderClass = 'border-success';
-} elseif ($estado === 'ANULADO' || $estado === 'CANCELADO') {
+} elseif ($estado === 'NO CONCLUIDO') {
     $badgeClass = 'bg-danger text-white';
     $borderClass = 'border-danger';
+} elseif ($estado === 'NO PROCEDENTE' || $estado === 'ANULADO' || $estado === 'CANCELADO') {
+    $badgeClass = 'bg-secondary text-white';
+    $borderClass = 'border-secondary';
 }
 
 $descripcion = $t['descripcion'] ?? ($tipo === 'reconexion' ? 'Reconexión de servicio' : 'Sin descripción');
@@ -48,7 +51,7 @@ $socio = $t['nombre_socio'] ?? $t['nombre'] ?? '';
                         $fechaStr = $is_historial ? ($t['fecha_actualizacion'] ?? $t['fecha_registro'] ?? '') : ($t['fecha_registro'] ?? '');
                         if ($fechaStr) {
                             $fecha = date_create($fechaStr);
-                            echo $fecha ? '<i class="bi bi-clock me-1"></i>' . date_format($fecha, 'd/m/Y H:i') : htmlspecialchars($fechaStr);
+                            echo $fecha ? date_format($fecha, 'd/m/Y H:i') : htmlspecialchars($fechaStr);
                         } else {
                             echo '—';
                         }
@@ -58,47 +61,21 @@ $socio = $t['nombre_socio'] ?? $t['nombre'] ?? '';
 
             <?php if (!empty($socio)): ?>
                 <h6 class="card-title mb-1 fw-bold text-truncate" title="<?= htmlspecialchars(trim($socio)) ?>">
-                    <?= htmlspecialchars(trim($socio)) ?>
+                    <i class="bi bi-person-fill text-secondary me-1"></i><?= htmlspecialchars(trim($socio)) ?>
                 </h6>
                 <?php if (!empty($t['cod_socio'])): ?>
-                    <div class="text-muted small mb-3"><span class="fw-semibold">Codigo:</span> <?= htmlspecialchars($t['cod_socio']) ?></div>
+                    <div class="text-muted small mb-3"><span class="fw-semibold">Cód. Socio:</span> <?= htmlspecialchars($t['cod_socio']) ?></div>
                 <?php else: ?>
                     <div class="mb-3"></div>
                 <?php endif; ?>
             <?php endif; ?>
 
-            <div class="mb-3 text-break">
-                <i class="bi bi-geo-alt-fill text-danger me-2"></i>
-                <?php if (!empty($t['coordenadas_gps'])): ?>
-                    <?php
-                        $coords = preg_replace('/\s+/', '', $t['coordenadas_gps']);
-                        $urlVerMapa = "https://www.google.com/maps?q={$coords}";
-                        $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coords}";
-                    ?>
-                    <a href="<?= htmlspecialchars($urlVerMapa) ?>" target="_blank" class="text-decoration-none fw-bold" onclick="event.stopPropagation();" title="Ver ubicación en Google Maps">
-                        <?= htmlspecialchars($t['ubicacion'] ?? 'N/A') ?>
-                    </a>
-                    <span class="small text-muted ms-1">(Z: <?= htmlspecialchars($t['zona'] ?? '-') ?>, R: <?= htmlspecialchars($t['ruta'] ?? '-') ?>)</span>
-                    <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="badge bg-light text-success border text-decoration-none ms-2" onclick="event.stopPropagation();" title="Trazar ruta">
-                        <i class="bi bi-sign-turn-right-fill"></i> Ruta
-                    </a>
-                <?php else: ?>
-                    <span class="fw-bold"><?= htmlspecialchars($t['ubicacion'] ?? 'N/A') ?></span>
-                    <span class="small text-muted ms-1">(Z: <?= htmlspecialchars($t['zona'] ?? '-') ?>, R: <?= htmlspecialchars($t['ruta'] ?? '-') ?>)</span>
-                <?php endif; ?>
-                
-                <?php if (!empty($t['direccion_predio'])): ?>
-                    <div class="small text-muted lh-sm mt-2 ps-4">
-                        <?= htmlspecialchars($t['direccion_predio']) ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="small text-muted text-break flex-grow-1">
-                <div class="mb-1"><?= htmlspecialchars($descripcion) ?></div>
+            <div class="small text-break flex-grow-1 border-top pt-3">
+                <div class="mb-1 text-secondary"><strong class="text-dark">Descripción:</strong> <?= htmlspecialchars($descripcion) ?></div>
                 <?php if ($is_historial && !empty($glosa)): ?>
-                    <div class="small text-muted fst-italic border-start border-3 border-info ps-2 mt-2 bg-white p-2 rounded">
-                        <?= htmlspecialchars($glosa) ?>
+                    <div class="mt-2 bg-light p-2 rounded border-start border-3 border-info">
+                        <span class="fw-bold text-info-emphasis d-block mb-1" style="font-size: 0.75rem;"><i class="bi bi-chat-text-fill me-1"></i>CONCLUSIÓN</span>
+                        <div class="fst-italic text-dark"><?= htmlspecialchars($glosa) ?></div>
                     </div>
                 <?php endif; ?>
             </div>

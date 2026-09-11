@@ -50,6 +50,12 @@ class ReporteController extends Controller
         $offset = ($pagina - 1) * $limit;
 
         // 3. Consultar datos al modelo
+        $filtrosConteo   = [
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin'    => $fechaFin,
+            'buscar'       => $buscar,
+        ];
+        $totalesPorTipo  = $this->reporteModel->getTotalesPorTipoConsulta($filtrosConteo);
         $tiposConsulta   = $this->reporteModel->getTiposConsulta();
         $totalRegistros  = $this->reporteModel->getTotalConsultas($filtros);
         $totalPaginas    = (int)ceil($totalRegistros / $limit);
@@ -63,6 +69,7 @@ class ReporteController extends Controller
         $this->view('reportes/visualizar', [
             'consultas'      => $consultas,
             'tiposConsulta'  => $tiposConsulta,
+            'totalesPorTipo' => $totalesPorTipo,
             'filtros'        => $filtros,
             'pagina'         => $pagina,
             'totalPaginas'   => $totalPaginas,

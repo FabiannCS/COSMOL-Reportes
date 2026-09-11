@@ -37,7 +37,7 @@ unset($_SESSION['error']);
 </style>
 
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-primary text-white py-3 text-center">
+    <div class="card-header text-white py-3 text-center color-cosmol">
         <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Reclamos Pendientes</h5>
     </div>
     <div class="card-body bg-light p-3 p-md-4">

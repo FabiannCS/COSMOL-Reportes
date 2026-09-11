@@ -21,6 +21,52 @@ class Reporte extends Model
     }
 
     /**
+     * Obtiene el conteo total de consultas agrupadas por tipo de consulta,
+     * considerando filtros de fecha y búsqueda.
+     *
+     * @param array $filtros Filtros aplicables (fecha_inicio, fecha_fin, buscar)
+     * @return array
+     */
+    public function getTotalesPorTipoConsulta($filtros = [])
+    {
+        $sql = "SELECT 
+                    t.id_tipo,
+                    t.nombre,
+                    t.descripcion,
+                    COUNT(c.id_consulta) as total
+                FROM tipo_consulta t
+                LEFT JOIN consulta c ON t.id_tipo = c.id_tipo";
+
+        $params = [];
+        $conditions = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $conditions[] = "c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $conditions[] = "c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $conditions[] = "(c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        if (!empty($conditions)) {
+            $sql .= " AND " . implode(" AND ", $conditions);
+        }
+
+        $sql .= " GROUP BY t.id_tipo, t.nombre, t.descripcion ORDER BY t.id_tipo ASC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Obtiene consultas paginadas y filtradas.
      *
      * @param array $filtros Filtros opcionales (fecha_inicio, fecha_fin, id_tipo)

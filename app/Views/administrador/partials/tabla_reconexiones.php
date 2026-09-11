@@ -38,14 +38,25 @@
                             $codSocio    = isset($rec['cod_socio']) ? trim($rec['cod_socio']) : '';
                             $nombreSocio = isset($rec['nombre_socio']) ? trim($rec['nombre_socio']) : '';
                             $coords      = isset($rec['coordenadas_gps']) ? preg_replace('/\s+/', '', $rec['coordenadas_gps']) : '';
+                            $estCalc     = isset($rec['estado_calculado']) ? $rec['estado_calculado'] : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($rec) : 'PENDIENTE');
                             ?>
                             <tr>
                                 <td class="ps-2 ps-sm-3 fw-bold text-muted">
                                     #<?= htmlspecialchars(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '—', ENT_QUOTES, 'UTF-8') ?>
+                                    <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                                        <div class="d-sm-none mt-1">
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.72rem;">No Concluido</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div class="fw-semibold text-dark small text-wrap text-break">
                                         <?= htmlspecialchars($nombreSocio ? $nombreSocio : 'Sin nombre', ENT_QUOTES, 'UTF-8') ?>
+                                        <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1 d-none d-sm-inline-block">
+                                                <i class="bi bi-exclamation-circle-fill me-1"></i>No Concluido
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                     <?php if ($codSocio): ?>
                                         <div class="text-muted font-monospace" style="font-size: 0.78rem;">
@@ -85,12 +96,21 @@
                                 </td>
                                 <td class="text-center pe-2 pe-sm-3">
                                     <div class="d-inline-flex gap-1">
-                                        <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>" 
-                                            class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
-                                            title="Concluir Reconexion">
-                                            <i class="bi bi-play-circle"></i>
-                                            <span class="d-none d-sm-inline">Concluir</span>
-                                        </a>
+                                        <?php if ($estCalc === 'NO CONCLUIDO'): ?>
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>&origen=trabajos" 
+                                                class="btn btn-sm btn-outline-warning text-dark d-inline-flex align-items-center gap-1" 
+                                                title="Editar / Concluir Reconexión">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span class="d-none d-sm-inline">Editar</span>
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="/administrador/trabajos/detalle?tipo=reconexion&id=<?= urlencode(isset($rec['id_reconexion']) ? $rec['id_reconexion'] : '') ?>&origen=trabajos" 
+                                                class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" 
+                                                title="Concluir Reconexión">
+                                                <i class="bi bi-play-circle"></i>
+                                                <span class="d-none d-sm-inline">Concluir</span>
+                                            </a>
+                                        <?php endif; ?>
                                         <?php if (!empty($coords)): ?>
                                             <a href="https://www.google.com/maps?q=<?= urlencode($coords) ?>" 
                                                 target="_blank" 

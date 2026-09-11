@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($title) ? htmlspecialchars($title) : 'COSMOL Reportes' ?></title>
-    <!-- Favicon / Logo -->
-    <link rel="icon" type="image/jpeg" href="/assets/img/logo.jpeg">
+    <!-- Favicon / Logo de Pestaña -->
+    <link rel="icon" type="image/jpeg" href="/assets/img/favicon.jpeg">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif; background: #f1f5f9; color: #1e293b; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
