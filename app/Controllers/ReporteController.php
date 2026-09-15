@@ -98,7 +98,11 @@ class ReporteController extends Controller
         fputs($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         // Encabezados del CSV
+<<<<<<< Updated upstream
         fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Tipo', 'Fecha', 'Hora', 'Atendido por']);
+=======
+        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Teléfono WhatsApp', 'Tipo de Consulta', 'Tipo Ubicación', 'Fecha', 'Hora', 'Atendido por']);
+>>>>>>> Stashed changes
 
         // Escribir filas de datos
         foreach ($consultas as $row) {
@@ -106,12 +110,15 @@ class ReporteController extends Controller
                 $row['id_consulta'],
                 $row['codigo_socio'],
                 $row['nombres'],
+                !empty($row['telefono']) ? $row['telefono'] : 'N/A',
                 $row['tipo'],
+                !empty($row['tipo_ubicacion']) ? $row['tipo_ubicacion'] : 'N/A',
                 $row['fecha_consulta'],
                 $row['hora_consulta'],
                 !empty($row['username']) ? $row['username'] : 'Chatbot'
             ]);
         }
+
 
         fclose($output);
         exit;

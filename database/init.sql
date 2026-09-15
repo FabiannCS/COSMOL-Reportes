@@ -34,11 +34,14 @@ CREATE TABLE IF NOT EXISTS consulta (
     id_consulta SERIAL PRIMARY KEY,
     codigo_socio INT NOT NULL,
     nombres VARCHAR(200) NOT NULL,
+    telefono VARCHAR(30) NULL,
+    tipo_ubicacion VARCHAR(20) NULL,
     fecha_consulta DATE NOT NULL DEFAULT CURRENT_DATE,
     hora_consulta TIME NOT NULL DEFAULT CURRENT_TIME,
     id_usuario INT REFERENCES usuario(id_usuario) ON DELETE SET NULL,
     id_tipo INT REFERENCES tipo_consulta(id_tipo) ON DELETE SET NULL
 );
+
 
 -- Datos iniciales de roles
 INSERT INTO rol (nombre_rol, descripcion) VALUES

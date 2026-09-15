@@ -177,10 +177,17 @@ class AuthController extends Controller
         }
         $totalConcluidos = $recConCount + $reclConCount;
 
+        // Métricas de Teléfonos y Control de Tráfico del Bot
+        $reporteModel       = new \App\Models\Reporte();
+        $totalNumerosUnicos = $reporteModel->getTotalNumerosUnicos();
+        $numerosMasActivos  = $reporteModel->getNumerosMasActivos(5);
+
         $this->view('dashboard/index', [
             'title'                     => 'Dashboard — COSMOL Reportes',
             'usuario'                   => $usuario,
             'totalConsultas'            => $totalConsultas,
+            'totalNumerosUnicos'        => $totalNumerosUnicos,
+            'numerosMasActivos'         => $numerosMasActivos,
             'totalOperadores'           => $totalOperadores,
             'operadoresPorEspecialidad' => $operadoresPorEsp,
             'totalPendientes'           => $totalPendientes,
@@ -190,5 +197,6 @@ class AuthController extends Controller
             'recConCount'               => $recConCount,
             'reclConCount'              => $reclConCount
         ], 'main');
+
     }
 }

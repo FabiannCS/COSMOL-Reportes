@@ -117,17 +117,19 @@ $hasta = min($pagina * $limit, $totalRegistros);
                     <thead class="table-light">
                         <tr>
                             <th scope="col" class="px-4 py-3" style="width: 80px;">ID</th>
-                            <th scope="col" class="py-3" style="width: 130px;">Cód. Socio</th>
+                            <th scope="col" class="py-3" style="width: 120px;">Cód. Socio</th>
                             <th scope="col" class="py-3">Nombres / Solicitante</th>
+                            <th scope="col" class="py-3" style="width: 140px;">Teléfono WhatsApp</th>
                             <th scope="col" class="py-3">Tipo de Consulta</th>
+                            <th scope="col" class="py-3" style="width: 120px;">Ubicación</th>
                             <th scope="col" class="py-3">Fecha y Hora</th>
-                            <th scope="col" class="py-3 text-center" style="width: 160px;">Atendido por</th>
+                            <th scope="col" class="py-3 text-center" style="width: 150px;">Atendido por</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($consultas)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
                                     <h6 class="fw-semibold mb-1">No se encontraron consultas</h6>
                                     <p class="small text-muted mb-0">No existen registros que coincidan con los criterios de búsqueda aplicados.</p>
@@ -146,9 +148,33 @@ $hasta = min($pagina * $limit, $totalRegistros);
                                         <?= htmlspecialchars($row['nombres'], ENT_QUOTES, 'UTF-8') ?>
                                     </td>
                                     <td class="py-3">
+                                        <?php if (!empty($row['telefono'])): ?>
+                                            <span class="badge bg-light text-dark border font-monospace">
+                                                <i class="bi bi-whatsapp text-success me-1"></i><?= htmlspecialchars($row['telefono'], ENT_QUOTES, 'UTF-8') ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted small">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="py-3">
                                         <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1">
                                             <?= htmlspecialchars($row['tipo'] ?? 'General', ENT_QUOTES, 'UTF-8') ?>
                                         </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <?php if (!empty($row['tipo_ubicacion'])): ?>
+                                            <?php if (strtoupper($row['tipo_ubicacion']) === 'DOMICILIO'): ?>
+                                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1">
+                                                    🏠 Domicilio
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1">
+                                                    📍 GPS
+                                                </span>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="text-muted small">-</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="py-3 text-secondary small">
                                         <div><i class="bi bi-calendar3 me-1 text-primary"></i><?= htmlspecialchars($row['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?></div>
@@ -168,6 +194,7 @@ $hasta = min($pagina * $limit, $totalRegistros);
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
+
                     </tbody>
                 </table>
             </div>
