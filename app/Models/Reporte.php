@@ -33,8 +33,6 @@ class Reporte extends Model
     }
 
     /**
-<<<<<<< Updated upstream
-=======
      * Obtiene el conteo total de consultas agrupadas por tipo de consulta,
      * considerando filtros de fecha y búsqueda.
      *
@@ -81,7 +79,6 @@ class Reporte extends Model
     }
 
     /**
->>>>>>> Stashed changes
      * Obtiene consultas paginadas y filtradas.
      *
      * @param array $filtros Filtros opcionales (fecha_inicio, fecha_fin, id_tipo, buscar)
@@ -114,17 +111,12 @@ class Reporte extends Model
             $params[':id_tipo'] = $filtros['id_tipo'];
         }
 
-<<<<<<< Updated upstream
-        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC";
-        
-=======
         if (!empty($filtros['buscar'])) {
             $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
             $params[':buscar'] = '%' . $filtros['buscar'] . '%';
         }
 
-        $sql .= " ORDER BY c.id_consulta DESC";
->>>>>>> Stashed changes
+        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
         $sql .= " LIMIT :limit OFFSET :offset";
 
         $stmt = $this->db()->prepare($sql);
@@ -170,14 +162,11 @@ class Reporte extends Model
             $params[':id_tipo'] = $filtros['id_tipo'];
         }
 
-<<<<<<< Updated upstream
-=======
         if (!empty($filtros['buscar'])) {
             $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
             $params[':buscar'] = '%' . $filtros['buscar'] . '%';
         }
 
->>>>>>> Stashed changes
         $stmt = $this->db()->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
@@ -214,16 +203,12 @@ class Reporte extends Model
             $params[':id_tipo'] = $filtros['id_tipo'];
         }
 
-<<<<<<< Updated upstream
-        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC";
-=======
         if (!empty($filtros['buscar'])) {
             $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
             $params[':buscar'] = '%' . $filtros['buscar'] . '%';
         }
 
-        $sql .= " ORDER BY c.id_consulta DESC";
->>>>>>> Stashed changes
+        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
 
         $stmt = $this->db()->prepare($sql);
         $stmt->execute($params);

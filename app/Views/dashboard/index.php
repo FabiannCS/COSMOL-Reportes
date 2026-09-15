@@ -2,6 +2,8 @@
 /**
  * Vista: Dashboard Principal
  * @var int $totalConsultas
+ * @var int $totalNumerosUnicos
+ * @var array $numerosMasActivos
  * @var int $totalPendientes
  * @var int $recPendCount
  * @var int $reclPendCount
@@ -31,8 +33,7 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
     </div>
 
     <!-- Tarjetas de Resumen KPI Informativas -->
-    <div class="row g-3 g-xl-4 mb-3">
-<<<<<<< Updated upstream
+    <div class="row g-3 g-xl-4 mb-4">
         <!-- Consultas Chatbot -->
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-3 h-100">
@@ -40,58 +41,12 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
                     <div class="me-3">
                         <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Consultas Chatbot</span>
                         <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalConsultas) ? (int)$totalConsultas : 0 ?></span>
+                        <small class="text-muted d-block text-truncate">
+                            <i class="bi bi-whatsapp text-success me-1"></i><span class="fw-semibold"><?= isset($totalNumerosUnicos) ? (int)$totalNumerosUnicos : 0 ?></span> números únicos
+                        </small>
                     </div>
                     <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center">
                         <i class="bi bi-chat-dots-fill fs-2"></i>
-=======
-        <?php
-            $statTitle = 'Consultas Chatbot';
-            $statValue = isset($totalConsultas) ? (int)$totalConsultas : 0;
-            $statColor = 'primary';
-            $statIcon  = 'bi-chat-dots-fill';
-            $statExtra = '<small class="text-muted d-block text-truncate"><i class="bi bi-whatsapp text-success me-1"></i><span class="fw-semibold">' . (isset($totalNumerosUnicos) ? (int)$totalNumerosUnicos : 0) . '</span> números únicos</small>';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-        <?php
-            $statTitle = 'Trabajos Pendientes';
-            $statValue = isset($totalPendientes) ? (int)$totalPendientes : 0;
-            $statColor = 'warning';
-            $statIcon  = 'bi-hourglass-split';
-            $statExtra = '<small class="text-muted d-block text-truncate"><span class="fw-semibold">' . $recPend . '</span> rec. - <span class="fw-semibold">' . $reclPend . '</span> recl.</small>';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-        <?php
-            $statTitle = 'Trabajos Concluidos';
-            $statValue = isset($totalConcluidos) ? (int)$totalConcluidos : 0;
-            $statColor = 'success';
-            $statIcon  = 'bi-check-circle-fill';
-            $statExtra = '<small class="text-muted d-block text-truncate"><span class="fw-semibold">' . $recCon . '</span> rec. - <span class="fw-semibold">' . $reclCon . '</span> recl.</small>';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-        <?php
-            $statTitle = 'Total Operadores';
-            $statValue = isset($totalOperadores) ? (int)$totalOperadores : 0;
-            $statColor = 'info';
-            $statIcon  = 'bi-people-fill';
-            $statExtra = '';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-    </div>
-
-    <!-- Gráficos Principales -->
-    <div class="row g-3 g-xl-4 mb-4">
-        <!-- Gráfico 1: Evolución de Consultas -->
-        <div class="col-12 col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold text-dark mb-4"><i class="bi bi-graph-up text-primary me-2"></i>Evolución de Consultas (Últimos 7 días)</h5>
-                    <div style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="chartConsultas"></canvas>
->>>>>>> Stashed changes
                     </div>
                 </div>
             </div>
@@ -218,7 +173,6 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
         </div>
     </div>
     <?php endif; ?>
-
 
     <!-- Distribución de Operadores por Especialidad -->
     <?php if (!empty($especialidades)): ?>

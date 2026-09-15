@@ -14,9 +14,6 @@ class ConsultaApiController extends Controller
         $tokenEsperado = getenv('REPORTES_API_TOKEN') ?: '';
         $tokenRecibido = $_SERVER['HTTP_X_REPORTES_TOKEN'] ?? '';
 
-        // Header headers generally arrive as HTTP_...
-        // For standard setup in apache with php-fpm, headers like X-Reportes-Token become HTTP_X_REPORTES_TOKEN
-        
         if ($tokenRecibido !== $tokenEsperado) {
             http_response_code(401);
             echo json_encode(['status' => 'error', 'message' => 'Token no autorizado']);
@@ -29,12 +26,8 @@ class ConsultaApiController extends Controller
         $codigoSocio = isset($input['codigo_socio']) ? (int)$input['codigo_socio'] : 0;
         $nombres     = isset($input['nombres']) ? trim($input['nombres']) : 'Socio';
         $idTipo      = isset($input['id_tipo']) ? (int)$input['id_tipo'] : null;
-<<<<<<< Updated upstream
-        $fecha       = isset($input['fecha_consulta']) ? $input['fecha_consulta'] : date('Y-m-d');
-        $hora        = isset($input['hora_consulta']) ? $input['hora_consulta'] : date('H:i:s');
-=======
 
-        // Auto-detectar Reclamo si envían el JSON directamente de la API externa
+        // Auto-detectar Reclamo o Reconexión si envían el JSON directamente de la API externa
         if (!$idTipo) {
             if (isset($input['id_tipo_reclamo'])) {
                 $idTipo = 4; // Registro de Reclamo
@@ -47,7 +40,6 @@ class ConsultaApiController extends Controller
         $hora          = isset($input['hora_consulta']) ? $input['hora_consulta'] : date('H:i:s');
         $telefono      = isset($input['telefono']) && !empty($input['telefono']) ? trim((string)$input['telefono']) : null;
         $tipoUbicacion = isset($input['tipo_ubicacion']) && !empty($input['tipo_ubicacion']) ? trim((string)$input['tipo_ubicacion']) : null;
->>>>>>> Stashed changes
 
         if ($codigoSocio <= 0 || !$idTipo) {
             http_response_code(400);
@@ -76,7 +68,6 @@ class ConsultaApiController extends Controller
                 ':hora_consulta'  => $hora,
                 ':id_tipo'        => $idTipo
             ]);
-
 
             http_response_code(201);
             echo json_encode([

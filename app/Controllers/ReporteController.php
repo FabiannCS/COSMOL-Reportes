@@ -31,11 +31,13 @@ class ReporteController extends Controller
         $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
         $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
         $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
 
         $filtros = [
             'fecha_inicio' => $fechaInicio,
             'fecha_fin'    => $fechaFin,
             'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
         ];
 
         // 2. Parámetros de paginación
@@ -49,6 +51,7 @@ class ReporteController extends Controller
 
         // 3. Consultar datos al modelo
         $tiposConsulta   = $this->reporteModel->getTiposConsulta();
+        $totalesPorTipo  = $this->reporteModel->getTotalesPorTipoConsulta($filtros);
         $totalRegistros  = $this->reporteModel->getTotalConsultas($filtros);
         $totalPaginas    = (int)ceil($totalRegistros / $limit);
         if ($totalPaginas < 1) {
@@ -61,6 +64,7 @@ class ReporteController extends Controller
         $this->view('reportes/visualizar', [
             'consultas'      => $consultas,
             'tiposConsulta'  => $tiposConsulta,
+            'totalesPorTipo' => $totalesPorTipo,
             'filtros'        => $filtros,
             'pagina'         => $pagina,
             'totalPaginas'   => $totalPaginas,
@@ -79,11 +83,13 @@ class ReporteController extends Controller
         $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
         $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
         $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
 
         $filtros = [
             'fecha_inicio' => $fechaInicio,
             'fecha_fin'    => $fechaFin,
             'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
         ];
 
         $consultas = $this->reporteModel->getAllConsultasExport($filtros);
@@ -98,11 +104,7 @@ class ReporteController extends Controller
         fputs($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         // Encabezados del CSV
-<<<<<<< Updated upstream
-        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Tipo', 'Fecha', 'Hora', 'Atendido por']);
-=======
         fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Teléfono WhatsApp', 'Tipo de Consulta', 'Tipo Ubicación', 'Fecha', 'Hora', 'Atendido por']);
->>>>>>> Stashed changes
 
         // Escribir filas de datos
         foreach ($consultas as $row) {
@@ -118,7 +120,6 @@ class ReporteController extends Controller
                 !empty($row['username']) ? $row['username'] : 'Chatbot'
             ]);
         }
-
 
         fclose($output);
         exit;
