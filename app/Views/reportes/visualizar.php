@@ -4,12 +4,38 @@
  * 
  * @var array  $consultas      Lista de consultas obtenidas
  * @var array  $tiposConsulta  Catálogo de tipos de consulta para el filtro
+ * @var array  $totalesPorTipo Conteo de consultas agrupadas por cada tipo
  * @var array  $filtros        Filtros aplicados actualmente (fecha_inicio, fecha_fin, id_tipo)
  * @var int    $pagina         Página actual
  * @var int    $totalPaginas   Total de páginas
  * @var int    $totalRegistros Total de registros que coinciden con los filtros
  * @var int    $limit          Límite de registros por página
  */
+
+$totalesPorTipo = isset($totalesPorTipo) ? $totalesPorTipo : [];
+
+$getTipoStyle = function ($idTipo, $nombre) {
+    switch ((int)$idTipo) {
+        case 1: // Autenticación / Acceso
+            return ['color' => 'secondary', 'icon' => 'bi-shield-check'];
+        case 2: // Consulta de Deuda
+            return ['color' => 'warning', 'icon' => 'bi-cash-coin'];
+        case 3: // Historial de Facturas
+            return ['color' => 'info', 'icon' => 'bi-receipt-cutoff'];
+        case 4: // Registro de Reclamo
+            return ['color' => 'danger', 'icon' => 'bi-exclamation-triangle-fill'];
+        case 5: // Solicitud de Reconexión
+            return ['color' => 'success', 'icon' => 'bi-arrow-repeat'];
+        case 6: // Información de Oficinas
+            return ['color' => 'dark', 'icon' => 'bi-building-fill'];
+        case 7: // Derivación a Agente
+            return ['color' => 'primary', 'icon' => 'bi-headset'];
+        case 8: // Estado de Solicitudes
+            return ['color' => 'info', 'icon' => 'bi-clock-history'];
+        default:
+            return ['color' => 'primary', 'icon' => 'bi-chat-dots-fill'];
+    }
+};
 
 $queryParams = [];
 if (!empty($filtros['fecha_inicio'])) {
@@ -20,6 +46,9 @@ if (!empty($filtros['fecha_fin'])) {
 }
 if (!empty($filtros['id_tipo'])) {
     $queryParams['id_tipo'] = $filtros['id_tipo'];
+}
+if (!empty($filtros['buscar'])) {
+    $queryParams['buscar'] = $filtros['buscar'];
 }
 
 $exportQuery = http_build_query($queryParams);
@@ -36,20 +65,74 @@ $hasta = min($pagina * $limit, $totalRegistros);
 
 <div class="container-fluid p-0">
     <!-- Encabezado de Página -->
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
         <div>
             <h1 class="h3 fw-bold mb-1 text-dark">
                 <i class="bi bi-file-earmark-bar-graph-fill text-primary me-2"></i>Visualización de Reportes
             </h1>
-            <p class="text-muted mb-0">Consultas y atenciones registradas mediante el chatbot de COSMOL.</p>
+            <p class="text-muted small mb-0">Consultas y atenciones registradas mediante el chatbot de COSMOL.</p>
         </div>
         <div>
-            <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-success d-inline-flex align-items-center gap-2 shadow-sm">
-                <i class="bi bi-file-earmark-spreadsheet-fill"></i>
-                <span>Exportar a CSV</span>
-            </a>
+            <?php if (hasPermission('reportes.exportar')): ?>
+                <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-success btn-sm d-inline-flex align-items-center gap-1 shadow-sm w-100 w-sm-auto">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                    <span>Exportar a CSV</span>
+                </a>
+            <?php else: ?>
+                <button type="button" class="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1 shadow-sm disabled w-100 w-sm-auto" disabled title="No posee permiso para exportar reportes">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                    <span>Exportar a CSV</span>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
+
+    <!-- Tarjetas de Métricas por Tipo de Consulta -->
+    <?php if (!empty($totalesPorTipo)): ?>
+        <div class="row g-3 g-md-4 mb-4">
+            <?php foreach ($totalesPorTipo as $tipoStat): ?>
+                <?php
+                $idTipoStat   = (int)$tipoStat['id_tipo'];
+                $nombreStat   = $tipoStat['nombre'];
+                $totalStat    = (int)$tipoStat['total'];
+                $estilo       = $getTipoStyle($idTipoStat, $nombreStat);
+                $esTipoActivo = (!empty($filtros['id_tipo']) && (int)$filtros['id_tipo'] === $idTipoStat);
+
+                // Parámetros de URL al hacer clic en la tarjeta
+                $paramsFiltro = $queryParams;
+                if ($esTipoActivo) {
+                    unset($paramsFiltro['id_tipo']);
+                } else {
+                    $paramsFiltro['id_tipo'] = $idTipoStat;
+                }
+                $paramsFiltro['p'] = 1;
+                $urlFiltroTipo = '/reportes/visualizar' . (!empty($paramsFiltro) ? '?' . http_build_query($paramsFiltro) : '');
+                ?>
+                <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+                    <a href="<?= htmlspecialchars($urlFiltroTipo, ENT_QUOTES, 'UTF-8') ?>" class="text-decoration-none d-block h-100" title="<?= $esTipoActivo ? 'Clic para quitar filtro' : 'Filtrar por ' . htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?>">
+                        <div class="card border-0 shadow-sm border-start border-<?= $estilo['color'] ?> border-4 h-100 py-3 <?= $esTipoActivo ? 'bg-light border-top border-end border-bottom border-primary-subtle' : 'bg-white' ?>">
+                            <div class="card-body text-center p-2">
+                                <div class="text-xs fw-bold text-dark text-uppercase mb-2 text-truncate px-1" style="font-size: 0.82rem; letter-spacing: 0.4px;">
+                                    <i class="bi <?= $estilo['icon'] ?> text-<?= $estilo['color'] ?> me-1"></i>
+                                    <span><?= htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+                                <div class="display-6 fw-bold text-dark mb-0">
+                                    <?= number_format($totalStat) ?>
+                                </div>
+                                <?php if ($esTipoActivo): ?>
+                                    <div class="mt-2">
+                                        <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                            <i class="bi bi-funnel-fill me-1"></i>Filtro activo (Quitar)
+                                        </span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 
     <!-- Tarjeta de Filtros -->
     <div class="card border-0 shadow-sm mb-4">
@@ -61,6 +144,15 @@ $hasta = min($pagina * $limit, $totalRegistros);
         <div class="card-body p-3 p-md-4">
             <form action="/reportes/visualizar" method="GET" class="row g-3 align-items-end">
                 <div class="col-12 col-md-3">
+                    <label for="buscar" class="form-label fw-semibold small text-muted">Búsqueda</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="buscar" 
+                           name="buscar" 
+                           placeholder="Cód. o Nombre..."
+                           value="<?= htmlspecialchars($filtros['buscar'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
+                <div class="col-12 col-md-2">
                     <label for="fecha_inicio" class="form-label fw-semibold small text-muted">Fecha Inicio</label>
                     <input type="date" 
                            class="form-control" 
@@ -68,7 +160,7 @@ $hasta = min($pagina * $limit, $totalRegistros);
                            name="fecha_inicio" 
                            value="<?= htmlspecialchars($filtros['fecha_inicio'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                     <label for="fecha_fin" class="form-label fw-semibold small text-muted">Fecha Fin</label>
                     <input type="date" 
                            class="form-control" 
@@ -76,7 +168,7 @@ $hasta = min($pagina * $limit, $totalRegistros);
                            name="fecha_fin" 
                            value="<?= htmlspecialchars($filtros['fecha_fin'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                     <label for="id_tipo" class="form-label fw-semibold small text-muted">Tipo de Consulta</label>
                     <select class="form-select" id="id_tipo" name="id_tipo">
                         <option value="">Todos los tipos</option>
@@ -140,12 +232,16 @@ $hasta = min($pagina * $limit, $totalRegistros);
                                 <tr>
                                     <td class="px-4 py-3 fw-bold text-muted">#<?= (int)$row['id_consulta'] ?></td>
                                     <td class="py-3">
-                                        <span class="badge bg-light text-dark border font-monospace">
-                                            <i class="bi bi-person-badge me-1"></i><?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?>
-                                        </span>
+                                        <?php if (!empty($row['codigo_socio'])): ?>
+                                            <span class="badge bg-light text-dark border font-monospace">
+                                                <i class="bi bi-person-badge me-1"></i><?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-light text-muted border font-monospace">N/A</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="py-3 fw-semibold text-dark">
-                                        <?= htmlspecialchars($row['nombres'], ENT_QUOTES, 'UTF-8') ?>
+                                        <?= htmlspecialchars(!empty($row['nombres']) ? $row['nombres'] : 'Desconocido', ENT_QUOTES, 'UTF-8') ?>
                                     </td>
                                     <td class="py-3">
                                         <?php if (!empty($row['telefono'])): ?>

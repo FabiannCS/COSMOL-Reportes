@@ -9,18 +9,27 @@ class Usuario extends Model
     /**
      * Retorna todos los usuarios registrados con su respectivo rol
      *
+     * @param string|null $buscar
      * @return array
      */
-    public function all()
+    public function all($buscar = null)
     {
-        $stmt = $this->db()->query(
-            "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, 
+        $sql = "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, 
                     u.id_rol, r.nombre_rol, u.id_especialidad, e.nombre as nombre_especialidad 
              FROM usuario u 
              LEFT JOIN rol r ON u.id_rol = r.id_rol 
-             LEFT JOIN especialidad e ON u.id_especialidad = e.id_especialidad 
-             ORDER BY u.fecha_creacion DESC"
-        );
+             LEFT JOIN especialidad e ON u.id_especialidad = e.id_especialidad";
+             
+        $params = [];
+        if (!empty($buscar)) {
+            $sql .= " WHERE u.username ILIKE :buscar";
+            $params['buscar'] = '%' . $buscar . '%';
+        }
+        
+        $sql .= " ORDER BY u.fecha_creacion DESC";
+        
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

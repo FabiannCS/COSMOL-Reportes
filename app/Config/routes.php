@@ -7,42 +7,51 @@ return [
         '/login' => ['AuthController', 'showLogin', []],
         '/logout' => ['AuthController', 'logout', ['auth']],
 
-        // Panel Principal (Dashboard) - Admin y Supervisor
-        '/dashboard' => ['AuthController', 'dashboard', ['auth', 'role:Administrador,Supervisor']],
+        // Panel Principal (Dashboard)
+        '/dashboard' => ['AuthController', 'dashboard', ['auth', 'role:Administrador,Supervisor', 'permission:reportes.ver,trabajos.ver,usuarios.ver,roles.ver']],
 
-        // Seguridad - Roles y Permisos (Solo Administrador)
-        '/seguridad/roles' => ['RolController', 'index', ['auth', 'role:Administrador']],
-        '/seguridad/permisos' => ['RolController', 'permisos', ['auth', 'role:Administrador']],
+        // Seguridad - Roles y Permisos
+        '/seguridad/roles'    => ['RolController', 'index', ['auth', 'role:Administrador', 'permission:roles.ver']],
+        '/seguridad/permisos' => ['RolController', 'permisos', ['auth', 'role:Administrador', 'permission:roles.permisos']],
 
         // Operador
-        '/operador/trabajos' => ['OperadorController', 'trabajos', ['auth', 'role:Operador']],
-        '/operador/detalle'  => ['OperadorController', 'detalle', ['auth', 'role:Operador']],
+        '/operador/trabajos' => ['OperadorController', 'trabajos', ['auth', 'permission:trabajos.ver']],
+        '/operador/detalle'  => ['OperadorController', 'detalle', ['auth', 'permission:trabajos.ver']],
+        '/operador/historial'=> ['OperadorController', 'historial', ['auth', 'permission:trabajos.ver']],
 
-        // Administrador
-        '/administrador/usuarios'         => ['UsuarioController', 'index',                ['auth', 'role:Administrador']],
-        '/administrador/trabajos'         => ['AdministradorController', 'trabajos',       ['auth', 'role:Administrador']],
-        '/administrador/trabajos/detalle' => ['AdministradorController', 'trabajoDetalle', ['auth', 'role:Administrador']],
+        // Perfil General (Todos los usuarios)
+        '/perfil' => ['PerfilController', 'index', ['auth']],
 
-        // Módulo de Reportes (Administrador y Supervisor)
-        '/reportes/visualizar' => ['ReporteController', 'visualizar', ['auth', 'role:Administrador,Supervisor']],
-        '/reportes/exportar'   => ['ReporteController', 'exportar',   ['auth', 'role:Administrador,Supervisor']],
+        // Administrador / Supervisión
+        '/administrador/usuarios'               => ['UsuarioController', 'index',                ['auth', 'role:Administrador,Supervisor', 'permission:usuarios.ver']],
+        '/administrador/trabajos'               => ['AdministradorController', 'trabajos',       ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/trabajos-no-concluidos' => ['AdministradorController', 'trabajosNoConcluidos', ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/trabajos/detalle'       => ['AdministradorController', 'trabajoDetalle', ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+        '/administrador/historial'              => ['AdministradorController', 'historial',      ['auth', 'role:Administrador,Supervisor', 'permission:trabajos.ver']],
+
+        // Módulo de Reportes
+        '/reportes/visualizar' => ['ReporteController', 'visualizar', ['auth', 'permission:reportes.ver']],
+        '/reportes/exportar'   => ['ReporteController', 'exportar',   ['auth', 'permission:reportes.exportar']],
     ],
     'POST' => [
         // Autenticación
-        '/login' => ['AuthController', 'login', []],
+        '/login' => ['AuthController', 'login', ['csrf']],
 
-        // Acciones de Roles y Permisos (Solo Administrador)
-        '/seguridad/roles/crear' => ['RolController', 'store', ['auth', 'role:Administrador']],
-        '/seguridad/roles/editar' => ['RolController', 'update', ['auth', 'role:Administrador']],
-        '/seguridad/roles/permisos' => ['RolController', 'guardarPermisos', ['auth', 'role:Administrador']],
+        // Acciones de Roles y Permisos
+        '/seguridad/roles/crear'    => ['RolController', 'store',           ['auth', 'permission:roles.crear', 'csrf']],
+        '/seguridad/roles/editar'   => ['RolController', 'update',          ['auth', 'permission:roles.editar', 'csrf']],
+        '/seguridad/roles/permisos' => ['RolController', 'guardarPermisos', ['auth', 'permission:roles.permisos', 'csrf']],
 
         // Operador
-        '/operador/concluir' => ['OperadorController', 'concluir', ['auth', 'role:Operador']],
+        '/operador/concluir' => ['OperadorController', 'concluir', ['auth', 'permission:trabajos.concluir', 'csrf']],
 
-        // Acciones de Usuarios (Solo Administrador)
-        '/administrador/usuarios/crear' => ['UsuarioController', 'store', ['auth', 'role:Administrador']],
-        '/administrador/usuarios/editar' => ['UsuarioController', 'update', ['auth', 'role:Administrador']],
-        '/administrador/usuarios/estado' => ['UsuarioController', 'toggleEstado', ['auth', 'role:Administrador']],
+        // Administrador
+        '/administrador/trabajos/concluir' => ['AdministradorController', 'concluir', ['auth', 'permission:trabajos.concluir', 'csrf']],
+
+        // Acciones de Usuarios
+        '/administrador/usuarios/crear'  => ['UsuarioController', 'store',        ['auth', 'permission:usuarios.crear', 'csrf']],
+        '/administrador/usuarios/editar' => ['UsuarioController', 'update',       ['auth', 'permission:usuarios.editar', 'csrf']],
+        '/administrador/usuarios/estado' => ['UsuarioController', 'toggleEstado', ['auth', 'permission:usuarios.estado', 'csrf']],
 
         // API
         '/api/consultas' => ['ConsultaApiController', 'registrar', []],

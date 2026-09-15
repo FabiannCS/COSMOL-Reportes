@@ -57,6 +57,21 @@ INSERT INTO especialidad (nombre) VALUES
 ('Agua Potable')
 ON CONFLICT DO NOTHING;
 
+-- Datos iniciales de tipos de consulta (homologados con el Chatbot)
+INSERT INTO tipo_consulta (id_tipo, nombre, descripcion) VALUES
+(1, 'Autenticación / Acceso', 'Socio valida su código fijo en el chatbot'),
+(2, 'Consulta de Deuda', 'Consulta de facturas pendientes y saldo'),
+(3, 'Historial de Facturas', 'Consulta de facturas pagadas anteriormente'),
+(4, 'Registro de Reclamo', 'Ticket de reclamo por agua o alcantarillado registrado'),
+(5, 'Solicitud de Reconexión', 'Ticket de trámite de reconexión registrado'),
+(6, 'Información de Oficinas', 'Consulta de ubicación de oficina central y horarios de atención'),
+(7, 'Derivación a Agente', 'Solicitud de atención con un operador humano'),
+(8, 'Estado de Solicitudes', 'Consulta de estado de reclamos y reconexiones')
+ON CONFLICT (id_tipo) DO NOTHING;
+
+-- Ajustar la secuencia para futuros registros autoincrementales
+SELECT setval('tipo_consulta_id_tipo_seq', COALESCE((SELECT MAX(id_tipo) FROM tipo_consulta), 1));
+
 -- Tablas de Permisos y Rol-Permiso
 CREATE TABLE IF NOT EXISTS permiso (
     id_permiso SERIAL PRIMARY KEY,
@@ -104,3 +119,23 @@ INSERT INTO rol_permiso (id_rol, id_permiso)
 SELECT 1, id_permiso FROM permiso
 ON CONFLICT DO NOTHING;
 
+-- Índices de alto rendimiento para acelerar reportes, filtros y consultas del dashboard
+CREATE INDEX IF NOT EXISTS idx_consulta_fecha ON consulta(fecha_consulta);
+CREATE INDEX IF NOT EXISTS idx_consulta_id_tipo ON consulta(id_tipo);
+CREATE INDEX IF NOT EXISTS idx_consulta_codigo_socio ON consulta(codigo_socio);
+CREATE INDEX IF NOT EXISTS idx_consulta_id_usuario ON consulta(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_usuario_id_rol ON usuario(id_rol);
+CREATE INDEX IF NOT EXISTS idx_usuario_id_especialidad ON usuario(id_especialidad);
+CREATE INDEX IF NOT EXISTS idx_rol_permiso_id_permiso ON rol_permiso(id_permiso);
+
+-- Tabla para seguimiento interno de trabajos pendientes (NO CONCLUIDO / NO PROCEDENTE)
+CREATE TABLE IF NOT EXISTS trabajo_seguimiento (
+    id SERIAL PRIMARY KEY,
+    id_trabajo INT NOT NULL,
+    tipo_trabajo VARCHAR(50) NOT NULL, -- 'reclamo' o 'reconexion'
+    estado_interno VARCHAR(50) NOT NULL, -- 'NO CONCLUIDO' o 'NO PROCEDENTE'
+    glosa_interna TEXT,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (id_trabajo, tipo_trabajo)
+);
+CREATE INDEX IF NOT EXISTS idx_trabajo_seguimiento_tipo_id ON trabajo_seguimiento(tipo_trabajo, id_trabajo);
