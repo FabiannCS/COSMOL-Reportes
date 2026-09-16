@@ -14,9 +14,6 @@ class ConsultaApiController extends Controller
         $tokenEsperado = getenv('REPORTES_API_TOKEN') ?: '';
         $tokenRecibido = $_SERVER['HTTP_X_REPORTES_TOKEN'] ?? '';
 
-        // Header headers generally arrive as HTTP_...
-        // For standard setup in apache with php-fpm, headers like X-Reportes-Token become HTTP_X_REPORTES_TOKEN
-
         if ($tokenRecibido !== $tokenEsperado) {
             http_response_code(401);
             echo json_encode(['status' => 'error', 'message' => 'Token no autorizado']);
@@ -30,7 +27,7 @@ class ConsultaApiController extends Controller
         $nombres     = isset($input['nombres']) ? trim($input['nombres']) : 'Socio';
         $idTipo      = isset($input['id_tipo']) ? (int)$input['id_tipo'] : null;
 
-        // Auto-detectar Reclamo si envían el JSON directamente de la API externa
+        // Auto-detectar Reclamo o Reconexión si envían el JSON directamente de la API externa
         if (!$idTipo) {
             if (isset($input['id_tipo_reclamo'])) {
                 $idTipo = 4; // Registro de Reclamo
@@ -39,27 +36,34 @@ class ConsultaApiController extends Controller
             }
         }
 
-        $fecha       = isset($input['fecha_consulta']) ? $input['fecha_consulta'] : date('Y-m-d');
-        $hora        = isset($input['hora_consulta']) ? $input['hora_consulta'] : date('H:i:s');
+        $fecha         = isset($input['fecha_consulta']) ? $input['fecha_consulta'] : date('Y-m-d');
+        $hora          = isset($input['hora_consulta']) ? $input['hora_consulta'] : date('H:i:s');
+        $telefono      = isset($input['telefono']) && !empty($input['telefono']) ? trim((string)$input['telefono']) : null;
+        $tipoUbicacion = isset($input['tipo_ubicacion']) && !empty($input['tipo_ubicacion']) ? trim((string)$input['tipo_ubicacion']) : null;
 
-        // Quitamos la validación de codigoSocio estricta por si el JSON del Reclamo no lo incluye
-        if (!$idTipo) {
+        if ($codigoSocio <= 0 || !$idTipo) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'No se pudo determinar el id_tipo o falta en la petición']);
+            echo json_encode(['status' => 'error', 'message' => 'Parámetros obligatorios faltantes']);
             exit;
         }
 
         // 3. Insertar en la tabla consulta
         try {
             $db = Database::getInstance();
+            // Migración defensiva no destructiva para columnas nuevas
+            $db->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS telefono VARCHAR(30);");
+            $db->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS tipo_ubicacion VARCHAR(20);");
+
             $stmt = $db->prepare("
-                INSERT INTO consulta (codigo_socio, nombres, fecha_consulta, hora_consulta, id_tipo)
-                VALUES (:codigo_socio, :nombres, :fecha_consulta, :hora_consulta, :id_tipo)
+                INSERT INTO consulta (codigo_socio, nombres, telefono, tipo_ubicacion, fecha_consulta, hora_consulta, id_tipo)
+                VALUES (:codigo_socio, :nombres, :telefono, :tipo_ubicacion, :fecha_consulta, :hora_consulta, :id_tipo)
             ");
 
             $stmt->execute([
                 ':codigo_socio'   => $codigoSocio,
                 ':nombres'        => $nombres,
+                ':telefono'       => $telefono,
+                ':tipo_ubicacion' => $tipoUbicacion,
                 ':fecha_consulta' => $fecha,
                 ':hora_consulta'  => $hora,
                 ':id_tipo'        => $idTipo
@@ -71,16 +75,8 @@ class ConsultaApiController extends Controller
                 'message' => 'Consulta registrada'
             ]);
         } catch (\Exception $e) {
-            error_log("Error en ConsultaApiController::registrar: " . $e->getMessage());
             http_response_code(500);
-
-            $debug = getenv('APP_DEBUG');
-            $response = ['status' => 'error', 'message' => 'Error interno al guardar'];
-            if ($debug === 'true' || $debug === '1') {
-                $response['details'] = $e->getMessage();
-            }
-
-            echo json_encode($response);
+            echo json_encode(['status' => 'error', 'message' => 'Error interno al guardar', 'details' => $e->getMessage()]);
         }
         exit;
     }

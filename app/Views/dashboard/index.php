@@ -2,6 +2,8 @@
 /**
  * Vista: Dashboard Principal
  * @var int $totalConsultas
+ * @var int $totalNumerosUnicos
+ * @var array $numerosMasActivos
  * @var int $totalPendientes
  * @var int $recPendCount
  * @var int $reclPendCount
@@ -10,13 +12,8 @@
  * @var int $reclConCount
  * @var int $totalOperadores
  * @var array $operadoresPorEspecialidad
- * @var array $consultas7Dias
  * @var array|null $usuario
  */
-
-// Datos para Gráfico 1
-$labelsDias = json_encode(array_keys($consultas7Dias ?? []));
-$datosDias  = json_encode(array_values($consultas7Dias ?? []));
 
 $rol = isset($usuario['nombre_rol']) ? $usuario['nombre_rol'] : 'Usuario';
 $nombre = isset($usuario['username']) ? $usuario['username'] : 'Invitado';
@@ -36,83 +33,146 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
     </div>
 
     <!-- Tarjetas de Resumen KPI Informativas -->
-    <div class="row g-3 g-xl-4 mb-3">
-        <?php
-            $statTitle = 'Consultas Chatbot';
-            $statValue = isset($totalConsultas) ? (int)$totalConsultas : 0;
-            $statColor = 'primary';
-            $statIcon  = 'bi-chat-dots-fill';
-            $statExtra = '';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-        <?php
-            $statTitle = 'Trabajos Pendientes';
-            $statValue = isset($totalPendientes) ? (int)$totalPendientes : 0;
-            $statColor = 'warning';
-            $statIcon  = 'bi-hourglass-split';
-            $statExtra = '<small class="text-muted d-block text-truncate"><span class="fw-semibold">' . $recPend . '</span> rec. - <span class="fw-semibold">' . $reclPend . '</span> recl.</small>';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-        <?php
-            $statTitle = 'Trabajos Concluidos';
-            $statValue = isset($totalConcluidos) ? (int)$totalConcluidos : 0;
-            $statColor = 'success';
-            $statIcon  = 'bi-check-circle-fill';
-            $statExtra = '<small class="text-muted d-block text-truncate"><span class="fw-semibold">' . $recCon . '</span> rec. - <span class="fw-semibold">' . $reclCon . '</span> recl.</small>';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-        <?php
-            $statTitle = 'Total Operadores';
-            $statValue = isset($totalOperadores) ? (int)$totalOperadores : 0;
-            $statColor = 'info';
-            $statIcon  = 'bi-people-fill';
-            $statExtra = '';
-            $statValueColor = 'text-dark';
-            include __DIR__ . '/../layouts/partials/stat_card.php';
-        ?>
-    </div>
-
-    <!-- Gráficos Principales -->
     <div class="row g-3 g-xl-4 mb-4">
-        <!-- Gráfico 1: Evolución de Consultas -->
-        <div class="col-12 col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold text-dark mb-4"><i class="bi bi-graph-up text-primary me-2"></i>Evolución de Consultas (Últimos 7 días)</h5>
-                    <div style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="chartConsultas"></canvas>
+        <!-- Consultas Chatbot -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div class="me-3">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Consultas Chatbot</span>
+                        <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalConsultas) ? (int)$totalConsultas : 0 ?></span>
+                        <small class="text-muted d-block text-truncate">
+                            <i class="bi bi-whatsapp text-success me-1"></i><span class="fw-semibold"><?= isset($totalNumerosUnicos) ? (int)$totalNumerosUnicos : 0 ?></span> números únicos
+                        </small>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-chat-dots-fill fs-2"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Gráfico 2: Estado de Trabajos -->
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4 d-flex flex-column">
-                    <h5 class="fw-bold text-dark mb-4"><i class="bi bi-pie-chart-fill text-warning me-2"></i>Estado de Trabajos</h5>
-                    <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="position: relative; min-height: 250px;">
-                        <canvas id="chartEstadoTrabajos"></canvas>
+        <!-- Trabajos Pendientes -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div class="me-3">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Trabajos Pendientes</span>
+                        <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalPendientes) ? (int)$totalPendientes : 0 ?></span>
+                        <small class="text-muted d-block text-truncate">
+                            <span class="fw-semibold"><?= $recPend ?></span> rec. - <span class="fw-semibold"><?= $reclPend ?></span> recl.
+                        </small>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-hourglass-split fs-2"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Gráfico 3: Comparativa Reconexiones vs Reclamos -->
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold text-dark mb-4"><i class="bi bi-bar-chart-fill text-info me-2"></i>Comparativa: Reconexiones vs Reclamos</h5>
-                    <div style="position: relative; height: 250px; width: 100%;">
-                        <canvas id="chartComparativa"></canvas>
+        <!-- Trabajos Concluidos -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div class="me-3">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Trabajos Concluidos</span>
+                        <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalConcluidos) ? (int)$totalConcluidos : 0 ?></span>
+                        <small class="text-muted d-block text-truncate">
+                            <span class="fw-semibold"><?= $recCon ?></span> rec. - <span class="fw-semibold"><?= $reclCon ?></span> recl.
+                        </small>
+                    </div>
+                    <div class="bg-success bg-opacity-10 text-success rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-check-circle-fill fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Operadores -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div class="me-3">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Operadores</span>
+                        <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalOperadores) ? (int)$totalOperadores : 0 ?></span>
+                    </div>
+                    <div class="bg-info bg-opacity-10 text-info rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people-fill fs-2"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Control de Tráfico y Números más Activos del Chatbot -->
+    <?php if (!empty($numerosMasActivos)): ?>
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+            <div>
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="bi bi-whatsapp text-success me-2"></i>Control de Tráfico: Números con Mayor Actividad
+                </h5>
+                <small class="text-muted">Monitoreo preventivo para detección de consultas reiteradas o posibles excesos en el bot.</small>
+            </div>
+            <a href="/reportes/visualizar" class="btn btn-sm btn-outline-primary rounded-pill">
+                Ver todos los reportes <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="px-4 py-3" style="width: 180px;">Teléfono WhatsApp</th>
+                            <th scope="col" class="py-3">Último Solicitante</th>
+                            <th scope="col" class="py-3 text-center" style="width: 140px;">Total Consultas</th>
+                            <th scope="col" class="py-3" style="width: 160px;">Última Interacción</th>
+                            <th scope="col" class="py-3 text-center" style="width: 160px;">Nivel de Tráfico</th>
+                            <th scope="col" class="py-3 text-end px-4" style="width: 130px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($numerosMasActivos as $item): ?>
+                            <?php
+                                $totalNum = (int)$item['total_consultas'];
+                                $nivelBadge = $totalNum >= 25 ? 'bg-danger-subtle text-danger-emphasis border-danger' : ($totalNum >= 10 ? 'bg-warning-subtle text-warning-emphasis border-warning' : 'bg-success-subtle text-success-emphasis border-success');
+                                $nivelTexto = $totalNum >= 25 ? '⚠️ Posible Exceso' : ($totalNum >= 10 ? 'Moderado' : 'Normal');
+                            ?>
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <span class="badge bg-light text-dark border font-monospace fs-6">
+                                        <i class="bi bi-whatsapp text-success me-1"></i><?= htmlspecialchars($item['telefono'], ENT_QUOTES, 'UTF-8') ?>
+                                    </span>
+                                </td>
+                                <td class="py-3 fw-semibold text-dark">
+                                    <?= htmlspecialchars(!empty($item['ultimo_nombre']) ? $item['ultimo_nombre'] : 'Socio', ENT_QUOTES, 'UTF-8') ?>
+                                </td>
+                                <td class="py-3 text-center">
+                                    <span class="badge bg-primary rounded-pill px-3 py-2 fw-bold">
+                                        <?= $totalNum ?>
+                                    </span>
+                                </td>
+                                <td class="py-3 text-secondary small">
+                                    <i class="bi bi-calendar-event me-1"></i><?= htmlspecialchars($item['ultima_fecha'], ENT_QUOTES, 'UTF-8') ?>
+                                </td>
+                                <td class="py-3 text-center">
+                                    <span class="badge <?= $nivelBadge ?> border px-2 py-1">
+                                        <?= $nivelTexto ?>
+                                    </span>
+                                </td>
+                                <td class="py-3 text-end px-4">
+                                    <a href="/reportes/visualizar?buscar=<?= urlencode($item['telefono']) ?>" class="btn btn-sm btn-outline-secondary" title="Ver historial de este número">
+                                        <i class="bi bi-search me-1"></i>Historial
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Distribución de Operadores por Especialidad -->
     <?php if (!empty($especialidades)): ?>
@@ -165,135 +225,3 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
         </div>
     </div>
 </div>
-
-<!-- Chart.js Local -->
-<script src="/assets/vendor/chartjs/chart.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Colores modernos
-    const colPrimary = '#0d6efd';
-    const colSuccess = '#198754';
-    const colWarning = '#ffc107';
-    const colDanger  = '#dc3545';
-    
-    // 1. Gráfico de Líneas: Evolución de Consultas
-    const ctxConsultas = document.getElementById('chartConsultas').getContext('2d');
-    new Chart(ctxConsultas, {
-        type: 'line',
-        data: {
-            labels: <?= $labelsDias ?>,
-            datasets: [{
-                label: 'Consultas Registradas',
-                data: <?= $datosDias ?>,
-                borderColor: colPrimary,
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                borderWidth: 3,
-                pointBackgroundColor: colPrimary,
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: colPrimary,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    titleFont: { size: 13 },
-                    bodyFont: { size: 14, weight: 'bold' },
-                    padding: 10,
-                    cornerRadius: 8,
-                    displayColors: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 },
-                    grid: { borderDash: [4, 4], color: '#e9ecef' }
-                },
-                x: {
-                    grid: { display: false }
-                }
-            }
-        }
-    });
-
-    // 2. Gráfico de Anillo: Estado de Trabajos
-    const ctxEstado = document.getElementById('chartEstadoTrabajos').getContext('2d');
-    const pendientes = <?= $totalPendientes ?>;
-    const concluidos = <?= $totalConcluidos ?>;
-    new Chart(ctxEstado, {
-        type: 'doughnut',
-        data: {
-            labels: ['Pendientes', 'Concluidos'],
-            datasets: [{
-                data: [pendientes, concluidos],
-                backgroundColor: [colWarning, colSuccess],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' }
-                }
-            }
-        }
-    });
-
-    // 3. Gráfico de Barras Agrupadas: Reconexiones vs Reclamos
-    const ctxComparativa = document.getElementById('chartComparativa').getContext('2d');
-    new Chart(ctxComparativa, {
-        type: 'bar',
-        data: {
-            labels: ['Reconexiones', 'Reclamos'],
-            datasets: [
-                {
-                    label: 'Pendientes',
-                    data: [<?= $recPend ?>, <?= $reclPend ?>],
-                    backgroundColor: colWarning,
-                    borderRadius: 4
-                },
-                {
-                    label: 'Concluidos',
-                    data: [<?= $recCon ?>, <?= $reclCon ?>],
-                    backgroundColor: colSuccess,
-                    borderRadius: 4
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: { usePointStyle: true, pointStyle: 'circle' }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 },
-                    grid: { borderDash: [4, 4], color: '#e9ecef' }
-                },
-                x: {
-                    grid: { display: false }
-                }
-            }
-        }
-    });
-});
-</script>

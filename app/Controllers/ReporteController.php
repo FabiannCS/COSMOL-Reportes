@@ -46,17 +46,12 @@ class ReporteController extends Controller
             $pagina = 1;
         }
 
-        $limit = 10;
+        $limit = 15;
         $offset = ($pagina - 1) * $limit;
 
         // 3. Consultar datos al modelo
-        $filtrosConteo   = [
-            'fecha_inicio' => $fechaInicio,
-            'fecha_fin'    => $fechaFin,
-            'buscar'       => $buscar,
-        ];
-        $totalesPorTipo  = $this->reporteModel->getTotalesPorTipoConsulta($filtrosConteo);
         $tiposConsulta   = $this->reporteModel->getTiposConsulta();
+        $totalesPorTipo  = $this->reporteModel->getTotalesPorTipoConsulta($filtros);
         $totalRegistros  = $this->reporteModel->getTotalConsultas($filtros);
         $totalPaginas    = (int)ceil($totalRegistros / $limit);
         if ($totalPaginas < 1) {
@@ -109,7 +104,7 @@ class ReporteController extends Controller
         fputs($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         // Encabezados del CSV
-        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Tipo', 'Fecha', 'Hora', 'Atendido por', 'Descripción', 'Ubicación', 'Zona', 'Ruta', 'Glosa', 'Coordenadas GPS']);
+        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Teléfono WhatsApp', 'Tipo de Consulta', 'Tipo Ubicación', 'Fecha', 'Hora', 'Atendido por']);
 
         // Escribir filas de datos
         foreach ($consultas as $row) {
@@ -117,16 +112,12 @@ class ReporteController extends Controller
                 $row['id_consulta'],
                 $row['codigo_socio'],
                 $row['nombres'],
+                !empty($row['telefono']) ? $row['telefono'] : 'N/A',
                 $row['tipo'],
+                !empty($row['tipo_ubicacion']) ? $row['tipo_ubicacion'] : 'N/A',
                 $row['fecha_consulta'],
                 $row['hora_consulta'],
-                !empty($row['username']) ? $row['username'] : 'Chatbot',
-                $row['descripcion'],
-                $row['ubicacion'],
-                $row['zona'],
-                $row['ruta'],
-                $row['glosa'],
-                $row['coordenadas_gps']
+                !empty($row['username']) ? $row['username'] : 'Chatbot'
             ]);
         }
 
