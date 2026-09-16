@@ -9,7 +9,6 @@ class Reporte extends Model
 {
     public function __construct()
     {
-        parent::__construct();
         try {
             // Migración defensiva no destructiva para columnas nuevas
             $this->db()->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS telefono VARCHAR(30);");
