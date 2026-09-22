@@ -124,4 +124,56 @@ class ReporteController extends Controller
         fclose($output);
         exit;
     }
+
+    /**
+     * Muestra la vista de visualización y filtrado de consultas de la App de Socios.
+     * GET /reportes/app-socios
+     */
+    public function visualizarAppSocios()
+    {
+        // 1. Capturar parámetros de filtrado desde GET
+        $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
+        $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
+        $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
+
+        $filtros = [
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin'    => $fechaFin,
+            'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
+        ];
+
+        // 2. Parámetros de paginación
+        $pagina = isset($_GET['p']) ? (int)$_GET['p'] : 1;
+        if ($pagina < 1) {
+            $pagina = 1;
+        }
+
+        $limit = 15;
+        $offset = ($pagina - 1) * $limit;
+
+        // 3. Consultar datos al modelo
+        $tiposConsulta   = $this->reporteModel->getTiposConsulta();
+        $totalesPorTipo  = $this->reporteModel->getTotalesPorTipoConsultaApp($filtros);
+        $totalRegistros  = $this->reporteModel->getTotalConsultasApp($filtros);
+        $totalPaginas    = (int)ceil($totalRegistros / $limit);
+        if ($totalPaginas < 1) {
+            $totalPaginas = 1;
+        }
+
+        $consultas = $this->reporteModel->getConsultasAppPaginadas($filtros, $limit, $offset);
+
+        // 4. Renderizar la vista
+        $this->view('reportes/app_socios', [
+            'consultas'      => $consultas,
+            'tiposConsulta'  => $tiposConsulta,
+            'totalesPorTipo' => $totalesPorTipo,
+            'filtros'        => $filtros,
+            'pagina'         => $pagina,
+            'totalPaginas'   => $totalPaginas,
+            'totalRegistros' => $totalRegistros,
+            'limit'          => $limit,
+        ]);
+    }
 }

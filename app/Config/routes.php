@@ -31,6 +31,7 @@ return [
 
         // Módulo de Reportes
         '/reportes/visualizar' => ['ReporteController', 'visualizar', ['auth', 'permission:reportes.ver']],
+        '/reportes/app-socios' => ['ReporteController', 'visualizarAppSocios', ['auth', 'permission:reportes.ver']],
         '/reportes/exportar'   => ['ReporteController', 'exportar',   ['auth', 'permission:reportes.exportar']],
     ],
     'POST' => [

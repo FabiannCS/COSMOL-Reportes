@@ -113,10 +113,19 @@ $isActive = function ($path) use ($currentUri) {
         <?php if ($rolActual !== 'Operador' && $hasPermission('reportes.ver')): ?>
             <li class="sidebar-section-title">Reportes</li>
 
+            <!-- 1. Reporte de Consultas Chatbot (WhatsApp) -->
             <li class="nav-item">
-                <a class="nav-link <?= $isActive('/reportes') ?>" href="/reportes/visualizar" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas Chatbot">
-                    <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                <a class="nav-link <?= ($currentUri === '/reportes/visualizar' || $currentUri === '/reportes/exportar' || $currentUri === '/reportes') ? 'active' : '' ?>" href="/reportes/visualizar" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas Chatbot">
+                    <i class="bi bi-whatsapp"></i>
                     <span style="color: #f8fafc;">Consultas Chatbot</span>
+                </a>
+            </li>
+
+            <!-- 2. Reporte de Movimientos App de Socios -->
+            <li class="nav-item">
+                <a class="nav-link <?= ($currentUri === '/reportes/app-socios') ? 'active' : '' ?>" href="/reportes/app-socios" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="App de Socios">
+                    <i class="bi bi-phone"></i>
+                    <span style="color: #f8fafc;">App de Socios</span>
                 </a>
             </li>
         <?php endif; ?>

@@ -41,6 +41,11 @@ class ConsultaApiController extends Controller
         $telefono      = isset($input['telefono']) && !empty($input['telefono']) ? trim((string)$input['telefono']) : null;
         $tipoUbicacion = isset($input['tipo_ubicacion']) && !empty($input['tipo_ubicacion']) ? trim((string)$input['tipo_ubicacion']) : null;
 
+        // Determinar el identificador de canal / usuario (3 = App Móvil, 2 = Chatbot WhatsApp)
+        $idUsuario = isset($input['id_usuario']) && !empty($input['id_usuario']) 
+            ? (int)$input['id_usuario'] 
+            : (($tipoUbicacion === 'APP_MOVIL') ? 3 : 2);
+
         if ($codigoSocio <= 0 || !$idTipo) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Parámetros obligatorios faltantes']);
@@ -54,9 +59,23 @@ class ConsultaApiController extends Controller
             $db->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS telefono VARCHAR(30);");
             $db->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS tipo_ubicacion VARCHAR(20);");
 
+            // Semillas defensivas para garantizar integridad de FKs (tipo_consulta y usuario)
+            $db->exec("
+                INSERT INTO tipo_consulta (id_tipo, nombre, descripcion) VALUES
+                (9, 'Descarga de Factura PDF', 'Descarga o visualización de factura en PDF desde la app móvil'),
+                (10, 'Intento de Pago', 'Redirección o generación de enlace hacia pasarela de pagos desde la app')
+                ON CONFLICT (id_tipo) DO NOTHING;
+            ");
+            $db->exec("
+                INSERT INTO usuario (id_usuario, username, password_hash, id_rol, estado) VALUES
+                (2, 'chatbot_whatsapp', 'SISTEMA_NO_LOGIN', 2, 1),
+                (3, 'app_movil', 'SISTEMA_NO_LOGIN', 2, 1)
+                ON CONFLICT (id_usuario) DO NOTHING;
+            ");
+
             $stmt = $db->prepare("
-                INSERT INTO consulta (codigo_socio, nombres, telefono, tipo_ubicacion, fecha_consulta, hora_consulta, id_tipo)
-                VALUES (:codigo_socio, :nombres, :telefono, :tipo_ubicacion, :fecha_consulta, :hora_consulta, :id_tipo)
+                INSERT INTO consulta (codigo_socio, nombres, telefono, tipo_ubicacion, fecha_consulta, hora_consulta, id_tipo, id_usuario)
+                VALUES (:codigo_socio, :nombres, :telefono, :tipo_ubicacion, :fecha_consulta, :hora_consulta, :id_tipo, :id_usuario)
             ");
 
             $stmt->execute([
@@ -66,7 +85,8 @@ class ConsultaApiController extends Controller
                 ':tipo_ubicacion' => $tipoUbicacion,
                 ':fecha_consulta' => $fecha,
                 ':hora_consulta'  => $hora,
-                ':id_tipo'        => $idTipo
+                ':id_tipo'        => $idTipo,
+                ':id_usuario'     => $idUsuario
             ]);
 
             http_response_code(201);
