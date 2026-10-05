@@ -57,20 +57,32 @@ INSERT INTO especialidad (nombre) VALUES
 ('Agua Potable')
 ON CONFLICT DO NOTHING;
 
--- Datos iniciales de tipos de consulta (homologados con el Chatbot)
+-- Usuarios de sistema para ingesta de consultas automatizadas (id_rol = 2: Supervisor / Sistema)
+INSERT INTO usuario (username, password_hash, id_rol, estado) VALUES
+('chatbot_whatsapp', 'SISTEMA_NO_LOGIN', 2, 1),
+('app_movil', 'SISTEMA_NO_LOGIN', 2, 1)
+ON CONFLICT (username) DO NOTHING;
+
+-- Datos iniciales de tipos de consulta (homologados con el Chatbot y App Móvil)
 INSERT INTO tipo_consulta (id_tipo, nombre, descripcion) VALUES
-(1, 'Autenticación / Acceso', 'Socio valida su código fijo en el chatbot'),
+(1, 'Autenticación / Acceso', 'Socio valida su identidad en el chatbot o inicia sesión en la app'),
 (2, 'Consulta de Deuda', 'Consulta de facturas pendientes y saldo'),
-(3, 'Historial de Facturas', 'Consulta de facturas pagadas anteriormente'),
+(3, 'Historial de Consumo', 'Consulta de histórico de consumo en m³ y facturas pagadas'),
 (4, 'Registro de Reclamo', 'Ticket de reclamo por agua o alcantarillado registrado'),
 (5, 'Solicitud de Reconexión', 'Ticket de trámite de reconexión registrado'),
 (6, 'Información de Oficinas', 'Consulta de ubicación de oficina central y horarios de atención'),
 (7, 'Derivación a Agente', 'Solicitud de atención con un operador humano'),
-(8, 'Estado de Solicitudes', 'Consulta de estado de reclamos y reconexiones')
-ON CONFLICT (id_tipo) DO NOTHING;
+(8, 'Estado de Solicitudes', 'Consulta de estado de reclamos y reconexiones'),
+(9, 'Descarga de Factura PDF', 'Descarga o visualización de factura en PDF desde la app móvil'),
+(10, 'Pago: Multipago', 'Intento de pago o redirección a pasarela Multipago desde la app'),
+(11, 'Pago: Pago al Paso', 'Intento de pago o redirección a pasarela Pago al Paso desde la app'),
+(12, 'Pago: Código QR', 'Generación de código QR interbancario para pago desde la app')
+ON CONFLICT (id_tipo) DO UPDATE SET
+    nombre = EXCLUDED.nombre,
+    descripcion = EXCLUDED.descripcion;
 
 -- Ajustar la secuencia para futuros registros autoincrementales
-SELECT setval('tipo_consulta_id_tipo_seq', COALESCE((SELECT MAX(id_tipo) FROM tipo_consulta), 1));
+SELECT setval('tipo_consulta_id_tipo_seq', COALESCE((SELECT MAX(id_tipo) FROM tipo_consulta), 12));
 
 -- Tablas de Permisos y Rol-Permiso
 CREATE TABLE IF NOT EXISTS permiso (

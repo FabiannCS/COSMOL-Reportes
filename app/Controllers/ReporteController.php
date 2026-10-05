@@ -124,4 +124,102 @@ class ReporteController extends Controller
         fclose($output);
         exit;
     }
+
+    /**
+     * Muestra la vista de visualización y filtrado de consultas de la App Móvil.
+     * GET /reportes/app-movil
+     */
+    public function visualizarAppMovil()
+    {
+        // 1. Capturar parámetros de filtrado desde GET
+        $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
+        $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
+        $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
+
+        $filtros = [
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin'    => $fechaFin,
+            'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
+        ];
+
+        // 2. Parámetros de paginación
+        $pagina = isset($_GET['p']) ? (int)$_GET['p'] : 1;
+        if ($pagina < 1) {
+            $pagina = 1;
+        }
+
+        $limit = 15;
+        $offset = ($pagina - 1) * $limit;
+
+        // 3. Consultar datos al modelo
+        $tiposConsulta   = $this->reporteModel->getTiposConsultaApp();
+        $totalesPorTipo  = $this->reporteModel->getTotalesPorTipoApp($filtros);
+        $totalRegistros  = $this->reporteModel->getTotalConsultasApp($filtros);
+        $totalPaginas    = (int)ceil($totalRegistros / $limit);
+        if ($totalPaginas < 1) {
+            $totalPaginas = 1;
+        }
+
+        $consultas = $this->reporteModel->getConsultasAppPaginadas($filtros, $limit, $offset);
+
+        // 4. Renderizar la vista
+        $this->view('reportes/app_movil', [
+            'consultas'      => $consultas,
+            'tiposConsulta'  => $tiposConsulta,
+            'totalesPorTipo' => $totalesPorTipo,
+            'filtros'        => $filtros,
+            'pagina'         => $pagina,
+            'totalPaginas'   => $totalPaginas,
+            'totalRegistros' => $totalRegistros,
+            'limit'          => $limit,
+        ]);
+    }
+
+    /**
+     * Exporta las consultas filtradas de la App Móvil a formato CSV.
+     * GET /reportes/app-movil/exportar
+     */
+    public function exportarAppMovil()
+    {
+        $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
+        $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
+        $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
+
+        $filtros = [
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin'    => $fechaFin,
+            'id_tipo'      => $idTipo,
+            'buscar'       => $buscar,
+        ];
+
+        $consultas = $this->reporteModel->getAllConsultasAppExport($filtros);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="reporte_app_movil_' . date('Ymd_His') . '.csv"');
+
+        $output = fopen('php://output', 'w');
+        fputs($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM UTF-8
+
+        // Encabezados limpios sin "WhatsApp" ni ubicación
+        fputcsv($output, ['ID Consulta', 'Cód. Socio', 'Nombres', 'Teléfono', 'Tipo de Evento', 'Fecha', 'Hora', 'Canal']);
+
+        foreach ($consultas as $row) {
+            fputcsv($output, [
+                $row['id_consulta'],
+                $row['codigo_socio'],
+                $row['nombres'],
+                !empty($row['telefono']) ? $row['telefono'] : 'N/A',
+                $row['tipo'],
+                $row['fecha_consulta'],
+                $row['hora_consulta'],
+                'App Móvil'
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
 }

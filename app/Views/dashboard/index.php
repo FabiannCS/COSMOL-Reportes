@@ -35,69 +35,90 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
     <!-- Tarjetas de Resumen KPI Informativas -->
     <div class="row g-3 g-xl-4 mb-4">
         <!-- Consultas Chatbot -->
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
-                    <div class="me-3">
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Consultas Chatbot</span>
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="me-2">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.75rem;">Chatbot WhatsApp</span>
                         <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalConsultas) ? (int)$totalConsultas : 0 ?></span>
                         <small class="text-muted d-block text-truncate">
-                            <i class="bi bi-whatsapp text-success me-1"></i><span class="fw-semibold"><?= isset($totalNumerosUnicos) ? (int)$totalNumerosUnicos : 0 ?></span> números únicos
+                            <i class="bi bi-whatsapp text-success me-1"></i><span class="fw-semibold"><?= isset($totalNumerosUnicos) ? (int)$totalNumerosUnicos : 0 ?></span> números
                         </small>
                     </div>
                     <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-chat-dots-fill fs-2"></i>
+                        <i class="bi bi-chat-dots-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consultas App Móvil -->
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="me-2">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.75rem;">App Móvil Socios</span>
+                        <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalConsultasApp) ? (int)$totalConsultasApp : 0 ?></span>
+                        <small class="text-muted d-block text-truncate">
+                            <i class="bi bi-phone-fill text-primary me-1"></i>Actividad móvil
+                        </small>
+                    </div>
+                    <div class="bg-info bg-opacity-10 text-info rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-phone-fill fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Trabajos Pendientes -->
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
-                    <div class="me-3">
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Trabajos Pendientes</span>
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="me-2">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.75rem;">Trabajos Pendientes</span>
                         <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalPendientes) ? (int)$totalPendientes : 0 ?></span>
                         <small class="text-muted d-block text-truncate">
                             <span class="fw-semibold"><?= $recPend ?></span> rec. - <span class="fw-semibold"><?= $reclPend ?></span> recl.
                         </small>
                     </div>
                     <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-hourglass-split fs-2"></i>
+                        <i class="bi bi-hourglass-split fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Trabajos Concluidos -->
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
-                    <div class="me-3">
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Trabajos Concluidos</span>
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="me-2">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.75rem;">Trabajos Concluidos</span>
                         <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalConcluidos) ? (int)$totalConcluidos : 0 ?></span>
                         <small class="text-muted d-block text-truncate">
                             <span class="fw-semibold"><?= $recCon ?></span> rec. - <span class="fw-semibold"><?= $reclCon ?></span> recl.
                         </small>
                     </div>
                     <div class="bg-success bg-opacity-10 text-success rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-check-circle-fill fs-2"></i>
+                        <i class="bi bi-check-circle-fill fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Total Operadores -->
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between">
-                    <div class="me-3">
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Operadores</span>
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="me-2">
+                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.75rem;">Total Operadores</span>
                         <span class="h2 fw-bold mb-1 d-block text-dark"><?= isset($totalOperadores) ? (int)$totalOperadores : 0 ?></span>
+                        <small class="text-muted d-block text-truncate">
+                            Personal activo
+                        </small>
                     </div>
-                    <div class="bg-info bg-opacity-10 text-info rounded-3 p-3 d-flex align-items-center justify-content-center">
-                        <i class="bi bi-people-fill fs-2"></i>
+                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-3 p-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people-fill fs-3"></i>
                     </div>
                 </div>
             </div>
@@ -203,23 +224,29 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
         </h6>
     </div>
     <div class="row g-2">
-        <div class="col-12 col-md-4">
-            <a href="/administrador/trabajos" class="btn btn-outline-warning w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border">
-                <span class="fw-semibold small text-dark"><i class="bi bi-card-checklist me-2 text-warning fs-5 align-middle"></i>Ver Trabajos Pendientes</span>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/administrador/trabajos" class="btn btn-outline-warning w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border h-100">
+                <span class="fw-semibold small text-dark"><i class="bi bi-card-checklist me-2 text-warning fs-5 align-middle"></i>Trabajos Pendientes</span>
                 <i class="bi bi-chevron-right text-muted small"></i>
             </a>
         </div>
         <?php if ($rol === 'Administrador'): ?>
-        <div class="col-12 col-md-4">
-            <a href="/administrador/usuarios" class="btn btn-outline-info w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/administrador/usuarios" class="btn btn-outline-info w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border h-100">
                 <span class="fw-semibold small text-dark"><i class="bi bi-people me-2 text-info fs-5 align-middle"></i>Gestionar Usuarios</span>
                 <i class="bi bi-chevron-right text-muted small"></i>
             </a>
         </div>
         <?php endif; ?>
-        <div class="col-12 col-md-4">
-            <a href="/reportes/visualizar" class="btn btn-outline-primary w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border">
-                <span class="fw-semibold small text-dark"><i class="bi bi-graph-up-arrow me-2 text-primary fs-5 align-middle"></i>Ver Reportes</span>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/reportes/visualizar" class="btn btn-outline-primary w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border h-100">
+                <span class="fw-semibold small text-dark"><i class="bi bi-chat-dots-fill me-2 text-primary fs-5 align-middle"></i>Reportes Chatbot</span>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/reportes/app-movil" class="btn btn-outline-success w-100 py-2 px-3 text-start d-flex align-items-center justify-content-between rounded-3 border h-100">
+                <span class="fw-semibold small text-dark"><i class="bi bi-phone-fill me-2 text-success fs-5 align-middle"></i>Reportes App Móvil</span>
                 <i class="bi bi-chevron-right text-muted small"></i>
             </a>
         </div>

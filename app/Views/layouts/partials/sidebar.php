@@ -114,9 +114,16 @@ $isActive = function ($path) use ($currentUri) {
             <li class="sidebar-section-title">Reportes</li>
 
             <li class="nav-item">
-                <a class="nav-link <?= $isActive('/reportes') ?>" href="/reportes/visualizar" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas Chatbot">
-                    <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                <a class="nav-link <?= ($currentUri === '/reportes/visualizar' || $currentUri === '/reportes/exportar') ? 'active' : '' ?>" href="/reportes/visualizar" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas Chatbot">
+                    <i class="bi bi-chat-dots-fill"></i>
                     <span style="color: #f8fafc;">Consultas Chatbot</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link <?= (strpos($currentUri, '/reportes/app-movil') === 0) ? 'active' : '' ?>" href="/reportes/app-movil" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas App Móvil">
+                    <i class="bi bi-phone-fill"></i>
+                    <span style="color: #f8fafc;">Consultas App Móvil</span>
                 </a>
             </li>
         <?php endif; ?>

@@ -121,14 +121,32 @@ class AuthController extends Controller
             $consultas7Dias[date('Y-m-d', strtotime("-$i days"))] = 0;
         }
 
+        $totalConsultasApp = 0;
         try {
-            $stmt = $db->query("SELECT COUNT(*) FROM consulta");
+            // Conteo exclusivo de consultas del Chatbot
+            $stmt = $db->query("
+                SELECT COUNT(*) FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)
+            ");
             $totalConsultas = (int)$stmt->fetchColumn();
+
+            // Conteo exclusivo de consultas de la App Móvil
+            $stmtApp = $db->query("
+                SELECT COUNT(*) FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+            ");
+            $totalConsultasApp = (int)$stmtApp->fetchColumn();
 
             $stmtDias = $db->query("
                 SELECT fecha_consulta, COUNT(*) as total 
-                FROM consulta 
-                WHERE fecha_consulta >= CURRENT_DATE - INTERVAL '6 days' 
+                FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE fecha_consulta >= CURRENT_DATE - INTERVAL '6 days'
+                  AND (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)
                 GROUP BY fecha_consulta 
                 ORDER BY fecha_consulta ASC
             ");
@@ -140,7 +158,8 @@ class AuthController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            $totalConsultas = 0; // Por si la tabla consulta aún no existe
+            $totalConsultas    = 0;
+            $totalConsultasApp = 0;
         }
 
         // --- 2. Cantidad de Operadores ---
@@ -220,6 +239,7 @@ class AuthController extends Controller
             'title'                     => 'Dashboard — COSMOL Reportes',
             'usuario'                   => $usuario,
             'totalConsultas'            => $totalConsultas,
+            'totalConsultasApp'         => $totalConsultasApp,
             'totalNumerosUnicos'        => $totalNumerosUnicos,
             'numerosMasActivos'         => $numerosMasActivos,
             'totalOperadores'           => $totalOperadores,
