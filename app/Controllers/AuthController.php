@@ -236,7 +236,7 @@ class AuthController extends Controller
         $numerosMasActivos  = $reporteModel->getNumerosMasActivos(5);
 
         $this->view('dashboard/index', [
-            'title'                     => 'Dashboard — COSMOL Reportes',
+            'title'                     => 'Métricas — COSMOL Reportes',
             'usuario'                   => $usuario,
             'totalConsultas'            => $totalConsultas,
             'totalConsultasApp'         => $totalConsultasApp,

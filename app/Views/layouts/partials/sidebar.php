@@ -37,12 +37,12 @@ $isActive = function ($path) use ($currentUri) {
 
     <!-- Navegación Principal -->
     <ul class="sidebar-nav flex-grow-1">
-        <!-- Dashboard: Visible para Administradores y Supervisores con permisos -->
+        <!-- Métricas: Visible para Administradores y Supervisores con permisos -->
         <?php if ($rolActual !== 'Operador' && ($hasPermission('reportes.ver') || $hasPermission('trabajos.ver') || $hasPermission('usuarios.ver') || $hasPermission('roles.ver'))): ?>
             <li class="nav-item">
-                <a class="nav-link <?= $isActive('/dashboard') ?>" href="/dashboard" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Dashboard">
+                <a class="nav-link <?= $isActive('/dashboard') ?>" href="/dashboard" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Métricas">
                     <i class="bi bi-speedometer2"></i>
-                    <span style="color: #f8fafc;">Dashboard</span>
+                    <span style="color: #f8fafc;">Métricas</span>
                 </a>
             </li>
         <?php endif; ?>

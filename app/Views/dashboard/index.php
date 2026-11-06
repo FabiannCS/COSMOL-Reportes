@@ -27,7 +27,7 @@ $especialidades = isset($operadoresPorEspecialidad) && is_array($operadoresPorEs
     <!-- Encabezado de Página -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-4">
         <div>
-            <h1 class="h2 fw-bold mb-1 text-dark">Panel Principal</h1>
+            <h1 class="h2 fw-bold mb-1 text-dark">Panel de Métricas</h1>
             <p class="text-muted small mb-0">Resumen en tiempo real del estado de trabajos y consultas del chatbot de COSMOL.</p>
         </div>
     </div>
