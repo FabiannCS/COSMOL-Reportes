@@ -13,43 +13,42 @@ class Reporte extends Model
             // Migración defensiva no destructiva para columnas nuevas
             $this->db()->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS telefono VARCHAR(30);");
             $this->db()->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS tipo_ubicacion VARCHAR(20);");
-
-            // Semillas defensivas para garantizar claves foráneas de tipo_consulta y usuario
-            $this->db()->exec("
-                INSERT INTO tipo_consulta (id_tipo, nombre, descripcion) VALUES
-                (9, 'Descarga de Factura PDF', 'Descarga o visualización de factura en PDF desde la app móvil'),
-                (10, 'Intento de Pago', 'Redirección o generación de enlace hacia pasarela de pagos desde la app')
-                ON CONFLICT (id_tipo) DO NOTHING;
-            ");
-            $this->db()->exec("
-                INSERT INTO usuario (id_usuario, username, password_hash, id_rol, estado) VALUES
-                (2, 'chatbot_whatsapp', 'SISTEMA_NO_LOGIN', 2, 1),
-                (3, 'app_movil', 'SISTEMA_NO_LOGIN', 2, 1)
-                ON CONFLICT (id_usuario) DO NOTHING;
-            ");
         } catch (\Exception $e) {
             // Silencioso ante contingencias de permisos
         }
     }
 
     /**
-     * Obtiene todos los tipos de consulta disponibles.
+     * Obtiene los tipos de consulta correspondientes al Chatbot (1 al 8).
      *
-     * @return array Lista de tipos de consulta
+     * @return array
      */
     public function getTiposConsulta()
     {
-        $sql = "SELECT id_tipo, nombre FROM tipo_consulta ORDER BY nombre ASC";
+        $sql = "SELECT id_tipo, nombre FROM tipo_consulta WHERE id_tipo <= 8 ORDER BY id_tipo ASC";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Obtiene el conteo total de consultas agrupadas por tipo de consulta,
-     * considerando filtros de fecha y búsqueda.
+     * Obtiene los tipos de consulta correspondientes a la App Móvil (1, 2, 3, 9, 10, 11, 12).
      *
-     * @param array $filtros Filtros aplicables (fecha_inicio, fecha_fin, buscar)
+     * @return array
+     */
+    public function getTiposConsultaApp()
+    {
+        $sql = "SELECT id_tipo, nombre FROM tipo_consulta WHERE id_tipo IN (1, 2, 3, 9, 10, 11, 12) ORDER BY id_tipo ASC";
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene el conteo total de consultas del Chatbot agrupadas por tipo,
+     * excluyendo registros de la App Móvil.
+     *
+     * @param array $filtros
      * @return array
      */
     public function getTotalesPorTipoConsulta($filtros = [])
@@ -60,33 +59,32 @@ class Reporte extends Model
                     t.descripcion,
                     COUNT(c.id_consulta) as total
                 FROM tipo_consulta t
-                LEFT JOIN consulta c ON t.id_tipo = c.id_tipo
-                     AND (c.id_usuario IS NULL OR c.id_usuario != 3)
-                     AND (c.tipo_ubicacion IS NULL OR c.tipo_ubicacion != 'APP_MOVIL')";
+                LEFT JOIN (
+                    SELECT c.id_consulta, c.id_tipo
+                    FROM consulta c
+                    LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                    WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                      AND (u.username != 'app_movil' OR u.username IS NULL)
+        ";
 
         $params = [];
-        $conditions = [];
-
         if (!empty($filtros['fecha_inicio'])) {
-            $conditions[] = "c.fecha_consulta >= :fecha_inicio";
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
             $params[':fecha_inicio'] = $filtros['fecha_inicio'];
         }
-
         if (!empty($filtros['fecha_fin'])) {
-            $conditions[] = "c.fecha_consulta <= :fecha_fin";
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
             $params[':fecha_fin'] = $filtros['fecha_fin'];
         }
-
         if (!empty($filtros['buscar'])) {
-            $conditions[] = "(c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
             $params[':buscar'] = '%' . $filtros['buscar'] . '%';
         }
 
-        if (!empty($conditions)) {
-            $sql .= " AND " . implode(" AND ", $conditions);
-        }
-
-        $sql .= " GROUP BY t.id_tipo, t.nombre, t.descripcion ORDER BY t.id_tipo ASC";
+        $sql .= " ) c ON t.id_tipo = c.id_tipo
+                WHERE t.id_tipo <= 8
+                GROUP BY t.id_tipo, t.nombre, t.descripcion
+                ORDER BY t.id_tipo ASC";
 
         $stmt = $this->db()->prepare($sql);
         $stmt->execute($params);
@@ -94,12 +92,228 @@ class Reporte extends Model
     }
 
     /**
-     * Obtiene consultas paginadas y filtradas.
+     * Obtiene los socios/usuarios únicos del Chatbot paginados con sus métricas agregadas.
      *
-     * @param array $filtros Filtros opcionales (fecha_inicio, fecha_fin, id_tipo, buscar)
-     * @param int $limit Límite de resultados
-     * @param int $offset Desplazamiento para paginación
-     * @return array Resultados de consultas
+     * @param array $filtros
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function getSociosChatbotPaginados($filtros, $limit, $offset)
+    {
+        $sql = "SELECT 
+                    COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) AS socio_key,
+                    c.codigo_socio,
+                    MAX(c.nombres) AS nombres,
+                    MAX(c.telefono) AS telefono,
+                    COUNT(c.id_consulta) AS total_consultas,
+                    MAX(c.fecha_consulta) AS ultima_fecha,
+                    MAX(c.hora_consulta) AS ultima_hora
+                FROM consulta c
+                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " GROUP BY socio_key, c.codigo_socio";
+        $sql .= " ORDER BY ultima_fecha DESC, ultima_hora DESC, socio_key DESC";
+        $sql .= " LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db()->prepare($sql);
+
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene el total de socios/usuarios únicos del Chatbot para la paginación según filtros.
+     *
+     * @param array $filtros
+     * @return int
+     */
+    public function getTotalSociosChatbot($filtros)
+    {
+        $sql = "SELECT COUNT(DISTINCT COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))))
+                FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Obtiene las acciones/consultas del Chatbot de un conjunto de socios para el desglose.
+     *
+     * @param array $socioKeys
+     * @param array $filtros
+     * @return array Array asociativo [socio_key => [consultas]]
+     */
+    public function getAccionesChatbotPorSocios(array $socioKeys, $filtros = [])
+    {
+        if (empty($socioKeys)) {
+            return [];
+        }
+
+        $inPlaceholders = [];
+        $params = [];
+        foreach (array_values($socioKeys) as $idx => $key) {
+            $pName = ':sk_' . $idx;
+            $inPlaceholders[] = $pName;
+            $params[$pName] = (string)$key;
+        }
+
+        $sql = "SELECT 
+                    c.id_consulta,
+                    c.codigo_socio,
+                    c.nombres,
+                    c.telefono,
+                    c.fecha_consulta,
+                    c.hora_consulta,
+                    t.nombre AS tipo,
+                    t.id_tipo,
+                    u.username,
+                    COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) AS socio_key
+                FROM consulta c
+                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)
+                  AND COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) IN (" . implode(', ', $inPlaceholders) . ")";
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $agrupados = [];
+        foreach ($rows as $row) {
+            $agrupados[$row['socio_key']][] = $row;
+        }
+        return $agrupados;
+    }
+
+    /**
+     * Obtiene todos los socios del Chatbot para exportar a CSV según filtros.
+     *
+     * @param array $filtros
+     * @return array
+     */
+    public function getAllSociosChatbotExport($filtros)
+    {
+        $sql = "SELECT 
+                    COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) AS socio_key,
+                    c.codigo_socio,
+                    MAX(c.nombres) AS nombres,
+                    MAX(c.telefono) AS telefono,
+                    COUNT(c.id_consulta) AS total_consultas,
+                    MAX(c.fecha_consulta) AS ultima_fecha,
+                    MAX(c.hora_consulta) AS ultima_hora
+                FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " GROUP BY socio_key, c.codigo_socio";
+        $sql .= " ORDER BY ultima_fecha DESC, ultima_hora DESC, socio_key DESC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene consultas paginadas y filtradas del Chatbot (excluye App Móvil).
      */
     public function getConsultasPaginadas($filtros, $limit, $offset)
     {
@@ -107,8 +321,8 @@ class Reporte extends Model
                 FROM consulta c
                 LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.id_usuario IS NULL OR c.id_usuario != 3) 
-                  AND (c.tipo_ubicacion IS NULL OR c.tipo_ubicacion != 'APP_MOVIL')";
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)";
 
         $params = [];
 
@@ -148,19 +362,15 @@ class Reporte extends Model
     }
 
     /**
-     * Obtiene el total de consultas para la paginación según los filtros.
-     *
-     * @param array $filtros Filtros aplicables
-     * @return int Total de registros
+     * Obtiene el total de consultas del Chatbot para paginación (excluye App Móvil).
      */
     public function getTotalConsultas($filtros)
     {
         $sql = "SELECT COUNT(*)
                 FROM consulta c
-                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.id_usuario IS NULL OR c.id_usuario != 3) 
-                  AND (c.tipo_ubicacion IS NULL OR c.tipo_ubicacion != 'APP_MOVIL')";
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)";
 
         $params = [];
 
@@ -190,10 +400,7 @@ class Reporte extends Model
     }
 
     /**
-     * Obtiene todas las consultas para exportar a CSV, aplicando filtros.
-     *
-     * @param array $filtros Filtros aplicables
-     * @return array Sábana de datos
+     * Obtiene consultas del Chatbot para exportar a CSV.
      */
     public function getAllConsultasExport($filtros)
     {
@@ -201,8 +408,397 @@ class Reporte extends Model
                 FROM consulta c
                 LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.id_usuario IS NULL OR c.id_usuario != 3) 
-                  AND (c.tipo_ubicacion IS NULL OR c.tipo_ubicacion != 'APP_MOVIL')";
+                WHERE (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL)
+                  AND (u.username != 'app_movil' OR u.username IS NULL)";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // =========================================================================
+    // MÉTODOS ESPECIALIZADOS PARA EL MÓDULO APP MÓVIL
+    // =========================================================================
+
+    /**
+     * Obtiene el conteo agrupado por tipo para las tarjetas KPI de la App Móvil.
+     * Tipos: 1 (Acceso), 3 (Consumo), 9 (PDF), 10 (Multipago), 11 (Pago al Paso), 12 (QR).
+     */
+    public function getTotalesPorTipoApp($filtros = [])
+    {
+        $sql = "SELECT 
+                    t.id_tipo,
+                    t.nombre,
+                    t.descripcion,
+                    COUNT(c.id_consulta) as total
+                FROM tipo_consulta t
+                LEFT JOIN (
+                    SELECT c.id_consulta, c.id_tipo
+                    FROM consulta c
+                    LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                    WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+        ";
+
+        $params = [];
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " ) c ON t.id_tipo = c.id_tipo
+                WHERE t.id_tipo IN (1, 2, 3, 9, 10, 11, 12)
+                GROUP BY t.id_tipo, t.nombre, t.descripcion
+                ORDER BY t.id_tipo ASC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene los socios/usuarios únicos de la App Móvil paginados con sus métricas agregadas.
+     *
+     * @param array $filtros
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function getSociosAppPaginados($filtros, $limit, $offset)
+    {
+        $sql = "SELECT 
+                    COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) AS socio_key,
+                    c.codigo_socio,
+                    MAX(c.nombres) AS nombres,
+                    MAX(c.telefono) AS telefono,
+                    COUNT(c.id_consulta) AS total_consultas,
+                    MAX(c.fecha_consulta) AS ultima_fecha,
+                    MAX(c.hora_consulta) AS ultima_hora
+                FROM consulta c
+                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " GROUP BY socio_key, c.codigo_socio";
+        $sql .= " ORDER BY ultima_fecha DESC, ultima_hora DESC, socio_key DESC";
+        $sql .= " LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db()->prepare($sql);
+
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene el total de socios/usuarios únicos de la App Móvil para la paginación según filtros.
+     *
+     * @param array $filtros
+     * @return int
+     */
+    public function getTotalSociosApp($filtros)
+    {
+        $sql = "SELECT COUNT(DISTINCT COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))))
+                FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Obtiene las acciones/eventos de la App Móvil de un conjunto de socios para el desglose.
+     *
+     * @param array $socioKeys
+     * @param array $filtros
+     * @return array Array asociativo [socio_key => [consultas]]
+     */
+    public function getAccionesAppPorSocios(array $socioKeys, $filtros = [])
+    {
+        if (empty($socioKeys)) {
+            return [];
+        }
+
+        $inPlaceholders = [];
+        $params = [];
+        foreach (array_values($socioKeys) as $idx => $key) {
+            $pName = ':sk_' . $idx;
+            $inPlaceholders[] = $pName;
+            $params[$pName] = (string)$key;
+        }
+
+        $sql = "SELECT 
+                    c.id_consulta,
+                    c.codigo_socio,
+                    c.nombres,
+                    c.telefono,
+                    c.fecha_consulta,
+                    c.hora_consulta,
+                    t.nombre AS tipo,
+                    t.id_tipo,
+                    u.username,
+                    COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) AS socio_key
+                FROM consulta c
+                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) IN (" . implode(', ', $inPlaceholders) . ")";
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $agrupados = [];
+        foreach ($rows as $row) {
+            $agrupados[$row['socio_key']][] = $row;
+        }
+        return $agrupados;
+    }
+
+    /**
+     * Obtiene todos los socios de la App Móvil para exportar a CSV según filtros.
+     *
+     * @param array $filtros
+     * @return array
+     */
+    public function getAllSociosAppExport($filtros)
+    {
+        $sql = "SELECT 
+                    COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) AS socio_key,
+                    c.codigo_socio,
+                    MAX(c.nombres) AS nombres,
+                    MAX(c.telefono) AS telefono,
+                    COUNT(c.id_consulta) AS total_consultas,
+                    MAX(c.fecha_consulta) AS ultima_fecha,
+                    MAX(c.hora_consulta) AS ultima_hora
+                FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " GROUP BY socio_key, c.codigo_socio";
+        $sql .= " ORDER BY ultima_fecha DESC, ultima_hora DESC, socio_key DESC";
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene consultas paginadas y filtradas exclusivamente de la App Móvil.
+     */
+    public function getConsultasAppPaginadas($filtros, $limit, $offset)
+    {
+        $sql = "SELECT c.id_consulta, c.codigo_socio, c.nombres, c.telefono, c.tipo_ubicacion, c.fecha_consulta, c.hora_consulta, t.nombre as tipo, t.id_tipo, u.username
+                FROM consulta c
+                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
+        $sql .= " LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db()->prepare($sql);
+
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene el total de registros de la App Móvil para la paginación.
+     */
+    public function getTotalConsultasApp($filtros)
+    {
+        $sql = "SELECT COUNT(*)
+                FROM consulta c
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+
+        $params = [];
+
+        if (!empty($filtros['fecha_inicio'])) {
+            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
+        }
+
+        if (!empty($filtros['fecha_fin'])) {
+            $sql .= " AND c.fecha_consulta <= :fecha_fin";
+            $params[':fecha_fin'] = $filtros['fecha_fin'];
+        }
+
+        if (!empty($filtros['id_tipo'])) {
+            $sql .= " AND c.id_tipo = :id_tipo";
+            $params[':id_tipo'] = $filtros['id_tipo'];
+        }
+
+        if (!empty($filtros['buscar'])) {
+            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
+            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
+        }
+
+        $stmt = $this->db()->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Obtiene todas las consultas de la App Móvil para exportar a CSV.
+     */
+    public function getAllConsultasAppExport($filtros)
+    {
+        $sql = "SELECT c.id_consulta, c.codigo_socio, c.nombres, c.telefono, c.tipo_ubicacion, c.fecha_consulta, c.hora_consulta, t.nombre as tipo, t.id_tipo, u.username
+                FROM consulta c
+                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
+                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
 
         $params = [];
 
@@ -271,154 +867,5 @@ class Reporte extends Model
         } catch (\Exception $e) {
             return [];
         }
-    }
-
-    // =========================================================================
-    // MÉTODOS EXCLUSIVOS PARA LA APP DE SOCIOS
-    // =========================================================================
-
-    /**
-     * Totales para Tarjetas KPI de la App Móvil indexados asociativamente por id_tipo.
-     *
-     * @param array $filtros
-     * @return array Mapa asociativo [id_tipo => total]
-     */
-    public function getTotalesPorTipoConsultaApp($filtros = [])
-    {
-        $sql = "SELECT 
-                    t.id_tipo,
-                    COUNT(c.id_consulta) as total
-                FROM tipo_consulta t
-                LEFT JOIN consulta c ON t.id_tipo = c.id_tipo 
-                     AND (c.id_usuario = 3 OR c.tipo_ubicacion = 'APP_MOVIL')";
-
-        $params = [];
-        $conditions = [];
-
-        if (!empty($filtros['fecha_inicio'])) {
-            $conditions[] = "c.fecha_consulta >= :fecha_inicio";
-            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
-        }
-
-        if (!empty($filtros['fecha_fin'])) {
-            $conditions[] = "c.fecha_consulta <= :fecha_fin";
-            $params[':fecha_fin'] = $filtros['fecha_fin'];
-        }
-
-        if (!empty($filtros['buscar'])) {
-            $conditions[] = "(c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
-            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
-        }
-
-        if (!empty($conditions)) {
-            $sql .= " AND " . implode(" AND ", $conditions);
-        }
-
-        $sql .= " GROUP BY t.id_tipo ORDER BY t.id_tipo ASC";
-
-        $stmt = $this->db()->prepare($sql);
-        $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $mapaTotales = [];
-        foreach ($rows as $row) {
-            $mapaTotales[(int)$row['id_tipo']] = (int)$row['total'];
-        }
-
-        return $mapaTotales;
-    }
-
-    /**
-     * Listado paginado de eventos exclusivos de la App de Socios.
-     *
-     * @param array $filtros
-     * @param int $limit
-     * @param int $offset
-     * @return array
-     */
-    public function getConsultasAppPaginadas($filtros, $limit, $offset)
-    {
-        $sql = "SELECT c.id_consulta, c.codigo_socio, c.nombres, c.telefono, c.tipo_ubicacion, 
-                       c.fecha_consulta, c.hora_consulta, t.nombre as tipo, u.username
-                FROM consulta c
-                LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
-                LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.id_usuario = 3 OR c.tipo_ubicacion = 'APP_MOVIL')";
-
-        $params = [];
-
-        if (!empty($filtros['fecha_inicio'])) {
-            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
-            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
-        }
-
-        if (!empty($filtros['fecha_fin'])) {
-            $sql .= " AND c.fecha_consulta <= :fecha_fin";
-            $params[':fecha_fin'] = $filtros['fecha_fin'];
-        }
-
-        if (!empty($filtros['id_tipo'])) {
-            $sql .= " AND c.id_tipo = :id_tipo";
-            $params[':id_tipo'] = $filtros['id_tipo'];
-        }
-
-        if (!empty($filtros['buscar'])) {
-            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
-            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
-        }
-
-        $sql .= " ORDER BY c.fecha_consulta DESC, c.hora_consulta DESC, c.id_consulta DESC";
-        $sql .= " LIMIT :limit OFFSET :offset";
-
-        $stmt = $this->db()->prepare($sql);
-
-        foreach ($params as $key => $val) {
-            $stmt->bindValue($key, $val);
-        }
-        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Total de registros filtrados para paginación de la App de Socios.
-     *
-     * @param array $filtros
-     * @return int
-     */
-    public function getTotalConsultasApp($filtros)
-    {
-        $sql = "SELECT COUNT(c.id_consulta) as total
-                FROM consulta c
-                WHERE (c.id_usuario = 3 OR c.tipo_ubicacion = 'APP_MOVIL')";
-
-        $params = [];
-
-        if (!empty($filtros['fecha_inicio'])) {
-            $sql .= " AND c.fecha_consulta >= :fecha_inicio";
-            $params[':fecha_inicio'] = $filtros['fecha_inicio'];
-        }
-
-        if (!empty($filtros['fecha_fin'])) {
-            $sql .= " AND c.fecha_consulta <= :fecha_fin";
-            $params[':fecha_fin'] = $filtros['fecha_fin'];
-        }
-
-        if (!empty($filtros['id_tipo'])) {
-            $sql .= " AND c.id_tipo = :id_tipo";
-            $params[':id_tipo'] = $filtros['id_tipo'];
-        }
-
-        if (!empty($filtros['buscar'])) {
-            $sql .= " AND (c.codigo_socio::text ILIKE :buscar OR c.nombres ILIKE :buscar OR c.telefono ILIKE :buscar)";
-            $params[':buscar'] = '%' . $filtros['buscar'] . '%';
-        }
-
-        $stmt = $this->db()->prepare($sql);
-        $stmt->execute($params);
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        return (int)($res['total'] ?? 0);
     }
 }

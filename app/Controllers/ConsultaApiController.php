@@ -12,16 +12,25 @@ class ConsultaApiController extends Controller
     {
         // 1. Validar Token de Seguridad
         $tokenEsperado = getenv('REPORTES_API_TOKEN') ?: '';
-        $tokenRecibido = $_SERVER['HTTP_X_REPORTES_TOKEN'] ?? '';
+        $tokenRecibido = $_SERVER['HTTP_X_REPORTES_TOKEN'] ?? $_SERVER['HTTP_X_INTERNAL_TOKEN'] ?? '';
+        if (empty($tokenRecibido) && function_exists('getallheaders')) {
+            $headers = getallheaders();
+            $tokenRecibido = $headers['X-Reportes-Token'] ?? $headers['x-reportes-token'] ?? $headers['X-Internal-Token'] ?? $headers['x-internal-token'] ?? '';
+        }
 
-        if ($tokenRecibido !== $tokenEsperado) {
+        if (empty($tokenEsperado) || $tokenRecibido !== $tokenEsperado) {
             http_response_code(401);
             echo json_encode(['status' => 'error', 'message' => 'Token no autorizado']);
             exit;
         }
 
-        // 2. Leer JSON del Chatbot
+        // 2. Leer JSON de entrada
         $input = json_decode(file_get_contents('php://input'), true);
+        if (!$input) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Cuerpo JSON inválido']);
+            exit;
+        }
 
         $codigoSocio = isset($input['codigo_socio']) ? (int)$input['codigo_socio'] : 0;
         $nombres     = isset($input['nombres']) ? trim($input['nombres']) : 'Socio';
@@ -41,37 +50,41 @@ class ConsultaApiController extends Controller
         $telefono      = isset($input['telefono']) && !empty($input['telefono']) ? trim((string)$input['telefono']) : null;
         $tipoUbicacion = isset($input['tipo_ubicacion']) && !empty($input['tipo_ubicacion']) ? trim((string)$input['tipo_ubicacion']) : null;
 
-        // Determinar el identificador de canal / usuario (3 = App Móvil, 2 = Chatbot WhatsApp)
-        $idUsuario = isset($input['id_usuario']) && !empty($input['id_usuario']) 
-            ? (int)$input['id_usuario'] 
-            : (($tipoUbicacion === 'APP_MOVIL') ? 3 : 2);
-
         if ($codigoSocio <= 0 || !$idTipo) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Parámetros obligatorios faltantes']);
             exit;
         }
 
-        // 3. Insertar en la tabla consulta
+        // Determinar canal de origen (App Móvil vs Chatbot)
+        $esAppMovil = ($tipoUbicacion === 'APP_MOVIL' || (isset($input['id_usuario']) && (int)$input['id_usuario'] === 3));
+        $usernameSistema = $esAppMovil ? 'app_movil' : 'chatbot_whatsapp';
+        if ($esAppMovil && empty($tipoUbicacion)) {
+            $tipoUbicacion = 'APP_MOVIL';
+        } elseif (!$esAppMovil && empty($tipoUbicacion)) {
+            $tipoUbicacion = 'WHATSAPP';
+        }
+
+        // 3. Insertar en la tabla consulta con resolución dinámica de id_usuario
         try {
             $db = Database::getInstance();
             // Migración defensiva no destructiva para columnas nuevas
             $db->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS telefono VARCHAR(30);");
             $db->exec("ALTER TABLE consulta ADD COLUMN IF NOT EXISTS tipo_ubicacion VARCHAR(20);");
 
-            // Semillas defensivas para garantizar integridad de FKs (tipo_consulta y usuario)
+            // Sembrar usuarios de sistema si aún no existen en la BD
             $db->exec("
-                INSERT INTO tipo_consulta (id_tipo, nombre, descripcion) VALUES
-                (9, 'Descarga de Factura PDF', 'Descarga o visualización de factura en PDF desde la app móvil'),
-                (10, 'Intento de Pago', 'Redirección o generación de enlace hacia pasarela de pagos desde la app')
-                ON CONFLICT (id_tipo) DO NOTHING;
+                INSERT INTO usuario (username, password_hash, id_rol, estado) VALUES
+                ('chatbot_whatsapp', 'SISTEMA_NO_LOGIN', 2, 1),
+                ('app_movil', 'SISTEMA_NO_LOGIN', 2, 1)
+                ON CONFLICT (username) DO NOTHING;
             ");
-            $db->exec("
-                INSERT INTO usuario (id_usuario, username, password_hash, id_rol, estado) VALUES
-                (2, 'chatbot_whatsapp', 'SISTEMA_NO_LOGIN', 2, 1),
-                (3, 'app_movil', 'SISTEMA_NO_LOGIN', 2, 1)
-                ON CONFLICT (id_usuario) DO NOTHING;
-            ");
+
+            // Obtener el ID del usuario del sistema sin hardcoding
+            $stmtUser = $db->prepare("SELECT id_usuario FROM usuario WHERE username = :u LIMIT 1");
+            $stmtUser->execute([':u' => $usernameSistema]);
+            $idUsuario = $stmtUser->fetchColumn();
+            $idUsuario = $idUsuario ? (int)$idUsuario : null;
 
             $stmt = $db->prepare("
                 INSERT INTO consulta (codigo_socio, nombres, telefono, tipo_ubicacion, fecha_consulta, hora_consulta, id_tipo, id_usuario)
@@ -91,8 +104,9 @@ class ConsultaApiController extends Controller
 
             http_response_code(201);
             echo json_encode([
-                'status' => 'success',
-                'message' => 'Consulta registrada'
+                'status'  => 'success',
+                'message' => 'Consulta registrada exitosamente',
+                'canal'   => $usernameSistema
             ]);
         } catch (\Exception $e) {
             http_response_code(500);

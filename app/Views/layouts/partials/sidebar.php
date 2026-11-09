@@ -37,12 +37,12 @@ $isActive = function ($path) use ($currentUri) {
 
     <!-- Navegación Principal -->
     <ul class="sidebar-nav flex-grow-1">
-        <!-- Dashboard: Visible para Administradores y Supervisores con permisos -->
+        <!-- Métricas: Visible para Administradores y Supervisores con permisos -->
         <?php if ($rolActual !== 'Operador' && ($hasPermission('reportes.ver') || $hasPermission('trabajos.ver') || $hasPermission('usuarios.ver') || $hasPermission('roles.ver'))): ?>
             <li class="nav-item">
-                <a class="nav-link <?= $isActive('/dashboard') ?>" href="/dashboard" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Dashboard">
+                <a class="nav-link <?= $isActive('/dashboard') ?>" href="/dashboard" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Métricas">
                     <i class="bi bi-speedometer2"></i>
-                    <span style="color: #f8fafc;">Dashboard</span>
+                    <span style="color: #f8fafc;">Métricas</span>
                 </a>
             </li>
         <?php endif; ?>
@@ -113,19 +113,17 @@ $isActive = function ($path) use ($currentUri) {
         <?php if ($rolActual !== 'Operador' && $hasPermission('reportes.ver')): ?>
             <li class="sidebar-section-title">Reportes</li>
 
-            <!-- 1. Reporte de Consultas Chatbot (WhatsApp) -->
             <li class="nav-item">
-                <a class="nav-link <?= ($currentUri === '/reportes/visualizar' || $currentUri === '/reportes/exportar' || $currentUri === '/reportes') ? 'active' : '' ?>" href="/reportes/visualizar" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas Chatbot">
-                    <i class="bi bi-whatsapp"></i>
+                <a class="nav-link <?= ($currentUri === '/reportes/visualizar' || $currentUri === '/reportes/exportar') ? 'active' : '' ?>" href="/reportes/visualizar" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas Chatbot">
+                    <i class="bi bi-chat-dots-fill"></i>
                     <span style="color: #f8fafc;">Consultas Chatbot</span>
                 </a>
             </li>
 
-            <!-- 2. Reporte de Movimientos App de Socios -->
             <li class="nav-item">
-                <a class="nav-link <?= ($currentUri === '/reportes/app-socios') ? 'active' : '' ?>" href="/reportes/app-socios" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="App de Socios">
-                    <i class="bi bi-phone"></i>
-                    <span style="color: #f8fafc;">App de Socios</span>
+                <a class="nav-link <?= (strpos($currentUri, '/reportes/app-movil') === 0) ? 'active' : '' ?>" href="/reportes/app-movil" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Consultas App Móvil">
+                    <i class="bi bi-phone-fill"></i>
+                    <span style="color: #f8fafc;">Consultas App Móvil</span>
                 </a>
             </li>
         <?php endif; ?>

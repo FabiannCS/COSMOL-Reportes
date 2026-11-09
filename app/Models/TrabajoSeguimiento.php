@@ -9,6 +9,26 @@ class TrabajoSeguimiento extends Model {
     protected $table = 'trabajo_seguimiento';
     protected $primaryKey = 'id';
 
+    public function __construct() {
+        try {
+            // Migración defensiva idempotente para servidores con volúmenes de PostgreSQL preexistentes
+            $this->db()->exec("
+                CREATE TABLE IF NOT EXISTS trabajo_seguimiento (
+                    id SERIAL PRIMARY KEY,
+                    id_trabajo INT NOT NULL,
+                    tipo_trabajo VARCHAR(50) NOT NULL,
+                    estado_interno VARCHAR(50) NOT NULL,
+                    glosa_interna TEXT,
+                    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (id_trabajo, tipo_trabajo)
+                );
+                CREATE INDEX IF NOT EXISTS idx_trabajo_seguimiento_tipo_id ON trabajo_seguimiento(tipo_trabajo, id_trabajo);
+            ");
+        } catch (\Exception $e) {
+            // Silencioso ante contingencias de permisos
+        }
+    }
+
     /**
      * Registra o actualiza el estado de seguimiento de un trabajo.
      * 
