@@ -258,11 +258,8 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
         <div class="card-header bg-white border-bottom py-3 px-3 px-sm-4 d-flex justify-content-between align-items-center" style="border-color: #e2e8f0;">
             <div>
                 <h5 class="card-title fw-bold text-dark mb-0 fs-6">
-                    <?= ($vista === 'socios') ? 'Usuarios Únicos de la App Móvil' : 'Historial Detallado de Eventos' ?>
+                    <?= ($vista === 'socios') ? 'Usuarios de la App Móvil' : 'Historial Detallado de Eventos' ?>
                 </h5>
-                <p class="text-muted small mb-0">
-                    <?= ($vista === 'socios') ? 'Agrupación individual de socios y su volumen de actividad digital.' : 'Cronología detallada de todas las solicitudes y accesos realizados.' ?>
-                </p>
             </div>
             <span class="badge bg-light text-secondary border fw-normal py-1.5 px-2.5">
                 Total: <?= number_format($totalRegistros) ?>

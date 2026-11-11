@@ -87,22 +87,40 @@ $origen    = isset($origen) ? $origen : (isset($_GET['origen']) ? $_GET['origen'
                         <textarea class="form-control bg-e9ecef text-dark" rows="3" readonly disabled><?= htmlspecialchars($trabajo['glosa'] ?? 'Sin glosa extra') ?></textarea>
                     </div>
 
-                    <!-- GPS SECTION CON MAPA -->
-                    <?php if (!empty($trabajo['coordenadas_gps'])): ?>
+                    <!-- SECCIÓN DE UBICACIÓN: GPS vs Domicilio Propio -->
+                    <?php 
+                        $rawGps = isset($trabajo['coordenadas_gps']) ? trim((string)$trabajo['coordenadas_gps']) : '';
+                        $esGpsValido = false;
+                        $coordsGpsLimpia = '';
+                        $esMiDomicilio = false;
+
+                        if (!empty($rawGps)) {
+                            if (strtoupper($rawGps) === 'DOMICILIO_REGISTRADO' || stripos($rawGps, 'DOMICILIO') !== false) {
+                                $esMiDomicilio = true;
+                            } elseif (preg_match('/^-?\d{1,3}\.\d+[\s]*,[\s]*-?\d{1,3}\.\d+$/', $rawGps)) {
+                                $esGpsValido = true;
+                                $coordsGpsLimpia = preg_replace('/\s+/', '', $rawGps);
+                            } else {
+                                $esMiDomicilio = true;
+                            }
+                        } else {
+                            $esMiDomicilio = true;
+                        }
+                    ?>
+
+                    <?php if ($esGpsValido): ?>
                         <?php 
-                            $coordsLimpia = preg_replace('/\s+/', '', $trabajo['coordenadas_gps']); 
-                            $urlVerMapa = "https://www.google.com/maps?q={$coordsLimpia}";
+                            $urlVerMapa = "https://www.google.com/maps?q={$coordsGpsLimpia}";
                             $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coordsLimpia}";
-                            // URL para embeber el mapa directamente en la página
-                            $urlIframe  = "https://maps.google.com/maps?q={$coordsLimpia}&hl=es&z=15&output=embed";
+                            $urlIframe  = "https://maps.google.com/maps?q={$coordsGpsLimpia}&hl=es&z=15&output=embed";
                         ?>
                         <div class="mb-4 p-3 border border-danger border-opacity-25 rounded-3 bg-white shadow-sm">
-                            <label class="form-label text-danger small fw-bold mb-2"><i class="bi bi-geo-alt-fill"></i> Ubicación Física (GPS)</label>
+                            <label class="form-label text-danger small fw-bold mb-2"><i class="bi bi-geo-alt-fill"></i> Ubicación GPS Enviada por el Socio</label>
                             
                             <div class="alert alert-warning border-warning p-2 mb-3 small text-dark d-flex align-items-center">
                                 <i class="bi bi-info-circle-fill fs-5 me-2 text-warning"></i> 
                                 <div>
-                                    <strong>¡Atención!</strong> Esta es la ubicación de la reconexión. <span class="text-danger fw-bold">Puede ser distinta a su casa.</span> ¡Guíese por esta dirección!
+                                    <strong>¡Atención!</strong> Esta reconexión fue solicitada con una <strong>Ubicación GPS específica</strong> enviada por el socio (puede ser en un lugar distinto a su casa).
                                 </div>
                             </div>
                             
@@ -113,7 +131,7 @@ $origen    = isset($origen) ? $origen : (isset($_GET['origen']) ? $_GET['origen'
 
                             <div class="input-group mb-2">
                                 <span class="input-group-text bg-light text-muted small" style="font-size: 15px;">Coordenadas:</span>
-                                <input type="text" class="form-control bg-e9ecef text-center fw-bold" style="font-size: 15px;" value="<?=htmlspecialchars($trabajo['coordenadas_gps']) ?>" readonly disabled>
+                                <input type="text" class="form-control bg-e9ecef text-center fw-bold" style="font-size: 15px;" value="<?= htmlspecialchars($coordsGpsLimpia) ?>" readonly disabled>
                             </div>
                             
                             <div class="d-flex gap-2">
@@ -123,6 +141,18 @@ $origen    = isset($origen) ? $origen : (isset($_GET['origen']) ? $_GET['origen'
                                 <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="btn btn-success flex-fill shadow-sm fw-bold">
                                     <i class="bi bi-sign-turn-right-fill me-1"></i> Iniciar Ruta GPS
                                 </a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="mb-4 p-3 rounded bg-light border d-flex align-items-start gap-3" style="border-color: #cbd5e1 !important;">
+                            <div class="p-2 rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                <i class="bi bi-house-check-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1 fs-6">Reconexión en Domicilio Propio (Hogar del Socio)</h6>
+                                <p class="text-secondary small mb-0">
+                                    El solicitante envió la orden con la opción <strong>"Mi Domicilio"</strong>. La reconexión se realiza en su propio hogar registrado en el sistema.
+                                </p>
                             </div>
                         </div>
                     <?php endif; ?>

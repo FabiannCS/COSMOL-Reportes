@@ -30,7 +30,6 @@ $totalPendientes = is_array($trabajos) ? count($trabajos) : 0;
                     </span>
                 <?php endif; ?>
             </div>
-            <p class="text-secondary small mb-0">Especialidad Reconexión &bull; Cooperativa COSMOL</p>
         </div>
         <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-sm-end">
             <a href="/operador/historial" class="btn btn-sm btn-outline-secondary px-3 py-1.5 shadow-sm fw-semibold" style="font-size: 0.8125rem;">
@@ -75,7 +74,7 @@ $totalPendientes = is_array($trabajos) ? count($trabajos) : 0;
     <?php elseif (empty($trabajos)): ?>
         <!-- Estado Vacío Positivo (0 Pendientes) -->
         <div class="card shadow-sm border text-center p-4 p-md-5 bg-white rounded-2" style="border-color: #cbd5e1 !important;">
-            <h2 class="h5 fw-bold text-dark mb-2">¡Todo al día!</h2>
+            <h2 class="h5 fw-bold text-dark mb-2">Todo al día</h2>
             <p class="text-secondary small mb-3">
                 No tienes reconexiones pendientes en este momento. Las nuevas órdenes asignadas aparecerán aquí automáticamente al actualizar.
             </p>
@@ -87,28 +86,6 @@ $totalPendientes = is_array($trabajos) ? count($trabajos) : 0;
         </div>
 
     <?php else: ?>
-        <!-- Barra de Búsqueda Rápida en Tiempo Real para el Operador -->
-        <div class="card shadow-sm border mb-3 mb-md-4 bg-white rounded-2" style="border-color: #cbd5e1 !important;">
-            <div class="card-body p-2 p-md-3">
-                <div class="row g-2 align-items-center">
-                    <div class="col-12 col-md">
-                        <label for="buscar-reconexiones" class="visually-hidden">Buscar</label>
-                        <input type="text" 
-                               id="buscar-reconexiones" 
-                               class="form-control" 
-                               placeholder="Escriba aquí para buscar por socio, código, calle, zona o número de orden..." 
-                               style="border-color: #cbd5e1; font-size: 0.875rem;"
-                               autocomplete="off">
-                    </div>
-                    <div class="col-12 col-md-auto text-end">
-                        <span class="text-secondary small" id="contador-filtrados" style="font-size: 0.8125rem;">
-                            Mostrando <strong><?= $totalPendientes ?></strong> de <?= $totalPendientes ?> trabajos
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Grid Directo de Tarjetas de Reconexión -->
         <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 g-md-4" id="contenedor-reconexiones">
             <?php foreach ($trabajos as $t): ?>
@@ -118,48 +95,5 @@ $totalPendientes = is_array($trabajos) ? count($trabajos) : 0;
                 ?>
             <?php endforeach; ?>
         </div>
-
-        <!-- Mensaje de Búsqueda sin Resultados -->
-        <div id="sin-resultados-busqueda" class="card shadow-sm border text-center p-4 bg-white d-none mt-3 rounded-2" style="border-color: #cbd5e1 !important;">
-            <div class="fw-bold text-dark mb-1">Sin coincidencias</div>
-            <div class="text-secondary small">No se encontraron trabajos con ese término de búsqueda.</div>
-        </div>
-
-        <!-- Script de Búsqueda Rápida en Cliente (JavaScript Plano sin frameworks) -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var input = document.getElementById('buscar-reconexiones');
-                var items = document.querySelectorAll('#contenedor-reconexiones .col-trabajo');
-                var contador = document.getElementById('contador-filtrados');
-                var sinResultados = document.getElementById('sin-resultados-busqueda');
-                var total = items.length;
-
-                if (input && items.length > 0) {
-                    input.addEventListener('input', function() {
-                        var q = this.value.toLowerCase().trim();
-                        var visibles = 0;
-                        items.forEach(function(el) {
-                            var txt = el.getAttribute('data-busqueda') || el.textContent.toLowerCase();
-                            if (q === '' || txt.indexOf(q) !== -1) {
-                                el.classList.remove('d-none');
-                                visibles++;
-                            } else {
-                                el.classList.add('d-none');
-                            }
-                        });
-                        if (contador) {
-                            contador.innerHTML = 'Mostrando <strong>' + visibles + '</strong> de ' + total + ' trabajos';
-                        }
-                        if (sinResultados) {
-                            if (visibles === 0) {
-                                sinResultados.classList.remove('d-none');
-                            } else {
-                                sinResultados.classList.add('d-none');
-                            }
-                        }
-                    });
-                }
-            });
-        </script>
     <?php endif; ?>
 </div>
