@@ -88,7 +88,7 @@ class ReporteController extends Controller
         }
 
         // 4. Renderizar la vista
-        $this->view('reportes/visualizar', [
+        $this->view('reportes/Reportes_chatbot', [
             'vista'            => $vista,
             'socios'           => $socios,
             'accionesPorSocio' => $accionesPorSocio,

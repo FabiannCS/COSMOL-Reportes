@@ -548,22 +548,72 @@ class AdministradorController extends Controller
 
         $todosTrabajos = array_merge($reconexionesConcluidas, $reclamosConcluidos);
 
-        $buscar = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
+        $buscar     = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
+        $fechaDesde = isset($_GET['fecha_desde']) ? trim($_GET['fecha_desde']) : '';
+        $fechaHasta = isset($_GET['fecha_hasta']) ? trim($_GET['fecha_hasta']) : '';
+        $periodo    = isset($_GET['periodo']) ? trim($_GET['periodo']) : '';
 
+        // Si se seleccionó un período predefinido (y no se ingresaron fechas manuales)
+        if (!empty($periodo) && empty($fechaDesde) && empty($fechaHasta)) {
+            $hoy = date('Y-m-d');
+            if ($periodo === 'hoy') {
+                $fechaDesde = $hoy;
+                $fechaHasta = $hoy;
+            } elseif ($periodo === '7dias') {
+                $fechaDesde = date('Y-m-d', strtotime('-6 days'));
+                $fechaHasta = $hoy;
+            } elseif ($periodo === '30dias') {
+                $fechaDesde = date('Y-m-d', strtotime('-29 days'));
+                $fechaHasta = $hoy;
+            } elseif ($periodo === 'mes') {
+                $fechaDesde = date('Y-m-01');
+                $fechaHasta = date('Y-m-t');
+            }
+        }
+
+        // 1. Filtro por búsqueda de texto
         if ($buscar !== '') {
             $todosTrabajos = array_filter($todosTrabajos, function($t) use ($buscar) {
-                $cod = $t['cod_socio'] ?? '';
-                $nom = $t['nombre_socio'] ?? '';
-                $est = $t['estado_calculado'] ?? ($t['estado'] ?? '');
-                $ope = $t['operador_nombre'] ?? '';
+                $cod = isset($t['cod_socio']) ? $t['cod_socio'] : '';
+                $nom = isset($t['nombre_socio']) ? $t['nombre_socio'] : '';
+                $est = isset($t['estado_calculado']) ? $t['estado_calculado'] : (isset($t['estado']) ? $t['estado'] : '');
+                $ope = isset($t['operador_nombre']) ? $t['operador_nombre'] : '';
                 return stripos($cod, $buscar) !== false || stripos($nom, $buscar) !== false || stripos($est, $buscar) !== false || stripos($ope, $buscar) !== false;
+            });
+        }
+
+        // 2. Filtro por rango de fechas
+        if (!empty($fechaDesde) || !empty($fechaHasta)) {
+            $todosTrabajos = array_filter($todosTrabajos, function($t) use ($fechaDesde, $fechaHasta) {
+                $fechaStr = isset($t['fecha_actualizacion']) && !empty($t['fecha_actualizacion'])
+                    ? $t['fecha_actualizacion']
+                    : (isset($t['fecha_conclusion']) && !empty($t['fecha_conclusion'])
+                        ? $t['fecha_conclusion']
+                        : (isset($t['fecha_reconexion']) && !empty($t['fecha_reconexion'])
+                            ? $t['fecha_reconexion']
+                            : (isset($t['fecha_solucion']) && !empty($t['fecha_solucion'])
+                                ? $t['fecha_solucion']
+                                : (isset($t['fecha_registro']) ? $t['fecha_registro'] : ''))));
+
+                if (empty($fechaStr)) {
+                    return false;
+                }
+
+                $fechaItem = substr(trim($fechaStr), 0, 10);
+                if (!empty($fechaDesde) && $fechaItem < $fechaDesde) {
+                    return false;
+                }
+                if (!empty($fechaHasta) && $fechaItem > $fechaHasta) {
+                    return false;
+                }
+                return true;
             });
         }
 
         // Ordenar por fecha_actualizacion o fecha_registro descendente
         usort($todosTrabajos, function ($a, $b) {
-            $fechaA = $a['fecha_actualizacion'] ?? $a['fecha_registro'] ?? '';
-            $fechaB = $b['fecha_actualizacion'] ?? $b['fecha_registro'] ?? '';
+            $fechaA = isset($a['fecha_actualizacion']) ? $a['fecha_actualizacion'] : (isset($a['fecha_registro']) ? $a['fecha_registro'] : '');
+            $fechaB = isset($b['fecha_actualizacion']) ? $b['fecha_actualizacion'] : (isset($b['fecha_registro']) ? $b['fecha_registro'] : '');
             if ($fechaA == $fechaB) return 0;
             return ($fechaA > $fechaB) ? -1 : 1;
         });
@@ -584,6 +634,9 @@ class AdministradorController extends Controller
             'p'            => $p,
             'totalPaginas' => $totalPaginas,
             'buscar'       => $buscar,
+            'fechaDesde'   => $fechaDesde,
+            'fechaHasta'   => $fechaHasta,
+            'periodo'      => $periodo,
             'errores'      => $errores,
         ], 'main');
     }

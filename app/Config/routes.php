@@ -31,6 +31,7 @@ return [
 
         // Módulo de Reportes
         '/reportes/visualizar'          => ['ReporteController', 'visualizar',          ['auth', 'permission:reportes.ver']],
+        '/reportes/chatbot'             => ['ReporteController', 'visualizar',          ['auth', 'permission:reportes.ver']],
         '/reportes/exportar'            => ['ReporteController', 'exportar',            ['auth', 'permission:reportes.exportar']],
         '/reportes/app-movil'           => ['ReporteController', 'visualizarAppMovil',  ['auth', 'permission:reportes.ver']],
         '/reportes/app-movil/exportar'  => ['ReporteController', 'exportarAppMovil',    ['auth', 'permission:reportes.exportar']],

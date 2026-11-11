@@ -20,24 +20,48 @@
 $totalesPorTipo = isset($totalesPorTipo) ? $totalesPorTipo : [];
 $vista          = isset($vista) ? $vista : 'socios';
 
-$getTipoStyle = function ($idTipo, $nombre) {
+// Asignación de estilos semánticos limpios por tipo de evento
+$getTipoBadgeClass = function ($idTipo) {
     switch ((int)$idTipo) {
         case 1: // Autenticación / Acceso
-            return ['color' => 'primary', 'icon' => 'bi-shield-check'];
+            return 'bg-primary-subtle text-primary border-primary-subtle';
         case 2: // Consulta de Deuda
-            return ['color' => 'warning', 'icon' => 'bi-cash-coin'];
-        case 3: // Historial de Consumo
-            return ['color' => 'info', 'icon' => 'bi-bar-chart-line-fill'];
+            return 'bg-warning-subtle text-dark border-warning-subtle';
+        case 3: // Historial de Facturas
+            return 'bg-info-subtle text-info-emphasis border-info-subtle';
+        case 5: // Solicitud de Reconexión
+            return 'bg-warning-subtle text-warning-emphasis border-warning-subtle';
         case 9: // Descarga de Factura PDF
-            return ['color' => 'success', 'icon' => 'bi-file-earmark-pdf-fill'];
+            return 'bg-success-subtle text-success border-success-subtle';
         case 10: // Pago: Multipago
-            return ['color' => 'dark', 'icon' => 'bi-credit-card-2-front-fill'];
+            return 'bg-secondary-subtle text-secondary border-secondary-subtle';
         case 11: // Pago: Pago al Paso
-            return ['color' => 'warning', 'icon' => 'bi-wallet2'];
+            return 'bg-warning-subtle text-dark border-warning-subtle';
         case 12: // Pago: Código QR
-            return ['color' => 'info', 'icon' => 'bi-qr-code-scan'];
+            return 'bg-info-subtle text-primary border-info-subtle';
         default:
-            return ['color' => 'primary', 'icon' => 'bi-phone'];
+            return 'bg-light text-secondary border-secondary-subtle';
+    }
+};
+
+$tarjetasConfig = [
+    1  => ['label' => 'Autenticación / Acceso',   'border' => '#0284c7'], // Azul COSMOL
+    5  => ['label' => 'Solicitud de Reconexión', 'border' => '#ea580c'], // Naranja cálido
+    9  => ['label' => 'Descarga de Factura',      'border' => '#059669'], // Verde Esmeralda
+    10 => ['label' => 'Pago Multipago',            'border' => '#6366f1'], // Índigo
+    12 => ['label' => 'Pago Código QR',            'border' => '#8b5cf6'], // Violeta
+];
+
+$getTipoBorderColor = function ($idTipo) use ($tarjetasConfig) {
+    if (isset($tarjetasConfig[(int)$idTipo])) {
+        return $tarjetasConfig[(int)$idTipo]['border'];
+    }
+    switch ((int)$idTipo) {
+        case 2:  return '#f59e0b'; // Ámbar
+        case 3:  return '#0ea5e9'; // Cian
+        case 5:  return '#ea580c'; // Naranja
+        case 11: return '#d97706'; // Naranja
+        default: return '#64748b'; // Pizarra
     }
 };
 
@@ -72,44 +96,46 @@ $urlVistaAcciones = '/reportes/app-movil?' . http_build_query($paramsAcciones);
 
 $desde = $totalRegistros > 0 ? (($pagina - 1) * $limit) + 1 : 0;
 $hasta = min($pagina * $limit, $totalRegistros);
+
+$hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha_fin']) || !empty($filtros['id_tipo']) || !empty($filtros['buscar']));
 ?>
 
 <div class="container-fluid px-0">
     <!-- Encabezado de Página -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
         <div>
-            <h1 class="h3 fw-bold mb-1 text-dark">
-                <i class="bi bi-phone-fill text-primary me-2"></i>Consultas App Móvil
-            </h1>
-            <p class="text-muted small mb-0">Auditoría, usuarios individuales y desglose de accesos, consumo, facturas digitales y pagos en la aplicación móvil.</p>
+            <h1 class="h3 fw-bold mb-1 text-dark">Auditoría y Consultas App Móvil</h1>
+            <p class="text-secondary small mb-0">Control de autenticaciones, consultas de estado de cuenta, descargas de facturas y pasarelas de pago.</p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
+        <div>
             <?php if (hasPermission('reportes.exportar')): ?>
-                <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-success btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
-                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
-                    <span>Exportar a CSV (<?= $vista === 'socios' ? 'Socios' : 'Eventos' ?>)</span>
+                <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-success btn-sm py-1 px-3 shadow-sm" style="font-size: 0.78rem; font-weight: 500;">
+                    Exportar a CSV (<?= $vista === 'socios' ? 'Socios' : 'Eventos' ?>)
                 </a>
             <?php else: ?>
-                <button type="button" class="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1 shadow-sm disabled" disabled title="No posee permiso para exportar reportes">
-                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
-                    <span>Exportar a CSV</span>
+                <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-3 shadow-sm disabled" disabled title="No posee permiso para exportar reportes" style="font-size: 0.78rem; font-weight: 500;">
+                    Exportar a CSV
                 </button>
             <?php endif; ?>
         </div>
     </div>
 
-    <!-- Tarjetas de Métricas por Tipo de Consulta (KPIs clicables para filtrar) -->
+    <!-- Tarjetas de Auditoría por Tipo de Consulta (KPIs Clicables para Filtrado Rápido) -->
     <?php if (!empty($totalesPorTipo)): ?>
-        <div class="row g-3 g-md-4 mb-4">
+        <div class="row g-2 g-md-3 row-cols-2 row-cols-sm-3 row-cols-xl-5 mb-4">
             <?php foreach ($totalesPorTipo as $tipoStat): ?>
                 <?php
-                $idTipoStat   = (int)$tipoStat['id_tipo'];
-                $nombreStat   = $tipoStat['nombre'];
+                $idTipoStat = (int)$tipoStat['id_tipo'];
+                // Conservar únicamente las 5 tarjetas prioritarias configuradas
+                if (!isset($tarjetasConfig[$idTipoStat])) {
+                    continue;
+                }
+
+                $nombreStat   = $tarjetasConfig[$idTipoStat]['label'];
+                $borderColor  = $tarjetasConfig[$idTipoStat]['border'];
                 $totalStat    = (int)$tipoStat['total'];
-                $estilo       = $getTipoStyle($idTipoStat, $nombreStat);
                 $esTipoActivo = (!empty($filtros['id_tipo']) && (int)$filtros['id_tipo'] === $idTipoStat);
 
-                // Parámetros de URL al hacer clic en la tarjeta
                 $paramsFiltro = $queryParams;
                 if ($esTipoActivo) {
                     unset($paramsFiltro['id_tipo']);
@@ -119,21 +145,21 @@ $hasta = min($pagina * $limit, $totalRegistros);
                 $paramsFiltro['p'] = 1;
                 $urlFiltroTipo = '/reportes/app-movil' . (!empty($paramsFiltro) ? '?' . http_build_query($paramsFiltro) : '');
                 ?>
-                <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+                <div class="col">
                     <a href="<?= htmlspecialchars($urlFiltroTipo, ENT_QUOTES, 'UTF-8') ?>" class="text-decoration-none d-block h-100" title="<?= $esTipoActivo ? 'Clic para quitar filtro' : 'Filtrar por ' . htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?>">
-                        <div class="card border-0 shadow-sm border-start border-<?= $estilo['color'] ?> border-4 h-100 py-3 <?= $esTipoActivo ? 'bg-light border-top border-end border-bottom border-primary-subtle' : 'bg-white' ?>">
-                            <div class="card-body text-center p-2">
-                                <div class="text-xs fw-bold text-dark text-uppercase mb-2 text-truncate px-1" style="font-size: 0.78rem; letter-spacing: 0.4px;">
-                                    <i class="bi <?= $estilo['icon'] ?> text-<?= $estilo['color'] ?> me-1"></i>
-                                    <span title="<?= htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?></span>
+                        <div class="card tarjeta-kpi shadow-sm rounded-3 h-100 <?= $esTipoActivo ? 'bg-primary-subtle' : 'bg-white' ?>" 
+                             style="border: 1px solid <?= $esTipoActivo ? '#0284c7' : '#cbd5e1' ?>; border-top: 3px solid <?= $borderColor ?>;">
+                            <div class="card-body p-3 text-center">
+                                <div class="text-secondary small fw-semibold text-uppercase text-truncate mb-1" style="font-size: 0.72rem; letter-spacing: 0.04em;" title="<?= htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars($nombreStat, ENT_QUOTES, 'UTF-8') ?>
                                 </div>
-                                <div class="display-6 fw-bold text-dark mb-0">
+                                <div class="h3 fw-bold text-dark mb-0 font-monospace">
                                     <?= number_format($totalStat) ?>
                                 </div>
                                 <?php if ($esTipoActivo): ?>
-                                    <div class="mt-2">
-                                        <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.68rem;">
-                                            <i class="bi bi-funnel-fill me-1"></i>Filtro activo
+                                    <div class="mt-1">
+                                        <span class="badge bg-primary text-white rounded-pill px-2 py-0.5" style="font-size: 0.62rem;">
+                                            Filtro activo
                                         </span>
                                     </div>
                                 <?php endif; ?>
@@ -146,42 +172,26 @@ $hasta = min($pagina * $limit, $totalRegistros);
     <?php endif; ?>
 
     <!-- Tarjeta de Filtros de Búsqueda -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white border-bottom py-3">
-            <h5 class="card-title mb-0 fw-semibold text-dark">
-                <i class="bi bi-funnel me-2 text-primary"></i>Filtros de Búsqueda
-            </h5>
-        </div>
-        <div class="card-body p-3 p-md-4">
-            <form action="/reportes/app-movil" method="GET" class="row g-3 align-items-end">
+    <div class="card shadow-sm border rounded-3 mb-4" style="border-color: #e2e8f0;">
+        <div class="card-body p-3">
+            <form action="/reportes/app-movil" method="GET" class="row g-2 align-items-end m-0">
                 <input type="hidden" name="vista" value="<?= htmlspecialchars($vista, ENT_QUOTES, 'UTF-8') ?>">
 
-                <!-- Búsqueda General -->
-                <div class="col-12 col-md-3">
-                    <label for="buscar" class="form-label fw-semibold small text-muted">Búsqueda</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="buscar" 
-                           name="buscar" 
-                           placeholder="Cód. Socio, Nombre o Teléfono..."
-                           value="<?= htmlspecialchars($filtros['buscar'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                </div>
-
                 <!-- Fecha Inicio -->
-                <div class="col-12 col-md-2">
-                    <label for="fecha_inicio" class="form-label fw-semibold small text-muted">Fecha Inicio</label>
+                <div class="col-6 col-md-2">
+                    <label for="fecha_inicio" class="form-label text-secondary small fw-semibold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Desde</label>
                     <input type="date" 
-                           class="form-control" 
+                           class="form-control form-control-sm" 
                            id="fecha_inicio" 
                            name="fecha_inicio" 
                            value="<?= htmlspecialchars($filtros['fecha_inicio'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </div>
 
                 <!-- Fecha Fin -->
-                <div class="col-12 col-md-2">
-                    <label for="fecha_fin" class="form-label fw-semibold small text-muted">Fecha Fin</label>
+                <div class="col-6 col-md-2">
+                    <label for="fecha_fin" class="form-label text-secondary small fw-semibold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Hasta</label>
                     <input type="date" 
-                           class="form-control" 
+                           class="form-control form-control-sm" 
                            id="fecha_fin" 
                            name="fecha_fin" 
                            value="<?= htmlspecialchars($filtros['fecha_fin'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -189,8 +199,8 @@ $hasta = min($pagina * $limit, $totalRegistros);
 
                 <!-- Tipo de Evento -->
                 <div class="col-12 col-md-3">
-                    <label for="id_tipo" class="form-label fw-semibold small text-muted">Tipo de Evento</label>
-                    <select class="form-select" id="id_tipo" name="id_tipo">
+                    <label for="id_tipo" class="form-label text-secondary small fw-semibold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Tipo de Evento</label>
+                    <select class="form-select form-select-sm" id="id_tipo" name="id_tipo">
                         <option value="">Todos los eventos de la App</option>
                         <?php foreach ($tiposConsulta as $tipo): ?>
                             <option value="<?= (int)$tipo['id_tipo'] ?>" <?= (!empty($filtros['id_tipo']) && (int)$filtros['id_tipo'] === (int)$tipo['id_tipo']) ? 'selected' : '' ?>>
@@ -200,95 +210,88 @@ $hasta = min($pagina * $limit, $totalRegistros);
                     </select>
                 </div>
 
+                <!-- Búsqueda General -->
+                <div class="col-12 col-md-3">
+                    <label for="buscar" class="form-label text-secondary small fw-semibold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Buscar</label>
+                    <input type="text" 
+                           class="form-control form-control-sm" 
+                           id="buscar" 
+                           name="buscar" 
+                           placeholder="Cód. socio, nombre o teléfono..."
+                           value="<?= htmlspecialchars($filtros['buscar'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
+
                 <!-- Botones Filtrar y Limpiar -->
-                <div class="col-12 col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1 shadow-sm">
-                        <i class="bi bi-search"></i>
-                        <span>Filtrar</span>
+                <div class="col-12 col-md-2 d-flex gap-1.5">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                        Filtrar
                     </button>
-                    <a href="/reportes/app-movil?vista=<?= htmlspecialchars($vista, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center gap-1" title="Limpiar Filtros">
-                        <i class="bi bi-x-circle"></i>
-                    </a>
+                    <?php if ($hayFiltrosActivos): ?>
+                        <a href="/reportes/app-movil?vista=<?= htmlspecialchars($vista, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary px-2.5 flex-shrink-0" title="Restablecer filtros">
+                            Limpiar
+                        </a>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Selector de Modos de Vista (Pestañas) -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-        <div class="btn-group shadow-sm" role="group" aria-label="Modos de Vista">
+    <!-- Selector de Modos de Vista (Segmentos COSMOL) -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+        <div class="p-1 rounded-3 border d-inline-flex flex-wrap gap-1 w-100 w-md-auto" style="background-color: #f1f5f9; border-color: #e2e8f0 !important;" role="group" aria-label="Modos de Vista">
             <a href="<?= htmlspecialchars($urlVistaSocios, ENT_QUOTES, 'UTF-8') ?>" 
-               class="btn <?= $vista === 'socios' ? 'btn-primary fw-semibold' : 'btn-outline-primary bg-white' ?>">
-                <i class="bi bi-people-fill me-1"></i> Por Socios (Usuarios Únicos)
-                <span class="badge <?= $vista === 'socios' ? 'bg-white text-primary' : 'bg-primary text-white' ?> ms-2 rounded-pill">
-                    <?= number_format($totalSocios) ?>
-                </span>
+               class="filtro-vista-btn <?= $vista === 'socios' ? 'active' : '' ?>">
+                Por Socios (Usuario Únicos) <span class="badge rounded-pill ms-1.5 font-monospace filtro-badge"><?= number_format($totalSocios) ?></span>
             </a>
             <a href="<?= htmlspecialchars($urlVistaAcciones, ENT_QUOTES, 'UTF-8') ?>" 
-               class="btn <?= $vista === 'acciones' ? 'btn-primary fw-semibold' : 'btn-outline-primary bg-white' ?>">
-                <i class="bi bi-list-check me-1"></i> Registro de Eventos (Detallado)
-                <span class="badge <?= $vista === 'acciones' ? 'bg-white text-primary' : 'bg-primary text-white' ?> ms-2 rounded-pill">
-                    <?= number_format($totalConsultas) ?>
-                </span>
+               class="filtro-vista-btn <?= $vista === 'acciones' ? 'active' : '' ?>">
+                Registro Detallado de Eventos <span class="badge rounded-pill ms-1.5 font-monospace filtro-badge"><?= number_format($totalConsultas) ?></span>
             </a>
         </div>
-
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill small">
-                <i class="bi bi-person-check-fill me-1"></i> <?= number_format($totalSocios) ?> Usuarios Únicos
-            </span>
-            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-3 py-2 rounded-pill small">
-                <i class="bi bi-activity me-1"></i> <?= number_format($totalConsultas) ?> Eventos Totales
-            </span>
+        <div class="small text-secondary d-none d-md-block">
+            Mostrando <?= $desde ?> - <?= $hasta ?> de <?= number_format($totalRegistros) ?> registros
         </div>
     </div>
 
     <!-- Contenido de la Tabla según la Vista Activa -->
-    <div class="card border-0 shadow-sm mb-4" id="tabla-reportes">
-        <div class="card-header bg-white border-bottom py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+    <div class="card shadow-sm border rounded-3 mb-4" id="tabla-reportes" style="border-color: #e2e8f0;">
+        <div class="card-header bg-white border-bottom py-3 px-3 px-sm-4 d-flex justify-content-between align-items-center" style="border-color: #e2e8f0;">
             <div>
-                <h5 class="fw-bold text-dark mb-0">
-                    <?php if ($vista === 'socios'): ?>
-                        <i class="bi bi-people-fill text-primary me-2"></i>Usuarios Únicos de la App Móvil
-                    <?php else: ?>
-                        <i class="bi bi-table text-primary me-2"></i>Historial Detallado de Eventos de la App
-                    <?php endif; ?>
+                <h5 class="card-title fw-bold text-dark mb-0 fs-6">
+                    <?= ($vista === 'socios') ? 'Usuarios Únicos de la App Móvil' : 'Historial Detallado de Eventos' ?>
                 </h5>
-                <small class="text-muted">
-                    <?php if ($vista === 'socios'): ?>
-                        Mostrando usuarios <?= $desde ?> - <?= $hasta ?> de <?= number_format($totalRegistros) ?> usuarios únicos.
-                    <?php else: ?>
-                        Mostrando eventos <?= $desde ?> - <?= $hasta ?> de <?= number_format($totalRegistros) ?> eventos registrados.
-                    <?php endif; ?>
-                </small>
+                <p class="text-muted small mb-0">
+                    <?= ($vista === 'socios') ? 'Agrupación individual de socios y su volumen de actividad digital.' : 'Cronología detallada de todas las solicitudes y accesos realizados.' ?>
+                </p>
             </div>
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill small">
-                <i class="bi bi-phone me-1"></i>Canal: App Móvil
+            <span class="badge bg-light text-secondary border fw-normal py-1.5 px-2.5">
+                Total: <?= number_format($totalRegistros) ?>
             </span>
         </div>
 
         <div class="card-body p-0">
             <?php if ($vista === 'socios'): ?>
                 <!-- VISTA 1: AGRUPADO POR SOCIO / USUARIO ÚNICO (PRINCIPAL) -->
-                <div class="table-responsive">
+                
+                <!-- Versión Escritorio: Tabla de Alta Densidad -->
+                <div class="d-none d-md-block table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-center" style="width: 70px;">#</th>
-                                <th scope="col" class="py-3" style="width: 140px;">Cód. Socio</th>
-                                <th scope="col" class="py-3">Nombre del Titular</th>
-                                <th scope="col" class="py-3" style="width: 170px;">Teléfono</th>
-                                <th scope="col" class="py-3 text-center" style="width: 160px;">Total Eventos</th>
-                                <th scope="col" class="py-3" style="width: 180px;">Última Actividad</th>
-                                <th scope="col" class="py-3 text-end px-4" style="width: 180px;">Acciones</th>
+                                <th class="ps-3 ps-sm-4 text-center text-secondary text-uppercase fw-semibold" style="width: 60px; font-size: 0.72rem; letter-spacing: 0.05em;">#</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="width: 140px; font-size: 0.72rem; letter-spacing: 0.05em;">Cód. Socio</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Titular del Servicio</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="width: 150px; font-size: 0.72rem; letter-spacing: 0.05em;">Teléfono</th>
+                                <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 140px; font-size: 0.72rem; letter-spacing: 0.05em;">Total Eventos</th>
+                                <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 160px; font-size: 0.72rem; letter-spacing: 0.05em;">Última Actividad</th>
+                                <th class="text-end pe-3 pe-sm-4 text-secondary text-uppercase fw-semibold" style="width: 150px; font-size: 0.72rem; letter-spacing: 0.05em;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($socios)): ?>
                                 <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted">
-                                        <i class="bi bi-people display-4 d-block mb-2 text-secondary opacity-50"></i>
-                                        <h6 class="fw-semibold mb-1">No se encontraron usuarios</h6>
+                                    <td colspan="7" class="text-center py-5 text-secondary">
+                                        <p class="mb-1 fw-semibold text-dark">No se encontraron usuarios</p>
                                         <p class="small text-muted mb-0">No existen registros que coincidan con los criterios de búsqueda aplicados.</p>
                                     </td>
                                 </tr>
@@ -299,140 +302,93 @@ $hasta = min($pagina * $limit, $totalRegistros);
                                     $sKey = $s['socio_key'];
                                     $misAcciones = isset($accionesPorSocio[$sKey]) ? $accionesPorSocio[$sKey] : [];
                                     $collapseId = 'collapse-app-socio-' . $idx;
+                                    $codSocio = !empty($s['codigo_socio']) ? htmlspecialchars($s['codigo_socio'], ENT_QUOTES, 'UTF-8') : 'S/C';
                                     ?>
                                     <tr class="align-middle">
-                                        <!-- Enumeración correlativa (#) de usuarios únicos -->
-                                        <td class="px-4 py-3 text-center fw-bold text-primary">
+                                        <td class="ps-3 ps-sm-4 text-center text-muted font-monospace small">
                                             #<?= $numUsuario ?>
                                         </td>
-
-                                        <!-- Cód. Socio cliqueable -->
-                                        <td class="py-3">
-                                            <a class="badge bg-light text-dark border font-monospace text-decoration-none px-2 py-1 fs-6 d-inline-flex align-items-center gap-1"
-                                               role="button"
-                                               data-bs-toggle="collapse" 
-                                               href="#<?= $collapseId ?>" 
-                                               aria-expanded="false" 
-                                               aria-controls="<?= $collapseId ?>"
-                                               title="Clic para ver eventos de este socio">
-                                                <i class="bi bi-person-badge text-primary"></i>
-                                                <?= !empty($s['codigo_socio']) ? htmlspecialchars($s['codigo_socio'], ENT_QUOTES, 'UTF-8') : 'S/C' ?>
-                                            </a>
+                                        <td>
+                                            <span class="font-monospace text-secondary small">
+                                                <?= $codSocio ?>
+                                            </span>
                                         </td>
-
-                                        <!-- Nombre del Titular -->
-                                        <td class="py-3 fw-semibold text-dark">
-                                            <a class="text-dark text-decoration-none"
-                                               role="button"
-                                               data-bs-toggle="collapse" 
-                                               href="#<?= $collapseId ?>" 
-                                               aria-expanded="false" 
-                                               aria-controls="<?= $collapseId ?>">
-                                                <?= htmlspecialchars(!empty($s['nombres']) ? $s['nombres'] : 'Socio', ENT_QUOTES, 'UTF-8') ?>
-                                            </a>
+                                        <td>
+                                            <div class="fw-semibold text-dark">
+                                                <?= htmlspecialchars(!empty($s['nombres']) ? $s['nombres'] : 'Sin nombre registrado', ENT_QUOTES, 'UTF-8') ?>
+                                            </div>
                                         </td>
-
-                                        <!-- Teléfono -->
-                                        <td class="py-3">
-                                            <?php if (!empty($s['telefono'])): ?>
-                                                <span class="badge bg-light text-dark border font-monospace">
-                                                    <i class="bi bi-telephone-fill text-primary me-1"></i><?= htmlspecialchars($s['telefono'], ENT_QUOTES, 'UTF-8') ?>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="text-muted small">No registrado</span>
-                                            <?php endif; ?>
+                                        <td class="font-monospace small text-secondary">
+                                            <?= !empty($s['telefono']) ? htmlspecialchars($s['telefono'], ENT_QUOTES, 'UTF-8') : '—' ?>
                                         </td>
-
-                                        <!-- Total de Eventos -->
-                                        <td class="py-3 text-center">
-                                            <span class="badge bg-primary rounded-pill px-3 py-1">
-                                                <i class="bi bi-activity me-1"></i>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark border font-monospace px-2.5 py-1">
                                                 <?= (int)$s['total_consultas'] ?> <?= (int)$s['total_consultas'] === 1 ? 'evento' : 'eventos' ?>
                                             </span>
                                         </td>
-
-                                        <!-- Última Actividad -->
-                                        <td class="py-3 text-secondary small">
-                                            <div><i class="bi bi-calendar3 me-1 text-primary"></i><?= htmlspecialchars($s['ultima_fecha'], ENT_QUOTES, 'UTF-8') ?></div>
-                                            <div class="text-muted"><i class="bi bi-clock me-1"></i><?= htmlspecialchars($s['ultima_hora'], ENT_QUOTES, 'UTF-8') ?></div>
+                                        <td class="text-center text-muted font-monospace small">
+                                            <div><?= htmlspecialchars($s['ultima_fecha'], ENT_QUOTES, 'UTF-8') ?></div>
+                                            <div style="font-size: 0.72rem;"><?= htmlspecialchars($s['ultima_hora'], ENT_QUOTES, 'UTF-8') ?></div>
                                         </td>
-
-                                        <!-- Botón Desplegar -->
-                                        <td class="py-3 text-end px-4">
-                                            <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm"
+                                        <td class="text-end pe-3 pe-sm-4 text-nowrap">
+                                            <button class="btn btn-sm btn-outline-primary px-2.5 py-1"
                                                     type="button" 
                                                     data-bs-toggle="collapse" 
                                                     data-bs-target="#<?= $collapseId ?>" 
                                                     aria-expanded="false" 
                                                     aria-controls="<?= $collapseId ?>">
-                                                <i class="bi bi-eye"></i>
-                                                <span>Ver eventos (<?= (int)$s['total_consultas'] ?>)</span>
+                                                Ver actividad (<?= (int)$s['total_consultas'] ?>)
                                             </button>
                                         </td>
                                     </tr>
 
-                                    <!-- Fila Colapsable de Detalle -->
+                                    <!-- Fila Colapsable de Detalle de Actividad -->
                                     <tr class="p-0 border-0">
                                         <td colspan="7" class="p-0 border-0">
                                             <div class="collapse" id="<?= $collapseId ?>">
-                                                <div class="p-3 bg-light border-top border-bottom">
-                                                    <div class="card border shadow-sm">
-                                                        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
-                                                            <div class="fw-semibold text-dark small">
-                                                                <i class="bi bi-clock-history me-1 text-primary"></i>
-                                                                Detalle de actividad del socio <strong><?= htmlspecialchars(!empty($s['nombres']) ? $s['nombres'] : 'Titular', ENT_QUOTES, 'UTF-8') ?></strong>
-                                                                (Cód. <?= !empty($s['codigo_socio']) ? htmlspecialchars($s['codigo_socio'], ENT_QUOTES, 'UTF-8') : 'S/C' ?>)
+                                                <div class="p-3 bg-light border-top border-bottom" style="border-color: #e2e8f0;">
+                                                    <div class="card border rounded-3 shadow-sm bg-white" style="border-color: #cbd5e1;">
+                                                        <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center border-bottom" style="border-color: #e2e8f0;">
+                                                            <div class="text-dark small fw-semibold">
+                                                                Actividad de <?= htmlspecialchars(!empty($s['nombres']) ? $s['nombres'] : 'Titular', ENT_QUOTES, 'UTF-8') ?> (Cód. <?= $codSocio ?>)
                                                             </div>
-                                                            <span class="badge bg-secondary rounded-pill small">
-                                                                <?= count($misAcciones) ?> registros
+                                                            <span class="badge bg-light text-secondary border fw-normal">
+                                                                <?= count($misAcciones) ?> <?= count($misAcciones) === 1 ? 'registro' : 'registros' ?>
                                                             </span>
                                                         </div>
                                                         <div class="card-body p-0">
                                                             <div class="table-responsive">
-                                                                <table class="table table-sm table-striped mb-0 align-middle">
-                                                                    <thead class="table-light text-muted small">
+                                                                <table class="table table-sm table-hover mb-0 align-middle">
+                                                                    <thead style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                                                                         <tr>
-                                                                            <th class="px-3 py-2" style="width: 50px;">#</th>
-                                                                            <th class="py-2" style="width: 170px;">Teléfono</th>
-                                                                            <th class="py-2">Tipo de Evento / Acción</th>
-                                                                            <th class="py-2" style="width: 180px;">Fecha y Hora</th>
-                                                                            <th class="py-2 text-center" style="width: 140px;">Origen</th>
+                                                                            <th class="ps-3 py-2 text-secondary text-uppercase fw-semibold" style="width: 50px; font-size: 0.68rem;">#</th>
+                                                                            <th class="py-2 text-secondary text-uppercase fw-semibold" style="font-size: 0.68rem;">Acción / Evento</th>
+                                                                            <th class="py-2 text-secondary text-uppercase fw-semibold" style="width: 160px; font-size: 0.68rem;">Teléfono</th>
+                                                                            <th class="pe-3 py-2 text-end text-secondary text-uppercase fw-semibold" style="width: 170px; font-size: 0.68rem;">Fecha y Hora</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
                                                                         <?php if (empty($misAcciones)): ?>
                                                                             <tr>
-                                                                                <td colspan="5" class="text-center py-3 text-muted small">
+                                                                                <td colspan="4" class="text-center py-3 text-muted small">
                                                                                     No hay eventos adicionales para este socio en el filtro actual.
                                                                                 </td>
                                                                             </tr>
                                                                         <?php else: ?>
                                                                             <?php foreach ($misAcciones as $accIdx => $acc): ?>
-                                                                                <?php $estiloAcc = $getTipoStyle($acc['id_tipo'] ?? 0, $acc['tipo'] ?? ''); ?>
+                                                                                <?php $badgeClass = $getTipoBadgeClass($acc['id_tipo'] ?? 0); ?>
                                                                                 <tr>
-                                                                                    <td class="px-3 py-2 text-muted small"><?= $accIdx + 1 ?></td>
+                                                                                    <td class="ps-3 py-2 text-muted font-monospace small"><?= $accIdx + 1 ?></td>
                                                                                     <td class="py-2">
-                                                                                        <?php if (!empty($acc['telefono'])): ?>
-                                                                                            <span class="badge bg-light text-dark border font-monospace small">
-                                                                                                <i class="bi bi-telephone-fill text-primary me-1"></i><?= htmlspecialchars($acc['telefono'], ENT_QUOTES, 'UTF-8') ?>
-                                                                                            </span>
-                                                                                        <?php else: ?>
-                                                                                            <span class="text-muted small">-</span>
-                                                                                        <?php endif; ?>
-                                                                                    </td>
-                                                                                    <td class="py-2">
-                                                                                        <span class="badge bg-<?= $estiloAcc['color'] ?>-subtle text-<?= $estiloAcc['color'] ?> border border-<?= $estiloAcc['color'] ?>-subtle px-2 py-1">
-                                                                                            <i class="bi <?= $estiloAcc['icon'] ?> me-1"></i><?= htmlspecialchars($acc['tipo'] ?? 'Consulta', ENT_QUOTES, 'UTF-8') ?>
+                                                                                        <span class="badge border fw-normal py-1 px-2 <?= $badgeClass ?>">
+                                                                                            <?= htmlspecialchars($acc['tipo'] ?? 'Consulta', ENT_QUOTES, 'UTF-8') ?>
                                                                                         </span>
                                                                                     </td>
-                                                                                    <td class="py-2 small text-secondary">
-                                                                                        <div><i class="bi bi-calendar3 me-1 text-primary"></i><?= htmlspecialchars($acc['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?></div>
-                                                                                        <div class="text-muted"><i class="bi bi-clock me-1"></i><?= htmlspecialchars($acc['hora_consulta'], ENT_QUOTES, 'UTF-8') ?></div>
+                                                                                    <td class="py-2 font-monospace small text-secondary">
+                                                                                        <?= !empty($acc['telefono']) ? htmlspecialchars($acc['telefono'], ENT_QUOTES, 'UTF-8') : '—' ?>
                                                                                     </td>
-                                                                                    <td class="py-2 text-center">
-                                                                                        <span class="badge bg-primary text-white shadow-sm small">
-                                                                                            <i class="bi bi-phone-fill me-1"></i>App Móvil
-                                                                                        </span>
+                                                                                    <td class="pe-3 py-2 text-end text-muted font-monospace small">
+                                                                                        <?= htmlspecialchars($acc['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars($acc['hora_consulta'], ENT_QUOTES, 'UTF-8') ?>
                                                                                     </td>
                                                                                 </tr>
                                                                             <?php endforeach; ?>
@@ -452,82 +408,117 @@ $hasta = min($pagina * $limit, $totalRegistros);
                     </table>
                 </div>
 
+                <!-- Versión Móvil: Fichas de Socios Adaptadas (< 768px) -->
+                <div class="d-block d-md-none p-3" id="listaMobileSocios">
+                    <?php if (empty($socios)): ?>
+                        <div class="text-center py-4 text-secondary">
+                            <p class="mb-1 fw-semibold text-dark">No se encontraron usuarios</p>
+                            <p class="small text-muted mb-0">No existen registros que coincidan con los criterios aplicados.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($socios as $idx => $s): ?>
+                            <?php 
+                            $numUsuario = $desde + $idx;
+                            $sKey = $s['socio_key'];
+                            $misAcciones = isset($accionesPorSocio[$sKey]) ? $accionesPorSocio[$sKey] : [];
+                            $collapseId = 'collapse-mobile-socio-' . $idx;
+                            $codSocio = !empty($s['codigo_socio']) ? htmlspecialchars($s['codigo_socio'], ENT_QUOTES, 'UTF-8') : 'S/C';
+                            ?>
+                            <div class="card border rounded-3 p-3 mb-2.5 shadow-sm" style="border-color: #e2e8f0;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="font-monospace fw-bold text-muted small">#<?= $numUsuario ?> &bull; Cód. <?= $codSocio ?></span>
+                                    <span class="badge bg-light text-dark border font-monospace">
+                                        <?= (int)$s['total_consultas'] ?> <?= (int)$s['total_consultas'] === 1 ? 'evento' : 'eventos' ?>
+                                    </span>
+                                </div>
+                                <div class="fw-semibold text-dark fs-6"><?= htmlspecialchars(!empty($s['nombres']) ? $s['nombres'] : 'Sin nombre registrado', ENT_QUOTES, 'UTF-8') ?></div>
+                                <div class="d-flex justify-content-between align-items-center small text-secondary mt-1">
+                                    <span>Tel: <?= !empty($s['telefono']) ? htmlspecialchars($s['telefono'], ENT_QUOTES, 'UTF-8') : '—' ?></span>
+                                    <span class="text-muted font-monospace" style="font-size: 0.74rem;">Último: <?= htmlspecialchars($s['ultima_fecha'], ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+
+                                <div class="mt-2.5 pt-2 border-top" style="border-color: #f1f5f9;">
+                                    <button class="btn btn-sm btn-outline-primary w-100 py-1"
+                                            type="button" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#<?= $collapseId ?>" 
+                                            aria-expanded="false" 
+                                            aria-controls="<?= $collapseId ?>">
+                                        Ver actividad detallada (<?= (int)$s['total_consultas'] ?>)
+                                    </button>
+
+                                    <div class="collapse mt-2" id="<?= $collapseId ?>">
+                                        <div class="border rounded-2 p-2 bg-light">
+                                            <?php if (empty($misAcciones)): ?>
+                                                <div class="text-center text-muted small py-2">Sin actividad adicional</div>
+                                            <?php else: ?>
+                                                <?php foreach ($misAcciones as $acc): ?>
+                                                    <?php $badgeClass = $getTipoBadgeClass($acc['id_tipo'] ?? 0); ?>
+                                                    <div class="d-flex justify-content-between align-items-center py-1.5 border-bottom" style="border-color: #e2e8f0;">
+                                                        <span class="badge border fw-normal <?= $badgeClass ?>" style="font-size: 0.7rem;">
+                                                            <?= htmlspecialchars($acc['tipo'] ?? 'Consulta', ENT_QUOTES, 'UTF-8') ?>
+                                                        </span>
+                                                        <span class="font-monospace text-muted" style="font-size: 0.72rem;">
+                                                            <?= htmlspecialchars($acc['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?>
+                                                        </span>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
             <?php else: ?>
                 <!-- VISTA 2: REGISTRO DETALLADO DE EVENTOS -->
-                <div class="table-responsive">
+                
+                <!-- Versión Escritorio -->
+                <div class="d-none d-md-block table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                             <tr>
-                                <th scope="col" class="px-4 py-3" style="width: 80px;"># ID</th>
-                                <th scope="col" class="py-3" style="width: 130px;">Cód. Socio</th>
-                                <th scope="col" class="py-3">Nombre del Titular</th>
-                                <th scope="col" class="py-3" style="width: 170px;">Teléfono</th>
-                                <th scope="col" class="py-3" style="width: 220px;">Acción / Evento</th>
-                                <th scope="col" class="py-3" style="width: 170px;">Fecha y Hora</th>
-                                <th scope="col" class="py-3 text-center px-4" style="width: 140px;">Origen</th>
+                                <th class="ps-3 ps-sm-4 text-secondary text-uppercase fw-semibold" style="width: 80px; font-size: 0.72rem; letter-spacing: 0.05em;"># ID</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="width: 140px; font-size: 0.72rem; letter-spacing: 0.05em;">Cód. Socio</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Titular</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="width: 150px; font-size: 0.72rem; letter-spacing: 0.05em;">Teléfono</th>
+                                <th class="text-secondary text-uppercase fw-semibold" style="width: 220px; font-size: 0.72rem; letter-spacing: 0.05em;">Acción / Evento</th>
+                                <th class="pe-3 pe-sm-4 text-end text-secondary text-uppercase fw-semibold" style="width: 170px; font-size: 0.72rem; letter-spacing: 0.05em;">Fecha y Hora</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($consultas)): ?>
                                 <tr>
-                                    <td colspan="7" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <i class="bi bi-inbox display-4 d-block mb-2 text-secondary opacity-50"></i>
-                                            <p class="mb-0 fw-semibold">No se encontraron movimientos registrados para la App Móvil.</p>
-                                            <small class="text-muted">Prueba modificando los filtros de fecha o búsqueda.</small>
-                                        </div>
+                                    <td colspan="6" class="text-center py-5 text-secondary">
+                                        <p class="mb-1 fw-semibold text-dark">No se encontraron movimientos registrados para la App Móvil</p>
+                                        <p class="small text-muted mb-0">Pruebe modificando los filtros de fecha o búsqueda.</p>
                                     </td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($consultas as $row): ?>
-                                    <?php $estilo = $getTipoStyle($row['id_tipo'] ?? 0, $row['tipo'] ?? ''); ?>
+                                    <?php $badgeClass = $getTipoBadgeClass($row['id_tipo'] ?? 0); ?>
                                     <tr>
-                                        <!-- ID -->
-                                        <td class="px-4 py-3 text-muted fw-bold small">
-                                            #<?= (int)$row['id_consulta'] ?>
+                                        <td class="ps-3 ps-sm-4 text-muted font-monospace small">
+                                            <?= (int)$row['id_consulta'] ?>
                                         </td>
-
-                                        <!-- Código de Socio -->
-                                        <td class="py-3">
-                                            <span class="badge bg-light text-dark border font-monospace">
-                                                <i class="bi bi-person-badge me-1 text-secondary"></i><?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?>
-                                            </span>
+                                        <td class="font-monospace text-secondary small">
+                                            <?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?>
                                         </td>
-
-                                        <!-- Nombre -->
-                                        <td class="py-3 fw-semibold text-dark">
+                                        <td class="fw-semibold text-dark">
                                             <?= htmlspecialchars(!empty($row['nombres']) ? $row['nombres'] : 'Socio', ENT_QUOTES, 'UTF-8') ?>
                                         </td>
-
-                                        <!-- Teléfono -->
-                                        <td class="py-3">
-                                            <?php if (!empty($row['telefono'])): ?>
-                                                <span class="badge bg-light text-dark border font-monospace small">
-                                                    <i class="bi bi-telephone-fill text-primary me-1"></i><?= htmlspecialchars($row['telefono'], ENT_QUOTES, 'UTF-8') ?>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="text-muted small">No registrado</span>
-                                            <?php endif; ?>
+                                        <td class="font-monospace text-secondary small">
+                                            <?= !empty($row['telefono']) ? htmlspecialchars($row['telefono'], ENT_QUOTES, 'UTF-8') : '—' ?>
                                         </td>
-
-                                        <!-- Tipo de Evento / Acción -->
-                                        <td class="py-3">
-                                            <span class="badge bg-<?= $estilo['color'] ?>-subtle text-<?= $estilo['color'] ?> border border-<?= $estilo['color'] ?>-subtle px-2 py-1">
-                                                <i class="bi <?= $estilo['icon'] ?> me-1"></i><?= htmlspecialchars($row['tipo'] ?? 'Consulta', ENT_QUOTES, 'UTF-8') ?>
+                                        <td>
+                                            <span class="badge border fw-normal py-1 px-2 <?= $badgeClass ?>">
+                                                <?= htmlspecialchars($row['tipo'] ?? 'Consulta', ENT_QUOTES, 'UTF-8') ?>
                                             </span>
                                         </td>
-
-                                        <!-- Fecha y Hora -->
-                                        <td class="py-3 text-secondary small">
-                                            <div><i class="bi bi-calendar3 me-1 text-primary"></i><?= htmlspecialchars($row['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?></div>
-                                            <div class="text-muted"><i class="bi bi-clock me-1"></i><?= htmlspecialchars($row['hora_consulta'], ENT_QUOTES, 'UTF-8') ?></div>
-                                        </td>
-
-                                        <!-- Origen -->
-                                        <td class="py-3 text-center px-4">
-                                            <span class="badge bg-primary text-white shadow-sm">
-                                                <i class="bi bi-phone-fill me-1"></i>App Móvil
-                                            </span>
+                                        <td class="pe-3 pe-sm-4 text-end text-muted font-monospace small">
+                                            <?= htmlspecialchars($row['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars($row['hora_consulta'], ENT_QUOTES, 'UTF-8') ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -535,29 +526,57 @@ $hasta = min($pagina * $limit, $totalRegistros);
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Versión Móvil: Fichas de Eventos (< 768px) -->
+                <div class="d-block d-md-none p-3" id="listaMobileEventos">
+                    <?php if (empty($consultas)): ?>
+                        <div class="text-center py-4 text-secondary">
+                            <p class="mb-1 fw-semibold text-dark">No se encontraron movimientos</p>
+                            <p class="small text-muted mb-0">No hay registros con los filtros actuales.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($consultas as $row): ?>
+                            <?php $badgeClass = $getTipoBadgeClass($row['id_tipo'] ?? 0); ?>
+                            <div class="card border rounded-3 p-3 mb-2.5 shadow-sm" style="border-color: #e2e8f0;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="font-monospace fw-bold text-muted small">#<?= (int)$row['id_consulta'] ?> &bull; Cód. <?= htmlspecialchars($row['codigo_socio'], ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="badge border fw-normal <?= $badgeClass ?>" style="font-size: 0.72rem;">
+                                        <?= htmlspecialchars($row['tipo'] ?? 'Consulta', ENT_QUOTES, 'UTF-8') ?>
+                                    </span>
+                                </div>
+                                <div class="fw-semibold text-dark"><?= htmlspecialchars(!empty($row['nombres']) ? $row['nombres'] : 'Socio', ENT_QUOTES, 'UTF-8') ?></div>
+                                <div class="d-flex justify-content-between align-items-center small text-secondary mt-2 pt-2 border-top" style="border-color: #f1f5f9;">
+                                    <span>Tel: <?= !empty($row['telefono']) ? htmlspecialchars($row['telefono'], ENT_QUOTES, 'UTF-8') : '—' ?></span>
+                                    <span class="text-muted font-monospace" style="font-size: 0.74rem;">
+                                        <?= htmlspecialchars($row['fecha_consulta'], ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars($row['hora_consulta'], ENT_QUOTES, 'UTF-8') ?>
+                                    </span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
             <?php endif; ?>
 
             <!-- Paginación y Resumen -->
             <?php if ($totalPaginas > 1 || $totalRegistros > 0): ?>
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 border-top bg-light gap-3">
-                    <div class="small text-muted">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 border-top bg-light gap-3" style="border-color: #e2e8f0;">
+                    <div class="small text-secondary">
                         <?php if ($vista === 'socios'): ?>
-                            Mostrando usuarios del <strong><?= $desde ?></strong> al <strong><?= $hasta ?></strong> de un total de <strong><?= number_format($totalRegistros) ?> usuarios únicos</strong>
+                            Mostrando usuarios del <strong><?= $desde ?></strong> al <strong><?= $hasta ?></strong> de <strong><?= number_format($totalRegistros) ?> usuarios únicos</strong>
                         <?php else: ?>
-                            Mostrando eventos del <strong><?= $desde ?></strong> al <strong><?= $hasta ?></strong> de un total de <strong><?= number_format($totalRegistros) ?> eventos registrados</strong>
+                            Mostrando eventos del <strong><?= $desde ?></strong> al <strong><?= $hasta ?></strong> de <strong><?= number_format($totalRegistros) ?> eventos registrados</strong>
                         <?php endif; ?>
                     </div>
                     <?php if ($totalPaginas > 1): ?>
                         <nav aria-label="Navegación de páginas">
-                            <ul class="pagination pagination-sm mb-0">
-                                <!-- Botón Anterior -->
+                            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center justify-content-md-end">
                                 <li class="page-item <?= ($pagina <= 1) ? 'disabled' : '' ?>">
                                     <a class="page-link" href="<?= $pageUrl($pagina - 1) ?>#tabla-reportes" <?= ($pagina <= 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
-                                        <i class="bi bi-chevron-left"></i>
+                                        Anterior
                                     </a>
                                 </li>
 
-                                <!-- Números de Página -->
                                 <?php
                                 $startPage = max(1, $pagina - 2);
                                 $endPage   = min($totalPaginas, $pagina + 2);
@@ -581,10 +600,9 @@ $hasta = min($pagina * $limit, $totalRegistros);
                                     <li class="page-item"><a class="page-link" href="<?= $pageUrl($totalPaginas) ?>#tabla-reportes"><?= $totalPaginas ?></a></li>
                                 <?php endif; ?>
 
-                                <!-- Botón Siguiente -->
                                 <li class="page-item <?= ($pagina >= $totalPaginas) ? 'disabled' : '' ?>">
                                     <a class="page-link" href="<?= $pageUrl($pagina + 1) ?>#tabla-reportes" <?= ($pagina >= $totalPaginas) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
-                                        <i class="bi bi-chevron-right"></i>
+                                        Siguiente
                                     </a>
                                 </li>
                             </ul>

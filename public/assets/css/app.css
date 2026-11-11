@@ -467,3 +467,128 @@ body {
 .sidebar-tooltip.bs-tooltip-end .tooltip-arrow::before {
     border-right-color: #0f172a;
 }
+
+/* ============================================================
+   Componentes de Módulo Administrativo y Supervisión
+   ============================================================ */
+
+/* Botones de Pestaña Segmentada por Tipo de Trabajo */
+.filtro-trabajo-btn {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-weight: 500;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.filtro-trabajo-btn:hover {
+    color: #0284c7;
+    background-color: rgba(2, 132, 199, 0.08);
+}
+.filtro-trabajo-btn.active {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.35);
+}
+.filtro-trabajo-btn .filtro-contador {
+    font-size: 0.72rem;
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+}
+.filtro-trabajo-btn.active .filtro-contador {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Botones de Pestaña Segmentada por Período */
+.filtro-periodo-btn {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-weight: 500;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+.filtro-periodo-btn:hover {
+    color: #0284c7;
+    background-color: rgba(2, 132, 199, 0.08);
+}
+.filtro-periodo-btn.active {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.35);
+}
+
+/* Botones de Pestaña Segmentada por Contingencia */
+.filtro-contingencia-btn {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-weight: 500;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.filtro-contingencia-btn:hover {
+    color: #0284c7;
+    background-color: rgba(2, 132, 199, 0.08);
+}
+.filtro-contingencia-btn.active {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.35);
+}
+.filtro-contingencia-btn .filtro-badge {
+    font-size: 0.72rem;
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+}
+.filtro-contingencia-btn.active .filtro-badge {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Bloque de Observación / Glosa en Fichas de Contingencia */
+.bloque-observacion {
+    background-color: #f8fafc;
+    border-left: 3px solid #cbd5e1;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+/* Tarjeta Operativa para Cuadrillas de Terreno (Reconexiones y Reclamos) */
+.task-card-operador {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.task-card-operador:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
