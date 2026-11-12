@@ -1,0 +1,10 @@
+{
+    "name": "cosmol/reportes",
+    "description": "Sistema de Visualización de Reportes y Gestión de Trabajos - COSMOL",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
