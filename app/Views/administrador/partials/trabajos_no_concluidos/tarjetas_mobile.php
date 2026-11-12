@@ -7,6 +7,8 @@
  * 
  * @var array $trabajos
  */
+
+$esAdmin = function_exists('hasRole') ? hasRole('Administrador') : (isset($_SESSION['usuario']['nombre_rol']) && $_SESSION['usuario']['nombre_rol'] === 'Administrador');
 ?>
 <div class="d-block d-md-none p-3" id="listaMobileNoConcluidos">
     <?php foreach ($trabajos as $trabajo): ?>
@@ -21,6 +23,11 @@
         $codSocio    = isset($trabajo['cod_socio']) ? trim($trabajo['cod_socio']) : '';
         $coords      = isset($trabajo['coordenadas_gps']) ? preg_replace('/\s+/', '', $trabajo['coordenadas_gps']) : '';
         
+        $operadorReporta = !empty($trabajo['operador_reporta']) 
+            ? $trabajo['operador_reporta'] 
+            : (!empty($trabajo['nombre_operador']) ? $trabajo['nombre_operador'] : 'No asignado');
+        $fechaSeguimiento = !empty($trabajo['fecha_seguimiento']) ? $trabajo['fecha_seguimiento'] : '';
+
         $estCalc = isset($trabajo['estado_calculado']) 
             ? $trabajo['estado_calculado'] 
             : (isset($trabajo['estado']) ? $trabajo['estado'] : 'NO CONCLUIDO');
@@ -63,6 +70,20 @@
             <div class="fw-semibold text-dark"><?= htmlspecialchars($nombreSocio, ENT_QUOTES, 'UTF-8') ?></div>
             <?php if ($codSocio): ?>
                 <div class="text-secondary font-monospace small">Cód. <?= htmlspecialchars($codSocio, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
+
+            <?php if ($esAdmin): ?>
+                <div class="mt-2 text-secondary small d-flex align-items-center justify-content-between flex-wrap gap-1 p-2 rounded bg-light border" style="border-color: #f1f5f9;">
+                    <span>
+                        <span class="text-muted">Operador:</span>
+                        <strong class="text-dark"><?= htmlspecialchars($operadorReporta, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </span>
+                    <?php if (!empty($fechaSeguimiento)): ?>
+                        <span class="font-monospace text-muted" style="font-size: 0.72rem;">
+                            <?= htmlspecialchars(date('d/m/Y H:i', strtotime($fechaSeguimiento)), ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
 
             <div class="mt-2.5">

@@ -47,6 +47,30 @@ $medidor       = isset($trabajo['medidor']) && !empty($trabajo['medidor']) ? (st
 $glosaRegistro = isset($trabajo['glosa']) ? trim((string)$trabajo['glosa']) : '';
 $foto          = isset($trabajo['foto']) && !empty($trabajo['foto']) ? trim((string)$trabajo['foto']) : null;
 
+// Tipo de Reconexión (API: id_tipo_reconexion)
+$idTipoReconexion = isset($trabajo['id_tipo_reconexion']) ? (int)$trabajo['id_tipo_reconexion'] : 1;
+$tipoReconexionTexto = 'Corte normal';
+$tipoReconexionDesc  = 'Sin retiro de medidor';
+
+switch ($idTipoReconexion) {
+    case 1:
+        $tipoReconexionTexto = 'Corte normal';
+        $tipoReconexionDesc  = 'Sin retiro de medidor';
+        break;
+    case 2:
+        $tipoReconexionTexto = 'Con medidor';
+        $tipoReconexionDesc  = 'Retiro de medidor';
+        break;
+    case 3:
+        $tipoReconexionTexto = 'Con material';
+        $tipoReconexionDesc  = 'Falta de accesorios';
+        break;
+    case 4:
+        $tipoReconexionTexto = 'Otros';
+        $tipoReconexionDesc  = 'Otro motivo';
+        break;
+}
+
 // Validación de tipo de ubicación: GPS vs Mi Domicilio
 $rawGps = isset($trabajo['coordenadas_gps']) ? trim((string)$trabajo['coordenadas_gps']) : '';
 $esGpsValido     = false;
@@ -152,60 +176,78 @@ $estadoInterno = isset($trabajo['estado_interno']) ? (string)$trabajo['estado_in
                         </span>
                     </div>
 
-                    <!-- Fila Clave Operativa: Zona y Ruta -->
-                    <div class="px-3 py-2 border-bottom bg-light d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #e2e8f0 !important;">
-                        <div class="fw-bold text-dark font-monospace" style="font-size: 0.95rem; letter-spacing: 0.02em;">
-                            <i class="bi bi-geo-alt-fill text-primary me-1"></i><?= htmlspecialchars($zonaRuta, ENT_QUOTES, 'UTF-8') ?>
-                        </div>
-                        <?php if (!empty($ubicacion)): ?>
-                            <span class="badge bg-white text-secondary border font-monospace" style="font-size: 0.72rem;">
-                                U-Z-R: <?= htmlspecialchars($ubicacion, ENT_QUOTES, 'UTF-8') ?>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="card-body p-3 d-flex flex-column gap-3">
+                    <div class="card-body p-3">
                         
-                        <!-- Dirección del Predio -->
-                        <div class="p-2.5 rounded bg-light border" style="border-color: #e2e8f0 !important;">
-                            <span class="text-secondary fw-bold text-uppercase d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
-                                Dirección de la solicitud
-                            </span>
-                            <div class="fw-semibold text-dark text-break fs-6 mb-0" style="line-height: 1.35;">
-                                <?= !empty($direccion) ? htmlspecialchars($direccion, ENT_QUOTES, 'UTF-8') : '<span class="text-muted fst-italic">Dirección no especificada</span>' ?>
+                        <!-- 1. Identificación del Socio Titular -->
+                        <div class="pb-2">
+                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; letter-spacing: 0.02em;">
+                                Socio Solicitante
                             </div>
-                        </div>
-
-                        <!-- Identificación del Socio Titular -->
-                        <div>
-                            <div class="d-flex justify-content-between align-items-baseline mb-0.5">
-                                <span class="text-secondary fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">
-                                    Socio Titular
-                                </span>
+                            <div class="text-secondary fs-6 text-break">
+                                <?= htmlspecialchars($nombreSocio, ENT_QUOTES, 'UTF-8') ?>
                                 <?php if (!empty($codSocio)): ?>
-                                    <span class="text-secondary small" style="font-size: 0.78rem;">
-                                        Cód: <strong class="text-dark font-monospace"><?= htmlspecialchars($codSocio, ENT_QUOTES, 'UTF-8') ?></strong>
-                                    </span>
+                                    <span class="text-muted ms-1 font-monospace">(Cód: <?= htmlspecialchars($codSocio, ENT_QUOTES, 'UTF-8') ?>)</span>
                                 <?php endif; ?>
                             </div>
-                            <div class="fw-bold text-dark text-break fs-6">
-                                <?= htmlspecialchars($nombreSocio, ENT_QUOTES, 'UTF-8') ?>
+                        </div>
+
+                        <hr class="my-2.5" style="border-top: 1px solid #e2e8f0; opacity: 1;">
+
+                        <!-- 2. Tipo de Reconexión -->
+                        <div class="py-2">
+                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; letter-spacing: 0.02em;">
+                                Tipo de Reconexión
+                            </div>
+                            <div class="text-secondary fs-6">
+                                <?= htmlspecialchars($tipoReconexionTexto, ENT_QUOTES, 'UTF-8') ?>
+                                <?php if (!empty($tipoReconexionDesc)): ?>
+                                    <span class="text-muted ms-1">(<?= htmlspecialchars($tipoReconexionDesc, ENT_QUOTES, 'UTF-8') ?>)</span>
+                                <?php endif; ?>
                             </div>
                         </div>
 
-                        <!-- Datos Técnicos: Medidor y Motivo / Glosa del Registro -->
-                        <div class="row g-2">
-                            <div class="col-sm-7">
-                                <div class="p-2.5 rounded bg-light border h-100 d-flex flex-column justify-content-center" style="border-color: #e2e8f0 !important;">
-                                    <span class="text-secondary fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">
-                                        Glosa / Descripcion
-                                    </span>
-                                    <span class="text-dark small text-break d-block fw-medium">
-                                        <?= !empty($glosaRegistro) ? htmlspecialchars($glosaRegistro, ENT_QUOTES, 'UTF-8') : 'Reconexión de servicio de agua potable' ?>
-                                    </span>
-                                </div>
+                        <hr class="my-2.5" style="border-top: 1px solid #e2e8f0; opacity: 1;">
+
+                        <!-- 3. Ubicación Proporcionada (Condicional: GPS vs Domicilio Registrado) -->
+                        <div class="py-2">
+                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; letter-spacing: 0.02em;">
+                                Ubicación
+                            </div>
+                            <div class="text-secondary fs-6 text-break">
+                                <?php if ($esGpsValido): ?>
+                                    Ubicación referencial enviada por el socio (ver mapa y coordenadas abajo)
+                                <?php else: ?>
+                                    <div>
+                                        <?= !empty($direccion) ? htmlspecialchars($direccion, ENT_QUOTES, 'UTF-8') : '<span class="text-muted fst-italic">Dirección no especificada</span>' ?>
+                                        <span class="text-muted ms-1">(Domicilio registrado)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-2 mt-2 rounded bg-light border" style="border-color: #e2e8f0 !important;">
+                                        <div class="fw-bold text-dark font-monospace" style="font-size: 0.88rem; letter-spacing: 0.02em;">
+                                            <i class="bi bi-geo-alt-fill text-primary me-1"></i><?= htmlspecialchars($zonaRuta, ENT_QUOTES, 'UTF-8') ?>
+                                        </div>
+                                        <?php if (!empty($ubicacion)): ?>
+                                            <span class="text-secondary font-monospace small" style="font-size: 0.78rem;">
+                                                U-Z-R: <strong class="text-dark"><?= htmlspecialchars($ubicacion, ENT_QUOTES, 'UTF-8') ?></strong>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
+
+                        <hr class="my-2.5" style="border-top: 1px solid #e2e8f0; opacity: 1;">
+
+                        <!-- 4. Descripción del Socio / Glosa -->
+                        <div class="py-2">
+                            <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem; letter-spacing: 0.02em;">
+                                Descripción del Socio
+                            </div>
+                            <div class="text-secondary fs-6 text-break">
+                                <?= !empty($glosaRegistro) ? htmlspecialchars($glosaRegistro, ENT_QUOTES, 'UTF-8') : 'Reconexión de servicio de agua potable' ?>
+                            </div>
+                        </div>
+
+                        <hr class="my-2.5" style="border-top: 1px solid #e2e8f0; opacity: 1;">
 
                         <!-- Sección de Ubicación: GPS vs Domicilio Propio -->
                         <?php if ($esGpsValido): ?>
@@ -216,25 +258,17 @@ $estadoInterno = isset($trabajo['estado_interno']) ? (string)$trabajo['estado_in
                             ?>
                             <div class="p-3 rounded bg-light border" style="border-color: #cbd5e1 !important;">
                                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-1">
-                                    <span class="text-secondary fw-bold text-uppercase d-inline-flex align-items-center gap-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
-                                        <i class="bi bi-geo-alt-fill text-danger"></i> Ubicación GPS Enviada por el Socio
+                                    <span class="text-secondary fw-semibold text-uppercase small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i> Ubicación GPS Enviada
                                     </span>
                                     <span class="font-monospace small text-dark fw-bold"><?= htmlspecialchars($coordsGpsLimpia, ENT_QUOTES, 'UTF-8') ?></span>
                                 </div>
 
-                                <!-- Aviso explicativo para el operador -->
-                                <div class="alert alert-warning border-0 p-2.5 mb-2.5 rounded-2 small d-flex align-items-start gap-2 text-dark" style="background-color: #fef3c7;">
-                                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
-                                    <div style="font-size: 0.8125rem; line-height: 1.4;">
-                                        <strong>¡Atención Operador!</strong> El solicitante envió esta <strong>Ubicación GPS</strong> para realizar la reconexión en un lugar específico. Guíese por el mapa y coordenadas para llegar.
-                                    </div>
-                                </div>
-
                                 <div class="d-flex gap-2 flex-wrap mb-2.5">
-                                    <a href="<?= htmlspecialchars($urlVerMapa, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm fw-semibold flex-fill d-inline-flex align-items-center justify-content-center gap-1.5" style="min-height: 42px;">
+                                    <a href="<?= htmlspecialchars($urlVerMapa, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm fw-semibold flex-fill d-inline-flex align-items-center justify-content-center gap-1.5" style="min-height: 40px;">
                                         <i class="bi bi-box-arrow-up-right"></i> Abrir en Google Maps
                                     </a>
-                                    <a href="<?= htmlspecialchars($urlRuta, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-danger btn-sm fw-bold flex-fill d-inline-flex align-items-center justify-content-center gap-1.5" style="min-height: 42px;">
+                                    <a href="<?= htmlspecialchars($urlRuta, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-danger btn-sm fw-bold flex-fill d-inline-flex align-items-center justify-content-center gap-1.5" style="min-height: 40px;">
                                         <i class="bi bi-sign-turn-right-fill"></i> Iniciar Ruta GPS
                                     </a>
                                 </div>
@@ -246,25 +280,22 @@ $estadoInterno = isset($trabajo['estado_interno']) ? (string)$trabajo['estado_in
                         <?php else: ?>
                             <!-- Aviso: Solicitud en Domicilio Propio / Hogar del Socio -->
                             <div class="p-3 rounded bg-light border d-flex align-items-start gap-3" style="border-color: #cbd5e1 !important;">
-                                <div class="p-2.5 rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
-                                    <i class="bi bi-house-check-fill fs-4"></i>
+                                <div class="p-2 rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-house-check-fill fs-5"></i>
                                 </div>
                                 <div>
-                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                        <h6 class="fw-bold text-dark mb-0 fs-6">Reconexión en Domicilio Propio (Hogar del Socio)</h6>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style="font-size: 0.72rem;">
-                                            Mi Domicilio
-                                        </span>
+                                    <div class="fw-bold text-dark fs-6 mb-1">
+                                        Reconexión en Domicilio Propio
                                     </div>
-                                    <p class="text-secondary small mb-0" style="line-height: 1.45;">
-                                        El socio registró la solicitud con la opción <strong>"Mi Domicilio"</strong>. La reconexión debe realizarse en su <strong>propia casa u hogar</strong> registrado en el sistema (ver dirección del predio arriba). No requiere navegación GPS externa.
-                                    </p>
+                                    <div class="text-secondary small mb-0">
+                                        El socio solicitó la reconexión en su domicilio registrado. No requiere navegación GPS externa.
+                                    </div>
                                 </div>
                             </div>
                         <?php endif; ?>
 
                         <!-- Fotografía Adjunta -->
-                        <div>
+                        <div style="margin-top: 20px;">
                             <span class="text-secondary fw-bold text-uppercase d-block mb-1.5" style="font-size: 0.68rem; letter-spacing: 0.05em;">
                                 Fotografía de referencia
                             </span>

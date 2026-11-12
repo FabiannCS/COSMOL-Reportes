@@ -21,6 +21,28 @@ if (!function_exists('hasPermission')) {
     }
 }
 
+if (!function_exists('hasRole')) {
+    /**
+     * Verifica si el usuario en sesión posee un rol específico (o varios)
+     *
+     * @param string|array $rol Nombre del rol (ej. 'Administrador' o ['Administrador', 'Supervisor'])
+     * @return bool
+     */
+    function hasRole($rol)
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $rolUsuario = isset($_SESSION['usuario']['nombre_rol']) ? $_SESSION['usuario']['nombre_rol'] : '';
+        if (is_array($rol)) {
+            return in_array($rolUsuario, $rol, true);
+        }
+
+        return $rolUsuario === $rol;
+    }
+}
+
 if (!function_exists('csrfToken')) {
     /**
      * Genera u obtiene el token CSRF actual en sesión

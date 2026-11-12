@@ -54,8 +54,7 @@ $queryString = !empty($queryParams) ? '&' . http_build_query($queryParams) : '';
     <!-- Encabezado de Página -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
         <div>
-            <h1 class="h3 fw-bold mb-1 text-dark">Gestión de Usuarios</h1>
-            <p class="text-secondary small mb-0">Administración de cuentas de acceso, asignación de roles y especialidades técnicas.</p>
+            <h1 class="h3 fw-bold mb-1 text-dark">Gestión de Usuarios</h1>        
         </div>
         <div>
             <?php if (hasPermission('usuarios.crear')): ?>

@@ -50,7 +50,6 @@ foreach ($trabajos as $t) {
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-1 text-dark">Trabajos No Concluidos / En Revisión</h1>
-            <p class="text-secondary small mb-0">Trabajos reportados por operadores que requieren intervención supervisada.</p>
         </div>
         <div>
             <a href="/administrador/trabajos-no-concluidos" class="btn btn-outline-secondary btn-sm py-1 px-2.5 shadow-sm" style="font-size: 0.78rem; font-weight: 500;">

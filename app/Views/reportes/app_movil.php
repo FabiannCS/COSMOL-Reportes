@@ -35,8 +35,6 @@ $getTipoBadgeClass = function ($idTipo) {
             return 'bg-success-subtle text-success border-success-subtle';
         case 10: // Pago: Multipago
             return 'bg-secondary-subtle text-secondary border-secondary-subtle';
-        case 11: // Pago: Pago al Paso
-            return 'bg-warning-subtle text-dark border-warning-subtle';
         case 12: // Pago: Código QR
             return 'bg-info-subtle text-primary border-info-subtle';
         default:
@@ -104,19 +102,7 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
     <!-- Encabezado de Página -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
         <div>
-            <h1 class="h3 fw-bold mb-1 text-dark">Auditoría y Consultas App Móvil</h1>
-            <p class="text-secondary small mb-0">Control de autenticaciones, consultas de estado de cuenta, descargas de facturas y pasarelas de pago.</p>
-        </div>
-        <div>
-            <?php if (hasPermission('reportes.exportar')): ?>
-                <a href="<?= htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-success btn-sm py-1 px-3 shadow-sm" style="font-size: 0.78rem; font-weight: 500;">
-                    Exportar a CSV (<?= $vista === 'socios' ? 'Socios' : 'Eventos' ?>)
-                </a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-3 shadow-sm disabled" disabled title="No posee permiso para exportar reportes" style="font-size: 0.78rem; font-weight: 500;">
-                    Exportar a CSV
-                </button>
-            <?php endif; ?>
+            <h1 class="h3 fw-bold mb-1 text-dark">Consultas de la App Móvil</h1>
         </div>
     </div>
 
@@ -202,9 +188,9 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
                     <label for="id_tipo" class="form-label text-secondary small fw-semibold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Tipo de Evento</label>
                     <select class="form-select form-select-sm" id="id_tipo" name="id_tipo">
                         <option value="">Todos los eventos de la App</option>
-                        <?php foreach ($tiposConsulta as $tipo): ?>
-                            <option value="<?= (int)$tipo['id_tipo'] ?>" <?= (!empty($filtros['id_tipo']) && (int)$filtros['id_tipo'] === (int)$tipo['id_tipo']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($tipo['nombre'], ENT_QUOTES, 'UTF-8') ?>
+                        <?php foreach ($tarjetasConfig as $idTipo => $cfg): ?>
+                            <option value="<?= (int)$idTipo ?>" <?= (!empty($filtros['id_tipo']) && (int)$filtros['id_tipo'] === (int)$idTipo) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($cfg['label'], ENT_QUOTES, 'UTF-8') ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -288,8 +274,7 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
                             <?php if (empty($socios)): ?>
                                 <tr>
                                     <td colspan="7" class="text-center py-5 text-secondary">
-                                        <p class="mb-1 fw-semibold text-dark">No se encontraron usuarios</p>
-                                        <p class="small text-muted mb-0">No existen registros que coincidan con los criterios de búsqueda aplicados.</p>
+                                        <p class="mb-1 fw-semibold text-dark">No se encontraron registros</p>
                                     </td>
                                 </tr>
                             <?php else: ?>
@@ -409,8 +394,7 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
                 <div class="d-block d-md-none p-3" id="listaMobileSocios">
                     <?php if (empty($socios)): ?>
                         <div class="text-center py-4 text-secondary">
-                            <p class="mb-1 fw-semibold text-dark">No se encontraron usuarios</p>
-                            <p class="small text-muted mb-0">No existen registros que coincidan con los criterios aplicados.</p>
+                            <p class="mb-1 fw-semibold text-dark">No se encontraron registros</p>
                         </div>
                     <?php else: ?>
                         <?php foreach ($socios as $idx => $s): ?>
@@ -489,8 +473,7 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
                             <?php if (empty($consultas)): ?>
                                 <tr>
                                     <td colspan="6" class="text-center py-5 text-secondary">
-                                        <p class="mb-1 fw-semibold text-dark">No se encontraron movimientos registrados para la App Móvil</p>
-                                        <p class="small text-muted mb-0">Pruebe modificando los filtros de fecha o búsqueda.</p>
+                                        <p class="mb-1 fw-semibold text-dark">No se encontraron registros</p>
                                     </td>
                                 </tr>
                             <?php else: ?>
@@ -528,8 +511,7 @@ $hayFiltrosActivos = (!empty($filtros['fecha_inicio']) || !empty($filtros['fecha
                 <div class="d-block d-md-none p-3" id="listaMobileEventos">
                     <?php if (empty($consultas)): ?>
                         <div class="text-center py-4 text-secondary">
-                            <p class="mb-1 fw-semibold text-dark">No se encontraron movimientos</p>
-                            <p class="small text-muted mb-0">No hay registros con los filtros actuales.</p>
+                            <p class="mb-1 fw-semibold text-dark">No se encontraron registros</p>
                         </div>
                     <?php else: ?>
                         <?php foreach ($consultas as $row): ?>

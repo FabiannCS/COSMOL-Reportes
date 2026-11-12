@@ -148,6 +148,8 @@ CREATE TABLE IF NOT EXISTS trabajo_seguimiento (
     estado_interno VARCHAR(50) NOT NULL, -- 'NO CONCLUIDO' o 'NO PROCEDENTE'
     glosa_interna TEXT,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT REFERENCES usuario(id_usuario) ON DELETE SET NULL,
+    nombre_operador VARCHAR(150),
     UNIQUE (id_trabajo, tipo_trabajo)
 );
 CREATE INDEX IF NOT EXISTS idx_trabajo_seguimiento_tipo_id ON trabajo_seguimiento(tipo_trabajo, id_trabajo);

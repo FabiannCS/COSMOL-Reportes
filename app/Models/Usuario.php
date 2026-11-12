@@ -94,6 +94,17 @@ class Usuario extends Model
         return $stmt->fetch();
     }
 
+    /**
+     * Alias para findById
+     *
+     * @param int $idUsuario
+     * @return array|false
+     */
+    public function find($idUsuario)
+    {
+        return $this->findById($idUsuario);
+    }
+
     public function create(array $data)
     {
         $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);

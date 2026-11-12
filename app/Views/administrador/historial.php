@@ -49,7 +49,6 @@ $queryString = !empty($queryParams) ? '&' . http_build_query($queryParams) : '';
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-1 text-dark">Historial de Trabajos Concluidos</h1>
-            <p class="text-secondary small mb-0">Registro y auditoría global de todas las órdenes de reconexión y reclamos técnicos finalizados.</p>
         </div>
         <div>
             <a href="/administrador/historial" class="btn btn-outline-secondary btn-sm py-1 px-2.5 shadow-sm" style="font-size: 0.78rem; font-weight: 500;">
@@ -89,7 +88,7 @@ $queryString = !empty($queryParams) ? '&' . http_build_query($queryParams) : '';
     <div class="card shadow-sm border rounded-3 mb-4" style="border-color: #e2e8f0;">
         <div class="card-header bg-white border-bottom py-3 px-3 px-sm-4 d-flex justify-content-between align-items-center" style="border-color: #e2e8f0;">
             <div>
-                <h5 class="card-title fw-bold mb-0 text-dark fs-6">Registro de Órdenes Finalizadas</h5>
+                <h5 class="card-title fw-bold mb-0 text-dark fs-6">Registro de trabajos concluidos</h5>
                 <p class="text-muted small mb-0">Resultados ordenados cronológicamente por fecha de conclusión.</p>
             </div>
             <span class="badge bg-light text-secondary border fw-normal py-1.5 px-2.5">

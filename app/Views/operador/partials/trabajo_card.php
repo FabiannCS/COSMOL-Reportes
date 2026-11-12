@@ -115,23 +115,39 @@ if ($is_historial) {
             </span>
         </div>
 
-        <!-- 2. Fila Clave Operativa: Zona y Ruta (Ej. "Zona 2 Ruta 24") -->
-        <div class="px-3 py-2 border-bottom bg-light d-flex align-items-center justify-content-between" 
-             style="border-color: #e2e8f0 !important;">
-            <div class="fw-bold text-dark font-monospace" style="font-size: 0.95rem; letter-spacing: 0.02em;">
-                <i class="bi bi-geo-alt-fill text-primary me-1"></i><?= htmlspecialchars($zonaRuta, ENT_QUOTES, 'UTF-8') ?>
+        <!-- 2. Fila Clave Operativa: Zona y Ruta (Solo si es solicitud en Domicilio Propio) -->
+        <?php if (!$esGpsValido): ?>
+            <div class="px-3 py-2 border-bottom bg-light d-flex align-items-center justify-content-between" 
+                 style="border-color: #e2e8f0 !important;">
+                <div class="fw-bold text-dark font-monospace" style="font-size: 0.95rem; letter-spacing: 0.02em;">
+                    <i class="bi bi-geo-alt-fill text-primary me-1"></i><?= htmlspecialchars($zonaRuta, ENT_QUOTES, 'UTF-8') ?>
+                </div>
             </div>
-        </div>
+        <?php else: ?>
+            <div class="px-3 py-2 border-bottom bg-light d-flex align-items-center justify-content-between" 
+                 style="border-color: #e2e8f0 !important;">
+                <div class="fw-bold text-dark font-monospace" style="font-size: 0.85rem; letter-spacing: 0.02em;">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>Ubicación GPS Enviada
+                </div>
+                <span class="text-secondary font-monospace small" style="font-size: 0.75rem;">
+                    <?= htmlspecialchars($coordsGpsLimpia, ENT_QUOTES, 'UTF-8') ?>
+                </span>
+            </div>
+        <?php endif; ?>
 
         <div class="card-body p-3 d-flex flex-column gap-3">
             
-            <!-- 3. Dirección del Predio -->
+            <!-- 3. Dirección / Ubicación -->
             <div class="p-2.5 rounded bg-light border" style="border-color: #e2e8f0 !important;">
                 <span class="text-secondary fw-bold text-uppercase d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">
-                    Dirección
+                    <?= $esGpsValido ? 'Ubicación' : 'Dirección' ?>
                 </span>
                 <div class="fw-semibold text-dark text-break fs-6 mb-0" style="line-height: 1.35;">
-                    <?= !empty($direccion) ? htmlspecialchars($direccion, ENT_QUOTES, 'UTF-8') : '<span class="text-muted fst-italic">Dirección no especificada</span>' ?>
+                    <?php if ($esGpsValido): ?>
+                        Ubicación referencial GPS enviada por el solicitante
+                    <?php else: ?>
+                        <?= !empty($direccion) ? htmlspecialchars($direccion, ENT_QUOTES, 'UTF-8') : '<span class="text-muted fst-italic">Dirección no especificada</span>' ?>
+                    <?php endif; ?>
                 </div>
             </div>
 

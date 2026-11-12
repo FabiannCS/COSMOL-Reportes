@@ -28,9 +28,6 @@
                         <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.05em;">
                             Consultas Chatbot WhatsApp
                         </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.65rem;">
-                            WhatsApp
-                        </span>
                     </div>
                     <div class="h2 fw-bold mb-0 text-dark font-monospace">
                         <?= number_format($totalConsultas, 0, '', '.') ?>
@@ -48,9 +45,6 @@
                     <div class="d-flex justify-content-between align-items-center mb-1.5">
                         <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.05em;">
                             Registros en la App Móvil
-                        </span>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">
-                            App Móvil
                         </span>
                     </div>
                     <div class="h2 fw-bold mb-0 text-dark font-monospace">
@@ -70,9 +64,6 @@
                         <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.05em;">
                             Trabajos Pendientes
                         </span>
-                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill" style="font-size: 0.65rem;">
-                            Cortes y Reconexiones
-                        </span>
                     </div>
                     <div class="h2 fw-bold mb-0 text-warning-emphasis font-monospace">
                         <?= number_format($totalPendientes, 0, '', '.') ?>
@@ -90,9 +81,6 @@
                     <div class="d-flex justify-content-between align-items-center mb-1.5">
                         <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.05em;">
                             Trabajos Concluidos
-                        </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.65rem;">
-                            <?= $tasaResolucion ?>% efectividad
                         </span>
                     </div>
                     <div class="h2 fw-bold mb-0 text-success font-monospace">

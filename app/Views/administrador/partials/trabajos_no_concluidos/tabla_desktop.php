@@ -8,16 +8,22 @@
  * @var array $trabajos
  */
 ?>
+<?php
+$esAdmin = function_exists('hasRole') ? hasRole('Administrador') : (isset($_SESSION['usuario']['nombre_rol']) && $_SESSION['usuario']['nombre_rol'] === 'Administrador');
+?>
 <div class="d-none d-md-block table-responsive">
     <table class="table table-hover align-middle mb-0" id="tablaDesktopNoConcluidos">
         <thead style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
             <tr>
                 <th class="ps-3 ps-sm-4 text-secondary text-uppercase fw-semibold" style="width: 75px; font-size: 0.72rem; letter-spacing: 0.05em;">ID</th>
-                <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 140px; font-size: 0.72rem; letter-spacing: 0.05em;">Servicio</th>
-                <th class="text-secondary text-uppercase fw-semibold" style="width: 230px; font-size: 0.72rem; letter-spacing: 0.05em;">Socio</th>
+                <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 130px; font-size: 0.72rem; letter-spacing: 0.05em;">Servicio</th>
+                <th class="text-secondary text-uppercase fw-semibold" style="width: 210px; font-size: 0.72rem; letter-spacing: 0.05em;">Socio</th>
+                <?php if ($esAdmin): ?>
+                    <th class="text-secondary text-uppercase fw-semibold" style="width: 160px; font-size: 0.72rem; letter-spacing: 0.05em;">Operador</th>
+                <?php endif; ?>
                 <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 130px; font-size: 0.72rem; letter-spacing: 0.05em;">Estado</th>
                 <th class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Informe Previo / Observación</th>
-                <th class="text-end pe-3 pe-sm-4 text-secondary text-uppercase fw-semibold" style="width: 170px; font-size: 0.72rem; letter-spacing: 0.05em;">Acciones</th>
+                <th class="text-end pe-3 pe-sm-4 text-secondary text-uppercase fw-semibold" style="width: 130px; font-size: 0.72rem; letter-spacing: 0.05em;">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -33,6 +39,11 @@
                 $codSocio    = isset($trabajo['cod_socio']) ? trim($trabajo['cod_socio']) : '';
                 $coords      = isset($trabajo['coordenadas_gps']) ? preg_replace('/\s+/', '', $trabajo['coordenadas_gps']) : '';
                 
+                $operadorReporta = !empty($trabajo['operador_reporta']) 
+                    ? $trabajo['operador_reporta'] 
+                    : (!empty($trabajo['nombre_operador']) ? $trabajo['nombre_operador'] : 'No asignado');
+                $fechaSeguimiento = !empty($trabajo['fecha_seguimiento']) ? $trabajo['fecha_seguimiento'] : '';
+
                 $estCalc = isset($trabajo['estado_calculado']) 
                     ? $trabajo['estado_calculado'] 
                     : (isset($trabajo['estado']) ? $trabajo['estado'] : 'NO CONCLUIDO');
@@ -77,6 +88,18 @@
                             </div>
                         <?php endif; ?>
                     </td>
+                    <?php if ($esAdmin): ?>
+                        <td>
+                            <div class="d-flex align-items-center gap-1.5 text-dark small">
+                                <span class="fw-medium text-break"><?= htmlspecialchars($operadorReporta, ENT_QUOTES, 'UTF-8') ?></span>
+                            </div>
+                            <?php if (!empty($fechaSeguimiento)): ?>
+                                <div class="text-secondary font-monospace" style="font-size: 0.72rem;">
+                                    <?= htmlspecialchars(date('d/m/Y H:i', strtotime($fechaSeguimiento)), ENT_QUOTES, 'UTF-8') ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                    <?php endif; ?>
                     <td class="text-center">
                         <?php if ($estCalc === 'NO PROCEDENTE'): ?>
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-normal py-1 px-2">
@@ -93,16 +116,8 @@
                             <?= htmlspecialchars($glosaMostrar, ENT_QUOTES, 'UTF-8') ?>
                         </div>
                     </td>
-                    <td class="text-end pe-3 pe-sm-4 text-nowrap">
+                    <td class="text-center pe-3 pe-sm-4 text-nowrap">
                         <div class="d-inline-flex align-items-center gap-1.5 justify-content-end">
-                            <?php if (!empty($coords)): ?>
-                                <a href="https://www.google.com/maps?q=<?= urlencode($coords) ?>" 
-                                   target="_blank" 
-                                   class="btn btn-sm btn-outline-secondary px-2.5 py-1" 
-                                   title="Ver en Google Maps">
-                                    GPS
-                                </a>
-                            <?php endif; ?>
                             <a href="/administrador/trabajos/detalle?tipo=<?= urlencode($tipoTrabajo) ?>&id=<?= urlencode($idStr) ?>&origen=no_concluidos" 
                                class="btn btn-sm btn-outline-primary px-3 py-1">
                                 Gestionar

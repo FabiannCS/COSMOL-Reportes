@@ -23,6 +23,8 @@ class TrabajoSeguimiento extends Model {
                     UNIQUE (id_trabajo, tipo_trabajo)
                 );
                 CREATE INDEX IF NOT EXISTS idx_trabajo_seguimiento_tipo_id ON trabajo_seguimiento(tipo_trabajo, id_trabajo);
+                ALTER TABLE trabajo_seguimiento ADD COLUMN IF NOT EXISTS id_usuario INT;
+                ALTER TABLE trabajo_seguimiento ADD COLUMN IF NOT EXISTS nombre_operador VARCHAR(150);
             ");
         } catch (\Exception $e) {
             // Silencioso ante contingencias de permisos
@@ -36,15 +38,19 @@ class TrabajoSeguimiento extends Model {
      * @param string $tipoTrabajo 'reclamo' o 'reconexion'
      * @param string $estadoInterno 'NO CONCLUIDO' o 'NO PROCEDENTE'
      * @param string $glosaInterna Opcional
+     * @param int|null $idUsuario ID del operador que registra
+     * @param string $nombreOperador Nombre/username del operador
      * @return bool
      */
-    public function registrarSeguimiento($idTrabajo, $tipoTrabajo, $estadoInterno, $glosaInterna = '') {
-        $sql = "INSERT INTO {$this->table} (id_trabajo, tipo_trabajo, estado_interno, glosa_interna) 
-                VALUES (:id_trabajo, :tipo_trabajo, :estado_interno, :glosa_interna)
+    public function registrarSeguimiento($idTrabajo, $tipoTrabajo, $estadoInterno, $glosaInterna = '', $idUsuario = null, $nombreOperador = '') {
+        $sql = "INSERT INTO {$this->table} (id_trabajo, tipo_trabajo, estado_interno, glosa_interna, id_usuario, nombre_operador) 
+                VALUES (:id_trabajo, :tipo_trabajo, :estado_interno, :glosa_interna, :id_usuario, :nombre_operador)
                 ON CONFLICT (id_trabajo, tipo_trabajo) 
                 DO UPDATE SET 
                     estado_interno = EXCLUDED.estado_interno,
                     glosa_interna = EXCLUDED.glosa_interna,
+                    id_usuario = EXCLUDED.id_usuario,
+                    nombre_operador = EXCLUDED.nombre_operador,
                     fecha_registro = CURRENT_TIMESTAMP";
 
         $stmt = $this->db()->prepare($sql);
@@ -52,7 +58,9 @@ class TrabajoSeguimiento extends Model {
             ':id_trabajo' => $idTrabajo,
             ':tipo_trabajo' => $tipoTrabajo,
             ':estado_interno' => $estadoInterno,
-            ':glosa_interna' => $glosaInterna
+            ':glosa_interna' => $glosaInterna,
+            ':id_usuario' => $idUsuario,
+            ':nombre_operador' => $nombreOperador
         ]);
     }
 
@@ -64,7 +72,10 @@ class TrabajoSeguimiento extends Model {
      * @return object|false
      */
     public function obtenerSeguimiento($idTrabajo, $tipoTrabajo) {
-        $sql = "SELECT * FROM {$this->table} WHERE id_trabajo = :id_trabajo AND tipo_trabajo = :tipo_trabajo";
+        $sql = "SELECT ts.*, u.username AS usuario_username 
+                FROM {$this->table} ts
+                LEFT JOIN usuario u ON ts.id_usuario = u.id_usuario
+                WHERE ts.id_trabajo = :id_trabajo AND ts.tipo_trabajo = :tipo_trabajo";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([
             ':id_trabajo' => $idTrabajo,
@@ -81,7 +92,10 @@ class TrabajoSeguimiento extends Model {
      * @return array
      */
     public function obtenerTodosPorTipo($tipoTrabajo) {
-        $sql = "SELECT * FROM {$this->table} WHERE tipo_trabajo = :tipo_trabajo";
+        $sql = "SELECT ts.*, u.username AS usuario_username 
+                FROM {$this->table} ts
+                LEFT JOIN usuario u ON ts.id_usuario = u.id_usuario
+                WHERE ts.tipo_trabajo = :tipo_trabajo";
         $stmt = $this->db()->prepare($sql);
         $stmt->execute([':tipo_trabajo' => $tipoTrabajo]);
         return $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -93,7 +107,9 @@ class TrabajoSeguimiento extends Model {
      * @return array
      */
     public function obtenerTodosSeguimientos() {
-        $sql = "SELECT * FROM {$this->table}";
+        $sql = "SELECT ts.*, u.username AS usuario_username 
+                FROM {$this->table} ts
+                LEFT JOIN usuario u ON ts.id_usuario = u.id_usuario";
         $stmt = $this->db()->query($sql);
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }

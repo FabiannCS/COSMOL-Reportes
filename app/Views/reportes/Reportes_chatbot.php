@@ -94,7 +94,6 @@ $esFiltroQrActivo  = (!empty($filtros['id_tipo']) && (int)$filtros['id_tipo'] ==
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
         <div>
             <h1 class="h3 fw-bold mb-1 text-dark">Consultas Chatbot WhatsApp</h1>
-            <p class="text-secondary small mb-0">Auditoría, trazabilidad de socios, consultas operativas y verificación de pagos por QR registrados mediante el chatbot.</p>
         </div>
         <div>
             <?php if (hasPermission('reportes.exportar')): ?>
