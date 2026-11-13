@@ -23,14 +23,16 @@
 ?>
 
 <div class="card bg-white rounded-2 shadow-sm" style="border: 1px solid #94a3b8 !important;">
-    <!-- Encabezado de la Ficha -->
+    <!-- Encabezado de la Ficha: Orden, Fecha y Plazo (24h) -->
     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-2 px-3" style="border-color: #e2e8f0 !important;">
         <span class="text-secondary fw-semibold font-monospace" style="font-size: 0.85rem;">
             Orden #<?= htmlspecialchars($idReclamo, ENT_QUOTES, 'UTF-8') ?>
         </span>
-        <span class="text-secondary small font-monospace d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" title="Fecha de reporte">
-            <?= $fechaFormateada ?>
-        </span>
+        <div class="text-end d-flex flex-column align-items-end">
+            <span class="text-secondary small font-monospace d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" title="Fecha de llegada de la solicitud">
+                <?= $fechaFormateada ?>
+            </span>
+        </div>
     </div>
 
     <div class="card-body p-3">

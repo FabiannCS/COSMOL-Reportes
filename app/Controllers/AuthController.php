@@ -221,11 +221,12 @@ class AuthController extends Controller
             $stmt->execute($paramsFechas);
             $totalConsultas = (int)$stmt->fetchColumn();
 
-            // Conteo exclusivo de consultas de la App Móvil
+            // Conteo exclusivo de consultas de la App Móvil (excluye Reclamos)
             $stmtApp = $db->prepare("
                 SELECT COUNT(*) FROM consulta c
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
                 WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)
                   {$whereFechas}
             ");
             $stmtApp->execute($paramsFechas);
@@ -239,7 +240,7 @@ class AuthController extends Controller
                 $stmtDias = $db->prepare("
                     SELECT 
                         c.fecha_consulta,
-                        SUM(CASE WHEN (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil') THEN 1 ELSE 0 END) as app_movil,
+                        SUM(CASE WHEN (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil') AND (c.id_tipo != 4 OR c.id_tipo IS NULL) THEN 1 ELSE 0 END) as app_movil,
                         SUM(CASE WHEN (c.tipo_ubicacion != 'APP_MOVIL' OR c.tipo_ubicacion IS NULL) AND (u.username != 'app_movil' OR u.username IS NULL) THEN 1 ELSE 0 END) as whatsapp
                     FROM consulta c
                     LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
@@ -443,6 +444,201 @@ class AuthController extends Controller
         $totalNumerosUnicos = $reporteModel->getTotalNumerosUnicos();
         $numerosMasActivos  = $reporteModel->getNumerosMasActivos(5);
 
+        // --- 4. Cálculo de Tiempos Promedio de Atención y Resolución ---
+        // Se calcula el tiempo promedio de resolución por trabajo individual (un solo reclamo / una reconexión).
+        // Para evitar distorsión por tickets estáticos de prueba (backlog inactivo de desarrollo que permaneció semanas
+        // o meses antes de cerrarse masivamente), se utiliza una ventana operativa realista acorde al SLA del servicio:
+        // - Reconexiones: SLA operativo oficial de 24h (ventana de ciclo operativo de hasta 48h).
+        // - Reclamos: Ventana de hasta 96h (4 días) para intervenciones físicas de red (Agua Potable y Alcantarillado).
+        $mapaUsuarios = [];
+        try {
+            $stmtUsers = $db->query("SELECT id_usuario, username FROM usuario");
+            while ($uRow = $stmtUsers->fetch(\PDO::FETCH_ASSOC)) {
+                $mapaUsuarios[(int)$uRow['id_usuario']] = $uRow['username'];
+            }
+        } catch (\Exception $e) {
+            $mapaUsuarios = [];
+        }
+
+        $formatearHorasLegible = function ($horasDecimal) {
+            if ($horasDecimal <= 0) return '0h 0m';
+            $minutosTotal = (int)round($horasDecimal * 60);
+            $dias = (int)floor($minutosTotal / (24 * 60));
+            $restoMinutos = $minutosTotal % (24 * 60);
+            $horas = (int)floor($restoMinutos / 60);
+            $minutos = $restoMinutos % 60;
+            
+            if ($dias > 0) {
+                return "{$dias}d {$horas}h" . ($minutos > 0 ? " {$minutos}m" : "");
+            }
+            return "{$horas}h {$minutos}m";
+        };
+
+        $MAX_HORAS_REC  = 48.0;
+        $MAX_HORAS_RECL = 96.0;
+
+        // Recopilación de diferencias brutas para Reconexiones
+        $rawRec = [];
+        foreach ($datosRecCon as $item) {
+            $fReg = isset($item['fecha_registro']) ? $item['fecha_registro'] : '';
+            $fFin = !empty($item['fecha_reconexion']) ? $item['fecha_reconexion'] : (!empty($item['fecha_actualizacion']) ? $item['fecha_actualizacion'] : '');
+            if (!empty($fReg) && !empty($fFin)) {
+                $t1 = strtotime($fReg);
+                $t2 = strtotime($fFin);
+                if ($t1 && $t2 && $t2 >= $t1) {
+                    $diffHoras = round(($t2 - $t1) / 3600, 2);
+                    if ($diffHoras > 0) {
+                        $rawRec[] = [
+                            'diff' => $diffHoras,
+                            'item' => $item
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Recopilación de diferencias brutas para Reclamos
+        $rawRecl = [];
+        foreach ($datosReclCon as $item) {
+            $fReg = isset($item['fecha_registro']) ? $item['fecha_registro'] : '';
+            $fFin = !empty($item['fecha_trabajo']) ? $item['fecha_trabajo'] : (!empty($item['fecha_actualizacion']) ? $item['fecha_actualizacion'] : '');
+            if (!empty($fReg) && !empty($fFin)) {
+                $t1 = strtotime($fReg);
+                $t2 = strtotime($fFin);
+                if ($t1 && $t2 && $t2 >= $t1) {
+                    $diffHoras = round(($t2 - $t1) / 3600, 2);
+                    if ($diffHoras > 0) {
+                        $rawRecl[] = [
+                            'diff' => $diffHoras,
+                            'item' => $item
+                        ];
+                    }
+                }
+            }
+        }
+
+        $tiemposRec      = [];
+        $tiemposRecl     = [];
+        $tiemposReclAgua = [];
+        $tiemposReclAlc  = [];
+        $tiemposTecnicos = [];
+
+        // Filtrado operativo de Reconexiones (excluyendo outliers masivos de backlog)
+        $recFiltrados = array_filter($rawRec, function ($r) use ($MAX_HORAS_REC) {
+            return $r['diff'] <= $MAX_HORAS_REC;
+        });
+        // Fallback defensivo: si no hay casos <= 48h pero sí hubo concluidos, tomar los menores a 168h (1 semana)
+        if (empty($recFiltrados) && !empty($rawRec)) {
+            $recFiltrados = array_filter($rawRec, function ($r) {
+                return $r['diff'] <= 168.0;
+            });
+        }
+
+        foreach ($recFiltrados as $r) {
+            $diffHoras = $r['diff'];
+            $item      = $r['item'];
+            $tiemposRec[] = $diffHoras;
+
+            $uId = isset($item['usuario_reconexion']) ? (int)$item['usuario_reconexion'] : 0;
+            $nombreOp = isset($mapaUsuarios[$uId]) ? $mapaUsuarios[$uId] : ($uId > 0 ? "Operador #{$uId}" : "Sin asignar");
+            if (!isset($tiemposTecnicos[$nombreOp])) {
+                $tiemposTecnicos[$nombreOp] = [
+                    'nombre'       => $nombreOp,
+                    'tiempos'      => [],
+                    'reconexiones' => 0,
+                    'reclamos'     => 0
+                ];
+            }
+            $tiemposTecnicos[$nombreOp]['tiempos'][] = $diffHoras;
+            $tiemposTecnicos[$nombreOp]['reconexiones']++;
+        }
+
+        // Filtrado operativo de Reclamos (separando por tipo)
+        $reclFiltrados = array_filter($rawRecl, function ($r) use ($MAX_HORAS_RECL) {
+            return $r['diff'] <= $MAX_HORAS_RECL;
+        });
+        // Fallback defensivo: si no hay casos <= 96h pero sí hubo concluidos, tomar los menores a 168h (1 semana)
+        if (empty($reclFiltrados) && !empty($rawRecl)) {
+            $reclFiltrados = array_filter($rawRecl, function ($r) {
+                return $r['diff'] <= 168.0;
+            });
+        }
+
+        foreach ($reclFiltrados as $r) {
+            $diffHoras = $r['diff'];
+            $item      = $r['item'];
+            $tiemposRecl[] = $diffHoras;
+
+            $idTipo = isset($item['id_tipo_reclamo']) ? (int)$item['id_tipo_reclamo'] : 0;
+            if ($idTipo === 2) {
+                $tiemposReclAgua[] = $diffHoras;
+            } elseif ($idTipo === 3) {
+                $tiemposReclAlc[] = $diffHoras;
+            }
+
+            $uId = !empty($item['usuario_conclucion']) ? (int)$item['usuario_conclucion'] : (!empty($item['usuario_reclamo']) ? (int)$item['usuario_reclamo'] : 0);
+            $nombreOp = isset($mapaUsuarios[$uId]) ? $mapaUsuarios[$uId] : ($uId > 0 ? "Operador #{$uId}" : "Sin asignar");
+            if (!isset($tiemposTecnicos[$nombreOp])) {
+                $tiemposTecnicos[$nombreOp] = [
+                    'nombre'       => $nombreOp,
+                    'tiempos'      => [],
+                    'reconexiones' => 0,
+                    'reclamos'     => 0
+                ];
+            }
+            $tiemposTecnicos[$nombreOp]['tiempos'][] = $diffHoras;
+            $tiemposTecnicos[$nombreOp]['reclamos']++;
+        }
+
+        // Promedios consolidados por servicio (tiempo de resolución de un solo trabajo)
+        $promRec      = count($tiemposRec) > 0 ? round(array_sum($tiemposRec) / count($tiemposRec), 1) : 0;
+        $promRecl     = count($tiemposRecl) > 0 ? round(array_sum($tiemposRecl) / count($tiemposRecl), 1) : 0;
+        $promReclAgua = count($tiemposReclAgua) > 0 ? round(array_sum($tiemposReclAgua) / count($tiemposReclAgua), 1) : 0;
+        $promReclAlc  = count($tiemposReclAlc) > 0 ? round(array_sum($tiemposReclAlc) / count($tiemposReclAlc), 1) : 0;
+
+        $tiemposTodos = array_merge($tiemposRec, $tiemposRecl);
+        $promGlobal   = count($tiemposTodos) > 0 ? round(array_sum($tiemposTodos) / count($tiemposTodos), 1) : 0;
+
+        // Consolidación por técnico
+        $tecnicosFinal = [];
+        foreach ($tiemposTecnicos as $nombre => $datos) {
+            $cnt = count($datos['tiempos']);
+            $prom = $cnt > 0 ? round(array_sum($datos['tiempos']) / $cnt, 1) : 0;
+            $tecnicosFinal[] = [
+                'nombre'        => $nombre,
+                'promedioHoras' => $prom,
+                'promedioTexto' => $formatearHorasLegible($prom),
+                'totalCasos'    => $cnt,
+                'reconexiones'  => $datos['reconexiones'],
+                'reclamos'      => $datos['reclamos'],
+            ];
+        }
+
+        // Ordenar técnicos por promedio ascendente
+        usort($tecnicosFinal, function ($a, $b) {
+            if ($a['promedioHoras'] == $b['promedioHoras']) return 0;
+            return ($a['promedioHoras'] < $b['promedioHoras']) ? -1 : 1;
+        });
+
+        $metricasTiempos = [
+            'promedioHorasRec'       => $promRec,
+            'promedioHorasRecl'      => $promRecl,
+            'promedioHorasReclAgua'  => $promReclAgua,
+            'promedioHorasReclAlc'   => $promReclAlc,
+            'promedioHorasGlobal'    => $promGlobal,
+            'promedioRecTexto'       => $formatearHorasLegible($promRec),
+            'promedioReclTexto'      => $formatearHorasLegible($promRecl),
+            'promedioReclAguaTexto'  => $formatearHorasLegible($promReclAgua),
+            'promedioReclAlcTexto'   => $formatearHorasLegible($promReclAlc),
+            'promedioGlobalTexto'    => $formatearHorasLegible($promGlobal),
+            'totalCasosRec'          => count($tiemposRec),
+            'totalCasosRecl'         => count($tiemposRecl),
+            'totalCasosReclAgua'     => count($tiemposReclAgua),
+            'totalCasosReclAlc'      => count($tiemposReclAlc),
+            'totalCasosGlobal'       => count($tiemposTodos),
+            'tecnicos'               => $tecnicosFinal
+        ];
+
         $this->view('dashboard/dashboard', [
             'title'                     => 'Panel de Control y Métricas — COSMOL Reportes',
             'usuario'                   => $usuario,
@@ -468,6 +664,7 @@ class AuthController extends Controller
             'totalNoConcluidos'         => $totalNoConcluidos,
             'diasSemana'                => array_values($diasSemana),
             'topTiposConsultas'         => $topTiposConsultas,
+            'metricasTiempos'           => $metricasTiempos,
             'apiStatus'                 => [
                 'reconexiones' => $resRecPend !== null,
                 'reclamos'     => $resReclPend !== null,

@@ -30,7 +30,6 @@ foreach ($roles as $r) {
         <div>
             <div class="text-uppercase text-secondary fw-semibold small mb-1" style="font-size: 0.72rem; letter-spacing: 0.06em;">Seguridad y Control de Accesos</div>
             <h1 class="h3 fw-bold mb-1 text-dark">Gestión de Roles</h1>
-            <p class="text-secondary small mb-0">Definición de perfiles de usuario y niveles de autorización para los módulos del sistema.</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="/seguridad/permisos" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-2 shadow-sm">

@@ -13,7 +13,6 @@
     <div class="card-header bg-white border-bottom py-3 px-3 px-sm-4 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2" style="border-color: #e2e8f0;">
         <div>
             <h5 class="card-title fw-bold mb-0 text-dark fs-6">Reconexiones Pendientes</h5>
-            <p class="text-muted small mb-0">Órdenes de servicio técnico para reconexión de agua potable.</p>
         </div>
         <div class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-end">
             <input type="text" id="filtroReconexiones" class="form-control form-control-sm" placeholder="Buscar en esta página..." style="max-width: 220px;">
@@ -30,11 +29,12 @@
                     <thead style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                         <tr>
                             <th class="ps-3 ps-sm-4 text-secondary text-uppercase fw-semibold" style="width: 75px; font-size: 0.72rem; letter-spacing: 0.05em;">ID</th>
-                            <th class="text-secondary text-uppercase fw-semibold" style="width: 240px; font-size: 0.72rem; letter-spacing: 0.05em;">Socio</th>
+                            <th class="text-secondary text-uppercase fw-semibold" style="width: 175px; font-size: 0.72rem; letter-spacing: 0.05em;">Llegada / Plazo (24h)</th>
+                            <th class="text-secondary text-uppercase fw-semibold" style="width: 220px; font-size: 0.72rem; letter-spacing: 0.05em;">Socio</th>
                             <th class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Descripción</th>
-                            <th class="text-secondary text-uppercase fw-semibold" style="width: 240px; font-size: 0.72rem; letter-spacing: 0.05em;">Ubicación</th>
-                            <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 130px; font-size: 0.72rem; letter-spacing: 0.05em;">Estado</th>
-                            <th class="text-end pe-3 pe-sm-4 text-secondary text-uppercase fw-semibold" style="width: 170px; font-size: 0.72rem; letter-spacing: 0.05em;">Acciones</th>
+                            <th class="text-secondary text-uppercase fw-semibold" style="width: 220px; font-size: 0.72rem; letter-spacing: 0.05em;">Ubicación</th>
+                            <th class="text-center text-secondary text-uppercase fw-semibold" style="width: 120px; font-size: 0.72rem; letter-spacing: 0.05em;">Estado</th>
+                            <th class="text-end pe-3 pe-sm-4 text-secondary text-uppercase fw-semibold" style="width: 160px; font-size: 0.72rem; letter-spacing: 0.05em;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,10 +50,27 @@
                             $direccion   = isset($rec['direccion_predio']) ? trim($rec['direccion_predio']) : '';
                             $zona        = isset($rec['zona']) ? trim($rec['zona']) : '';
                             $ruta        = isset($rec['ruta']) ? trim($rec['ruta']) : '';
+                            $fechaReg    = isset($rec['fecha_registro']) ? $rec['fecha_registro'] : '';
+                            $plazo       = function_exists('calcularPlazo24h') 
+                                ? calcularPlazo24h($fechaReg, $estCalc) 
+                                : ['fechaLlegada' => $fechaReg, 'label' => '24h', 'badgeClass' => 'bg-light text-secondary', 'fechaLimite' => ''];
                             ?>
                             <tr class="fila-reconexion-item">
                                 <td class="ps-3 ps-sm-4 text-muted font-monospace small">
                                     #<?= htmlspecialchars($idRec ?: '—', ENT_QUOTES, 'UTF-8') ?>
+                                </td>
+                                <td class="busqueda-fecha" style="width: 175px;">
+                                    <div class="d-flex flex-column gap-1">
+                                        <div class="text-dark fw-semibold font-monospace small d-inline-flex align-items-center gap-1">
+                                            <i class="bi bi-clock-history text-primary" style="font-size: 0.8rem;"></i>
+                                            <?= $plazo['fechaLlegada'] ?>
+                                        </div>
+                                        <div>
+                                            <span class="badge font-monospace <?= $plazo['badgeClass'] ?>" style="font-size: 0.70rem; letter-spacing: 0.02em;" title="Límite 24h: <?= $plazo['fechaLimite'] ?>">
+                                                <?= $plazo['label'] ?>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="fw-semibold text-dark text-break busqueda-socio">
@@ -125,6 +142,10 @@
                     $direccion   = isset($rec['direccion_predio']) ? trim($rec['direccion_predio']) : '';
                     $zona        = isset($rec['zona']) ? trim($rec['zona']) : '';
                     $ruta        = isset($rec['ruta']) ? trim($rec['ruta']) : '';
+                    $fechaReg    = isset($rec['fecha_registro']) ? $rec['fecha_registro'] : '';
+                    $plazo       = function_exists('calcularPlazo24h') 
+                        ? calcularPlazo24h($fechaReg, $estCalc) 
+                        : ['fechaLlegada' => $fechaReg, 'label' => '24h', 'badgeClass' => 'bg-light text-secondary', 'fechaLimite' => ''];
                     ?>
                     <div class="card border rounded-3 p-3 mb-2.5 shadow-sm fila-reconexion-item" style="border-color: #e2e8f0;">
                         <div class="d-flex justify-content-between align-items-center mb-1">
@@ -135,6 +156,17 @@
                                 <span class="badge bg-light text-secondary border border-secondary-subtle fw-normal">Pendiente</span>
                             <?php endif; ?>
                         </div>
+
+                        <!-- Fila de Llegada y Plazo 24h -->
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 py-1.5 px-2 my-2 rounded bg-light border busqueda-fecha" style="border-color: #e2e8f0 !important;">
+                            <span class="text-secondary font-monospace small d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock-history text-primary"></i> Llegada: <strong class="text-dark"><?= $plazo['fechaLlegada'] ?></strong>
+                            </span>
+                            <span class="badge font-monospace <?= $plazo['badgeClass'] ?>" style="font-size: 0.70rem;" title="Límite: <?= $plazo['fechaLimite'] ?>">
+                                <?= $plazo['label'] ?>
+                            </span>
+                        </div>
+
                         <div class="fw-semibold text-dark busqueda-socio"><?= htmlspecialchars($nombreSocio ?: 'Sin nombre registrado', ENT_QUOTES, 'UTF-8') ?></div>
                         <?php if ($codSocio): ?>
                             <div class="text-secondary font-monospace small busqueda-cod">Cód. <?= htmlspecialchars($codSocio, ENT_QUOTES, 'UTF-8') ?></div>
@@ -213,12 +245,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 var textoCod   = (item.querySelector('.busqueda-cod') ? item.querySelector('.busqueda-cod').textContent : '').toLowerCase();
                 var textoDesc  = (item.querySelector('.busqueda-desc') ? item.querySelector('.busqueda-desc').textContent : '').toLowerCase();
                 var textoUbi   = (item.querySelector('.busqueda-ubi') ? item.querySelector('.busqueda-ubi').textContent : '').toLowerCase();
+                var textoFecha = (item.querySelector('.busqueda-fecha') ? item.querySelector('.busqueda-fecha').textContent : '').toLowerCase();
 
                 if (termino === '' || 
                     textoSocio.indexOf(termino) !== -1 || 
                     textoCod.indexOf(termino) !== -1 || 
                     textoDesc.indexOf(termino) !== -1 || 
-                    textoUbi.indexOf(termino) !== -1) {
+                    textoUbi.indexOf(termino) !== -1 ||
+                    textoFecha.indexOf(termino) !== -1) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';

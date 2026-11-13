@@ -40,7 +40,6 @@ unset($_SESSION['error']);
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-1 text-dark">Supervisión de Trabajos</h1>
-            <p class="text-secondary small mb-0">Monitoreo en tiempo real de órdenes de reconexión y reclamos técnicos pendientes en terreno.</p>
         </div>
         <div>
             <a href="/administrador/trabajos" class="btn btn-outline-secondary btn-sm py-1 px-2.5 shadow-sm" style="font-size: 0.78rem; font-weight: 500;">

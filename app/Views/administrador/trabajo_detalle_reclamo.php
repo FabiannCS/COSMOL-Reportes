@@ -80,7 +80,7 @@ if (!empty($rawGps)) {
     $esMiDomicilio = true;
 }
 
-// Formateo de fecha
+// Formateo de fecha y cálculo de plazo SLA (24h)
 $fechaStr = isset($trabajo['fecha_registro']) ? $trabajo['fecha_registro'] : '';
 $fechaFormateada = '—';
 if ($fechaStr) {
@@ -93,6 +93,8 @@ $estadoRaw = strtoupper(trim(isset($trabajo['estado']) ? (string)$trabajo['estad
 $estadoCalculado = isset($trabajo['estado_calculado']) 
     ? $trabajo['estado_calculado'] 
     : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($trabajo) : 'PENDIENTE');
+
+$plazoSla = function_exists('calcularPlazo24h') ? calcularPlazo24h($fechaStr, $estadoCalculado) : null;
 
 $tieneEstadoPendienteLocal = !empty($trabajo['estado_interno']);
 $esEstadoNoConcluido       = ($estadoCalculado === 'NO CONCLUIDO' || $estadoCalculado === 'NO PROCEDENTE' || $tieneEstadoPendienteLocal);
@@ -139,15 +141,15 @@ if (!empty($fechaOperador)) {
                 <h1 class="h3 fw-bold mb-0 text-dark">
                     Reclamo <span class="font-monospace text-primary">#<?= htmlspecialchars($idReclamo, ENT_QUOTES, 'UTF-8') ?></span>
                 </h1>
-                <span class="badge border font-monospace fw-bold <?= $badgeClass ?>" style="font-size: 0.75rem; letter-spacing: 0.03em;">
-                    <?= htmlspecialchars($estadoCalculado, ENT_QUOTES, 'UTF-8') ?>
-                </span>
+                <?php if ($plazoSla && $plazoSla['estadoPlazo'] !== 'desconocido'): ?>
+                    <span class="badge <?= $plazoSla['badgeClass'] ?> font-monospace" style="font-size: 0.75rem;" title="Plazo de resolución: 24h desde la solicitud (Límite: <?= htmlspecialchars($plazoSla['fechaLimite'], ENT_QUOTES, 'UTF-8') ?>)">
+                        <?= htmlspecialchars($plazoSla['label'], ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                <?php endif; ?>
             </div>
             <p class="text-secondary small mb-0">
-                Ficha de supervisión y gestión técnica
+                <span>Solicitud: <strong class="text-dark font-monospace"><?= $fechaFormateada ?></strong></span>
                 <?php if (!empty($mostrarOperador) && !empty($operadorMostrar)): ?>
-                    <span class="text-muted ms-2 me-2">•</span>
-                    <span>Operador: <strong class="text-dark"><?= htmlspecialchars($operadorMostrar, ENT_QUOTES, 'UTF-8') ?></strong></span>
                 <?php endif; ?>
             </p>
         </div>

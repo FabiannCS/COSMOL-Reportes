@@ -71,6 +71,36 @@ foreach ($topTiposConsultas as $tipo) {
     $labelsTipos[] = $tipo['nombre'];
     $dataTipos[] = (int)$tipo['total'];
 }
+
+// Preparación de datos para Gráficos de Tiempos de Resolución
+$metricasTiempos = isset($metricasTiempos) ? $metricasTiempos : [];
+
+$labelsTiemposServicio = ['Reconexión', 'Agua Potable', 'Alcantarillado', 'Promedio General'];
+$dataTiemposServicio   = [
+    isset($metricasTiempos['promedioHorasRec']) ? $metricasTiempos['promedioHorasRec'] : 0,
+    isset($metricasTiempos['promedioHorasReclAgua']) ? $metricasTiempos['promedioHorasReclAgua'] : 0,
+    isset($metricasTiempos['promedioHorasReclAlc']) ? $metricasTiempos['promedioHorasReclAlc'] : 0,
+    isset($metricasTiempos['promedioHorasGlobal']) ? $metricasTiempos['promedioHorasGlobal'] : 0,
+];
+$textosTiemposServicio = [
+    isset($metricasTiempos['promedioRecTexto']) ? $metricasTiempos['promedioRecTexto'] : '0h',
+    isset($metricasTiempos['promedioReclAguaTexto']) ? $metricasTiempos['promedioReclAguaTexto'] : '0h',
+    isset($metricasTiempos['promedioReclAlcTexto']) ? $metricasTiempos['promedioReclAlcTexto'] : '0h',
+    isset($metricasTiempos['promedioGlobalTexto']) ? $metricasTiempos['promedioGlobalTexto'] : '0h',
+];
+
+$labelsTiemposTecnicos = [];
+$dataTiemposTecnicos   = [];
+$textosTiemposTecnicos = [];
+$casosTiemposTecnicos  = [];
+if (!empty($metricasTiempos['tecnicos'])) {
+    foreach ($metricasTiempos['tecnicos'] as $tec) {
+        $labelsTiemposTecnicos[] = $tec['nombre'];
+        $dataTiemposTecnicos[]   = (float)$tec['promedioHoras'];
+        $textosTiemposTecnicos[] = $tec['promedioTexto'];
+        $casosTiemposTecnicos[]  = (int)$tec['totalCasos'];
+    }
+}
 ?>
 
 <div class="container-fluid px-0">
@@ -101,7 +131,10 @@ foreach ($topTiposConsultas as $tipo) {
     <!-- 4. Sección Secundaria de Gráficos (Demanda Trámites y Cuadrillas) -->
     <?php require __DIR__ . '/partials/graficos_tramites_operadores.php'; ?>
 
-    <!-- 5. Monitoreo de Tráfico Telefónico y Panel de Accesos Operativos -->
+    <!-- 5. Tiempos Promedio de Atención y Resolución (Servicios y Técnicos) -->
+    <?php require __DIR__ . '/partials/graficos_tiempos_resolucion.php'; ?>
+
+    <!-- 6. Monitoreo de Tráfico Telefónico y Panel de Accesos Operativos -->
     <div class="row g-2 g-md-3 mb-4">
         <!-- Tabla: Control de Tráfico WhatsApp -->
         <div class="col-12 col-xl-8">
@@ -115,5 +148,5 @@ foreach ($topTiposConsultas as $tipo) {
     </div>
 </div>
 
-<!-- 6. Inicialización de Gráficos con Chart.js v4 -->
+<!-- 7. Inicialización de Gráficos con Chart.js v4 -->
 <?php require __DIR__ . '/partials/scripts_charts.php'; ?>

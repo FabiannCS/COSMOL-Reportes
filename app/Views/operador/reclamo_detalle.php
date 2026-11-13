@@ -80,7 +80,7 @@ if (!empty($rawGps)) {
     $esMiDomicilio = true;
 }
 
-// Formateo de fecha
+// Formateo de fecha y cálculo de plazo SLA (24h)
 $fechaStr = isset($trabajo['fecha_registro']) ? $trabajo['fecha_registro'] : '';
 $fechaFormateada = '—';
 if ($fechaStr) {
@@ -93,6 +93,8 @@ $estadoRaw = strtoupper(trim(isset($trabajo['estado']) ? (string)$trabajo['estad
 $estadoCalculado = isset($trabajo['estado_calculado']) 
     ? $trabajo['estado_calculado'] 
     : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($trabajo) : 'PENDIENTE');
+
+$plazoSla = function_exists('calcularPlazo24h') ? calcularPlazo24h($fechaStr, $estadoCalculado) : null;
 
 $tieneEstadoPendienteLocal = !empty($trabajo['estado_interno']);
 $esEstadoNoConcluido       = ($estadoCalculado === 'NO CONCLUIDO' || $estadoCalculado === 'NO PROCEDENTE' || $tieneEstadoPendienteLocal);
@@ -122,7 +124,15 @@ $estadoInterno = isset($trabajo['estado_interno']) ? (string)$trabajo['estado_in
                 <span class="badge border font-monospace fw-bold <?= $badgeClass ?>" style="font-size: 0.75rem; letter-spacing: 0.03em;">
                     <?= htmlspecialchars($estadoCalculado, ENT_QUOTES, 'UTF-8') ?>
                 </span>
+                <?php if ($plazoSla && $plazoSla['estadoPlazo'] !== 'desconocido'): ?>
+                    <span class="badge <?= $plazoSla['badgeClass'] ?> font-monospace" style="font-size: 0.75rem;" title="Plazo de resolución: 24h desde la solicitud (Límite: <?= htmlspecialchars($plazoSla['fechaLimite'], ENT_QUOTES, 'UTF-8') ?>)">
+                        <i class="bi bi-hourglass-split me-1"></i><?= htmlspecialchars($plazoSla['label'], ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                <?php endif; ?>
             </div>
+            <p class="text-secondary small mb-0">
+                Llegada de solicitud: <strong class="text-dark font-monospace"><?= $fechaFormateada ?></strong>
+            </p>
         </div>
         <a href="<?= htmlspecialchars($urlVolver, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" style="min-height: 38px;">
             <i class="bi bi-arrow-left"></i>
@@ -155,14 +165,22 @@ $estadoInterno = isset($trabajo['estado_interno']) ? (string)$trabajo['estado_in
             <div class="col-12 col-lg-7 d-flex flex-column gap-3">
                 <div class="card bg-white rounded-2 shadow-sm" style="border: 1px solid #94a3b8 !important;">
                     
-                    <!-- Encabezado de la Ficha -->
+                    <!-- Encabezado de la Ficha: Orden, Fecha y Plazo (24h) -->
                     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-2 px-3" style="border-color: #e2e8f0 !important;">
                         <span class="text-secondary fw-semibold font-monospace" style="font-size: 0.85rem;">
                             Orden #<?= htmlspecialchars($idReclamo, ENT_QUOTES, 'UTF-8') ?>
                         </span>
-                        <span class="text-secondary small font-monospace d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" title="Fecha de reporte">
-                            <?= $fechaFormateada ?>
-                        </span>
+                        <div class="text-end d-flex flex-column align-items-end">
+                            <span class="text-secondary small font-monospace d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" title="Fecha de llegada de la solicitud">
+                                <i class="bi bi-clock text-muted" aria-hidden="true"></i>
+                                <?= $fechaFormateada ?>
+                            </span>
+                            <?php if ($plazoSla && $plazoSla['estadoPlazo'] !== 'desconocido'): ?>
+                                <span class="badge <?= $plazoSla['badgeClass'] ?> mt-1 font-monospace" style="font-size: 0.68rem;" title="Plazo de resolución: 24h (Límite: <?= htmlspecialchars($plazoSla['fechaLimite'], ENT_QUOTES, 'UTF-8') ?>)">
+                                    <?= htmlspecialchars($plazoSla['label'], ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="card-body p-3">

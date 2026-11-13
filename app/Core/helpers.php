@@ -213,4 +213,130 @@ if (!function_exists('determinarEstadoTrabajo')) {
     }
 }
 
+if (!function_exists('calcularPlazo24h')) {
+    /**
+     * Calcula la fecha/hora de llegada y el estado del plazo de 24 horas
+     * para la atención de solicitudes de reconexión y reclamos.
+     *
+     * @param string|null $fechaRegistro Fecha de registro de la solicitud
+     * @param string $estado Estado del trabajo ('PENDIENTE', 'CONCLUIDO', etc.)
+     * @return array
+     */
+    function calcularPlazo24h($fechaRegistro, $estado = 'PENDIENTE')
+    {
+        if (empty($fechaRegistro)) {
+            return [
+                'fechaLlegada'    => '—',
+                'fechaSolo'       => '—',
+                'horaLlegada'     => '—',
+                'fechaLimite'     => '—',
+                'label'           => 'Sin fecha',
+                'badgeClass'      => 'bg-light text-secondary border border-secondary-subtle',
+                'estadoPlazo'     => 'desconocido',
+                'horasRestantes'  => null,
+                'minutosRestantes'=> null,
+                'esVencido'       => false,
+            ];
+        }
+
+        $tsRegistro = strtotime($fechaRegistro);
+        if (!$tsRegistro) {
+            return [
+                'fechaLlegada'    => htmlspecialchars((string)$fechaRegistro, ENT_QUOTES, 'UTF-8'),
+                'fechaSolo'       => '—',
+                'horaLlegada'     => '—',
+                'fechaLimite'     => '—',
+                'label'           => 'Fecha no válida',
+                'badgeClass'      => 'bg-light text-secondary border border-secondary-subtle',
+                'estadoPlazo'     => 'desconocido',
+                'horasRestantes'  => null,
+                'minutosRestantes'=> null,
+                'esVencido'       => false,
+            ];
+        }
+
+        $tsLimite     = $tsRegistro + (24 * 3600);
+        $fechaLlegada = date('d/m/Y H:i', $tsRegistro);
+        $fechaSolo    = date('d/m/Y', $tsRegistro);
+        $horaLlegada  = date('H:i', $tsRegistro);
+        $fechaLimite  = date('d/m/Y H:i', $tsLimite);
+
+        $ahora        = time();
+        $diffSegundos = $tsLimite - $ahora;
+
+        $estadoUpper = strtoupper(trim((string)$estado));
+        $esConcluido = ($estadoUpper === 'CONCLUIDO' || $estadoUpper === 'CONCLUIDA');
+
+        if ($esConcluido) {
+            return [
+                'fechaLlegada'    => $fechaLlegada,
+                'fechaSolo'       => $fechaSolo,
+                'horaLlegada'     => $horaLlegada,
+                'fechaLimite'     => $fechaLimite,
+                'label'           => 'Concluido',
+                'badgeClass'      => 'bg-success-subtle text-success border border-success-subtle',
+                'estadoPlazo'     => 'concluido',
+                'horasRestantes'  => 0,
+                'minutosRestantes'=> 0,
+                'esVencido'       => false,
+            ];
+        }
+
+        if ($diffSegundos >= 0) {
+            $horas   = (int)floor($diffSegundos / 3600);
+            $minutos = (int)floor(($diffSegundos % 3600) / 60);
+
+            if ($horas >= 6) {
+                $label      = "Quedan {$horas}h {$minutos}m";
+                $badgeClass = 'bg-success-subtle text-success border border-success-subtle';
+                $estadoPlazo= 'a_tiempo';
+            } else {
+                $label      = ($horas > 0) ? "Quedan {$horas}h {$minutos}m" : "Quedan {$minutos}m";
+                $badgeClass = 'bg-warning-subtle text-warning-emphasis border border-warning';
+                $estadoPlazo= 'por_vencer';
+            }
+
+            return [
+                'fechaLlegada'    => $fechaLlegada,
+                'fechaSolo'       => $fechaSolo,
+                'horaLlegada'     => $horaLlegada,
+                'fechaLimite'     => $fechaLimite,
+                'label'           => $label,
+                'badgeClass'      => $badgeClass,
+                'estadoPlazo'     => $estadoPlazo,
+                'horasRestantes'  => $horas,
+                'minutosRestantes'=> $minutos,
+                'esVencido'       => false,
+            ];
+        } else {
+            $diffAbs = abs($diffSegundos);
+            $horas   = (int)floor($diffAbs / 3600);
+            $minutos = (int)floor(($diffAbs % 3600) / 60);
+
+            if ($horas >= 24) {
+                $dias = (int)floor($horas / 24);
+                $restoHoras = $horas % 24;
+                $label = "Vencido hace {$dias}d " . ($restoHoras > 0 ? "{$restoHoras}h" : '');
+                $label = trim($label);
+            } else {
+                $label = "Vencido hace {$horas}h {$minutos}m";
+            }
+
+            return [
+                'fechaLlegada'    => $fechaLlegada,
+                'fechaSolo'       => $fechaSolo,
+                'horaLlegada'     => $horaLlegada,
+                'fechaLimite'     => $fechaLimite,
+                'label'           => $label,
+                'badgeClass'      => 'bg-danger-subtle text-danger border border-danger',
+                'estadoPlazo'     => 'vencido',
+                'horasRestantes'  => -$horas,
+                'minutosRestantes'=> -$minutos,
+                'esVencido'       => true,
+            ];
+        }
+    }
+}
+
+
 

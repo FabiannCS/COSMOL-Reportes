@@ -125,8 +125,8 @@ X-Reportes-Token: <REPORTES_API_TOKEN>
 | **1** | Autenticación / Acceso | Inicio de sesión o validación de credenciales del socio. |
 | **2** | Consulta de Deuda | Consulta de facturas pendientes de pago y monto adeudado. |
 | **3** | Historial de Consumo | Consulta de histórico de consumo en m³ y facturas pagadas. |
-| **4** | Registro de Reclamo | Envío de reclamo técnico o comercial. |
-| **5** | **Solicitud de Reconexión** | **Trámite de solicitud de reconexión completado.** |
+| **4** | Registro de Reclamo | *(No reportado en módulo de App Móvil, gestionado directamente en sistema central).* |
+| **5** | **Solicitud de Reconexión** | **Trámite de solicitud de reconexión completado (Conectado y activo en reportes).** |
 | **9** | Descarga de Factura PDF | Descarga o visualización de factura en PDF. |
 | **10**| Pago: Multipago | Intento o redirección a pasarela Multipago. |
 | **11**| Pago: Pago al Paso | Intento o redirección a pasarela Pago al Paso. |

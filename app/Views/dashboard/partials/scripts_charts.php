@@ -241,5 +241,107 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // --- GRÁFICO 5: Tiempo Promedio por Servicio (Bar) ---
+    const ctxTiemposServ = document.getElementById('chartTiemposServicio');
+    if (ctxTiemposServ) {
+        new Chart(ctxTiemposServ, {
+            type: 'bar',
+            data: {
+                labels: <?= json_encode(isset($labelsTiemposServicio) ? $labelsTiemposServicio : []) ?>,
+                datasets: [{
+                    label: 'Horas Promedio',
+                    data: <?= json_encode(isset($dataTiemposServicio) ? $dataTiemposServicio : []) ?>,
+                    backgroundColor: ['#f59e0b', '#0284c7', '#10b981', '#64748b'],
+                    borderRadius: 4,
+                    barPercentage: 0.55
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const textos = <?= json_encode(isset($textosTiemposServicio) ? $textosTiemposServicio : []) ?>;
+                                const valHoras = context.parsed.y !== null ? context.parsed.y : 0;
+                                const textoLegible = textos[context.dataIndex] || '';
+                                return ` Promedio: ${valHoras} hrs (${textoLegible})`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '500' } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: function(v) { return v + ' h'; },
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- GRÁFICO 6: Tiempo Promedio de Atención por Técnico (Horizontal Bar) ---
+    const ctxTiemposTec = document.getElementById('chartTiemposTecnicos');
+    if (ctxTiemposTec) {
+        new Chart(ctxTiemposTec, {
+            type: 'bar',
+            data: {
+                labels: <?= json_encode(isset($labelsTiemposTecnicos) ? $labelsTiemposTecnicos : []) ?>,
+                datasets: [{
+                    label: 'Horas Promedio',
+                    data: <?= json_encode(isset($dataTiemposTecnicos) ? $dataTiemposTecnicos : []) ?>,
+                    backgroundColor: '#0d9488',
+                    hoverBackgroundColor: '#0f766e',
+                    borderRadius: 4,
+                    barPercentage: 0.65
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const textos = <?= json_encode(isset($textosTiemposTecnicos) ? $textosTiemposTecnicos : []) ?>;
+                                const casos  = <?= json_encode(isset($casosTiemposTecnicos) ? $casosTiemposTecnicos : []) ?>;
+                                const valHoras = context.parsed.x !== null ? context.parsed.x : 0;
+                                const textoLegible = textos[context.dataIndex] || '';
+                                const totalCasos = casos[context.dataIndex] || 0;
+                                return ` Promedio: ${valHoras} hrs (${textoLegible}) • ${totalCasos} trabajos`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: function(v) { return v + ' h'; },
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '500' } }
+                    }
+                }
+            }
+        });
+    }
 });
 </script>

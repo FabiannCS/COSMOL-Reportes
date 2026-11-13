@@ -32,6 +32,11 @@ $esAdmin = function_exists('hasRole') ? hasRole('Administrador') : (isset($_SESS
             ? $trabajo['estado_calculado'] 
             : (isset($trabajo['estado']) ? $trabajo['estado'] : 'NO CONCLUIDO');
 
+        $fechaReg = !empty($trabajo['fecha_registro']) ? $trabajo['fecha_registro'] : '';
+        $plazo = function_exists('calcularPlazo24h') 
+            ? calcularPlazo24h($fechaReg, $estCalc) 
+            : ['fechaLlegada' => $fechaReg, 'label' => '24h', 'badgeClass' => 'bg-light text-secondary', 'fechaLimite' => '', 'estadoPlazo' => 'desconocido'];
+
         $glosaMostrar = !empty($trabajo['glosa_interna']) 
             ? $trabajo['glosa_interna'] 
             : (!empty($trabajo['glosa']) ? $trabajo['glosa'] : 'Sin observación registrada');
@@ -66,6 +71,17 @@ $esAdmin = function_exists('hasRole') ? hasRole('Administrador') : (isset($_SESS
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-normal">No Concluido</span>
                 <?php endif; ?>
             </div>
+
+            <?php if (!empty($plazo['fechaLlegada']) && $plazo['fechaLlegada'] !== '—'): ?>
+                <div class="d-flex align-items-center justify-content-between text-secondary font-monospace mt-1 mb-1.5" style="font-size: 0.75rem;">
+                    <span><i class="bi bi-clock text-muted me-1"></i><?= $plazo['fechaLlegada'] ?></span>
+                    <?php if ($plazo['estadoPlazo'] !== 'desconocido'): ?>
+                        <span class="badge <?= $plazo['badgeClass'] ?>" style="font-size: 0.68rem;" title="Límite 24h: <?= $plazo['fechaLimite'] ?>">
+                            <?= $plazo['label'] ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <div class="fw-semibold text-dark"><?= htmlspecialchars($nombreSocio, ENT_QUOTES, 'UTF-8') ?></div>
             <?php if ($codSocio): ?>

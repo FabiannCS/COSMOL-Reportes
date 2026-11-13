@@ -472,6 +472,7 @@ class Reporte extends Model
                     FROM consulta c
                     LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
                     WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                      AND (c.id_tipo != 4 OR c.id_tipo IS NULL)
         ";
 
         $params = [];
@@ -526,7 +527,8 @@ class Reporte extends Model
                 FROM consulta c
                 LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)";
 
         $params = [];
 
@@ -577,7 +579,8 @@ class Reporte extends Model
         $sql = "SELECT COUNT(DISTINCT COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))))
                 FROM consulta c
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)";
 
         $params = [];
 
@@ -642,6 +645,7 @@ class Reporte extends Model
                 LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
                 WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)
                   AND COALESCE(NULLIF(c.codigo_socio, 0)::text, COALESCE(NULLIF(c.telefono, ''), ('ID_' || c.id_consulta::text))) IN (" . implode(', ', $inPlaceholders) . ")";
 
         if (!empty($filtros['fecha_inicio'])) {
@@ -690,7 +694,8 @@ class Reporte extends Model
                     MAX(c.hora_consulta) AS ultima_hora
                 FROM consulta c
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)";
 
         $params = [];
 
@@ -731,7 +736,8 @@ class Reporte extends Model
                 FROM consulta c
                 LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)";
 
         $params = [];
 
@@ -778,7 +784,8 @@ class Reporte extends Model
         $sql = "SELECT COUNT(*)
                 FROM consulta c
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)";
 
         $params = [];
 
@@ -816,7 +823,8 @@ class Reporte extends Model
                 FROM consulta c
                 LEFT JOIN tipo_consulta t ON c.id_tipo = t.id_tipo
                 LEFT JOIN usuario u ON c.id_usuario = u.id_usuario
-                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')";
+                WHERE (c.tipo_ubicacion = 'APP_MOVIL' OR u.username = 'app_movil')
+                  AND (c.id_tipo != 4 OR c.id_tipo IS NULL)";
 
         $params = [];
 
