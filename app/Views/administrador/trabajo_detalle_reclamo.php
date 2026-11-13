@@ -61,24 +61,18 @@ if (empty($zonaRuta)) {
 
 $foto = isset($trabajo['foto']) && !empty($trabajo['foto']) ? trim((string)$trabajo['foto']) : null;
 
-// Validación de tipo de ubicación: GPS vs Mi Domicilio
+// Validación y normalización de tipo de ubicación: GPS vs Mi Domicilio
 $rawGps = isset($trabajo['coordenadas_gps']) ? trim((string)$trabajo['coordenadas_gps']) : '';
-$esGpsValido     = false;
-$coordsGpsLimpia = '';
-$esMiDomicilio   = false;
+$gpsInfo = function_exists('normalizarYValidarGps') 
+    ? normalizarYValidarGps($rawGps, $direccion) 
+    : ['esGps' => false, 'coordsLimpia' => '', 'esDomicilio' => true, 'alerta' => null, 'enMontero' => false, 'urlDomicilio' => ''];
 
-if (!empty($rawGps)) {
-    if (strtoupper($rawGps) === 'DOMICILIO_REGISTRADO' || stripos($rawGps, 'DOMICILIO') !== false) {
-        $esMiDomicilio = true;
-    } elseif (preg_match('/^-?\d{1,3}\.\d+[\s]*,[\s]*-?\d{1,3}\.\d+$/', $rawGps)) {
-        $esGpsValido     = true;
-        $coordsGpsLimpia = preg_replace('/\s+/', '', $rawGps);
-    } else {
-        $esMiDomicilio = true;
-    }
-} else {
-    $esMiDomicilio = true;
-}
+$esGpsValido     = $gpsInfo['esGps'];
+$coordsGpsLimpia = $gpsInfo['coordsLimpia'];
+$esMiDomicilio   = $gpsInfo['esDomicilio'];
+$alertaGps       = $gpsInfo['alerta'];
+$enMontero       = $gpsInfo['enMontero'];
+$urlDomicilio    = $gpsInfo['urlDomicilio'];
 
 // Formateo de fecha y cálculo de plazo SLA (24h)
 $fechaStr = isset($trabajo['fecha_registro']) ? $trabajo['fecha_registro'] : '';

@@ -338,5 +338,130 @@ if (!function_exists('calcularPlazo24h')) {
     }
 }
 
+if (!function_exists('normalizarYValidarGps')) {
+    /**
+     * Valida, normaliza y analiza coordenadas GPS para trabajos en terreno de COSMOL (Montero, Santa Cruz).
+     *
+     * Detecta y mitiga anomalías comunes:
+     *  - Cadenas vacías, nulos, textos descriptivos o 'DOMICILIO_REGISTRADO' -> no es GPS.
+     *  - Coordenadas invertidas (longitud, latitud -> latitud, longitud).
+     *  - Coordenadas positivas sin signo para Bolivia -> ajusta automáticamente signos negativos.
+     *  - Detección de perímetro operativo: Montero y alrededores vs otras ciudades/países.
+     *
+     * @param mixed $rawCoords Cadena de coordenadas GPS recibida
+     * @param string $direccionPredio Dirección registrada del socio (para enlace de búsqueda en Montero)
+     * @return array
+     */
+    function normalizarYValidarGps($rawCoords, $direccionPredio = '')
+    {
+        $res = [
+            'esGps'        => false,
+            'coordsLimpia' => '',
+            'lat'          => null,
+            'lng'          => null,
+            'enMontero'    => false,
+            'esDomicilio'  => true,
+            'alerta'       => null,
+            'urlMaps'      => '',
+            'urlRuta'      => '',
+            'urlIframe'    => '',
+            'urlDomicilio' => '',
+        ];
+
+        $dirPredio = trim((string)$direccionPredio);
+        if (!empty($dirPredio)) {
+            $queryDir = $dirPredio . ', Montero, Santa Cruz, Bolivia';
+            $res['urlDomicilio'] = 'https://www.google.com/maps?q=' . urlencode($queryDir);
+        }
+
+        if (empty($rawCoords)) {
+            return $res;
+        }
+
+        $str = trim((string)$rawCoords);
+        $upper = strtoupper($str);
+
+        // Si es explícitamente domicilio registrado o texto sin números
+        if ($upper === 'DOMICILIO_REGISTRADO' || stripos($upper, 'DOMICILIO') !== false) {
+            $res['esDomicilio'] = true;
+            return $res;
+        }
+
+        // Extraer números decimales con posible signo (admite espacios, comas o puntos y coma)
+        if (!preg_match('/^(-?\d{1,3}(?:\.\d+)?)\s*[,;]\s*(-?\d{1,3}(?:\.\d+)?)$/', $str, $matches)) {
+            $res['esDomicilio'] = true;
+            return $res;
+        }
+
+        $num1 = (float)$matches[1];
+        $num2 = (float)$matches[2];
+
+        // Descartar coordenadas nulas (Null Island 0, 0)
+        if (abs($num1) < 0.0001 && abs($num2) < 0.0001) {
+            $res['esDomicilio'] = true;
+            return $res;
+        }
+
+        $alerta = null;
+
+        // Caso A: Coordenadas invertidas (longitud, latitud)
+        // En Bolivia: Latitud ~ -17 (-23 a -9), Longitud ~ -63 (-70 a -57)
+        if (abs($num1) > 40.0 && abs($num2) < 30.0) {
+            $lat = $num2;
+            $lng = $num1;
+            $alerta = 'Coordenadas invertidas ajustadas automáticamente (Lat/Lng).';
+        } else {
+            $lat = $num1;
+            $lng = $num2;
+        }
+
+        // Caso B: Signos positivos omitidos (en Bolivia ambas deben ser negativas)
+        if ($lat > 0 && $lat >= 9.0 && $lat <= 25.0) {
+            $lat = -$lat;
+            $alerta = 'Signo de latitud ajustado al hemisferio sur.';
+        }
+        if ($lng > 0 && $lng >= 55.0 && $lng <= 75.0) {
+            $lng = -$lng;
+            $alerta = 'Signo de longitud ajustado al hemisferio oeste.';
+        }
+
+        // Validar rango general plausible para territorio boliviano
+        // Lat: -23.5 a -9.0, Lng: -70.0 a -57.0
+        $enBolivia = ($lat >= -23.5 && $lat <= -9.0 && $lng >= -70.0 && $lng <= -57.0);
+
+        if (!$enBolivia) {
+            $res['esDomicilio'] = true;
+            $res['alerta'] = 'Coordenadas fuera del territorio boliviano (' . $lat . ', ' . $lng . ').';
+            return $res;
+        }
+
+        // Validar perímetro operativo de Montero / Provincia Obispo Santistevan / Norte Integrado
+        // Montero centro: -17.3386, -63.2558
+        // Perímetro urbano y rural extendido: Lat -17.55 a -17.15, Lng -63.45 a -63.10
+        $enMontero = ($lat >= -17.55 && $lat <= -17.15 && $lng >= -63.45 && $lng <= -63.10);
+
+        if (!$enMontero) {
+            // Está en Bolivia pero fuera de Montero (ej. Santa Cruz de la Sierra o La Paz)
+            $alerta = 'Ubicación GPS fuera del radio de Montero (' . sprintf('%.4f, %.4f', $lat, $lng) . '). Guiarse preferentemente por la dirección fija del socio (Zona y Ruta).';
+        }
+
+        $coordsLimpia = sprintf('%.7f,%.7f', $lat, $lng);
+
+        $res['esGps']        = true;
+        $res['coordsLimpia'] = $coordsLimpia;
+        $res['lat']          = $lat;
+        $res['lng']          = $lng;
+        $res['enMontero']    = $enMontero;
+        $res['esDomicilio']  = false;
+        $res['alerta']       = $alerta;
+        $res['urlMaps']      = 'https://www.google.com/maps?q=' . $coordsLimpia;
+        $res['urlRuta']      = 'https://www.google.com/maps/dir/?api=1&destination=' . $coordsLimpia;
+        $res['urlIframe']    = 'https://maps.google.com/maps?q=' . $coordsLimpia . '&hl=es&z=15&output=embed';
+
+        return $res;
+    }
+}
+
+
 
 

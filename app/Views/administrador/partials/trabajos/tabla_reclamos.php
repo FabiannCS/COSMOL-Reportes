@@ -55,11 +55,14 @@
                             }
                             $codSocio    = isset($recl['cod_socio']) ? trim($recl['cod_socio']) : '';
                             $nombreSocio = isset($recl['nombre_socio']) ? trim($recl['nombre_socio']) : '';
-                            $coords      = isset($recl['coordenadas_gps']) ? preg_replace('/\s+/', '', $recl['coordenadas_gps']) : '';
+                            $rawCoords   = isset($recl['coordenadas_gps']) ? $recl['coordenadas_gps'] : '';
+                            $direccion   = isset($recl['direccion_predio']) ? trim($recl['direccion_predio']) : '';
+                            $gpsInfo     = function_exists('normalizarYValidarGps') 
+                                ? normalizarYValidarGps($rawCoords, $direccion) 
+                                : ['esGps' => false, 'urlMaps' => '', 'urlDomicilio' => '', 'enMontero' => false];
                             $estCalc     = isset($recl['estado_calculado']) ? $recl['estado_calculado'] : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($recl) : 'PENDIENTE');
                             $desc        = isset($recl['descripcion']) ? trim($recl['descripcion']) : '';
                             $ubicacion   = isset($recl['ubicacion']) ? trim($recl['ubicacion']) : '';
-                            $direccion   = isset($recl['direccion_predio']) ? trim($recl['direccion_predio']) : '';
                             $zona        = isset($recl['zona']) ? trim($recl['zona']) : '';
                             $ruta        = isset($recl['ruta']) ? trim($recl['ruta']) : '';
                             $fechaReg    = isset($recl['fecha_registro']) ? $recl['fecha_registro'] : '';
@@ -125,12 +128,21 @@
                                 </td>
                                 <td class="text-end pe-3 pe-sm-4 text-nowrap">
                                     <div class="d-inline-flex align-items-center gap-1.5 justify-content-end">
-                                        <?php if (!empty($coords)): ?>
-                                            <a href="https://www.google.com/maps?q=<?= urlencode($coords) ?>" 
+                                        <?php if (!empty($gpsInfo['esGps'])): ?>
+                                            <a href="<?= htmlspecialchars($gpsInfo['urlMaps'], ENT_QUOTES, 'UTF-8') ?>" 
                                                target="_blank" 
-                                               class="btn btn-sm btn-outline-secondary px-2.5 py-1" 
-                                               title="Ver ubicación en Google Maps">
-                                                GPS
+                                               rel="noopener noreferrer"
+                                               class="btn btn-sm btn-outline-danger px-2.5 py-1 <?= empty($gpsInfo['enMontero']) ? 'border-warning text-warning-emphasis' : '' ?>" 
+                                               title="<?= empty($gpsInfo['enMontero']) ? 'Ubicación GPS referencial (fuera de Montero)' : 'Ver ubicación GPS en Google Maps' ?>">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>GPS
+                                            </a>
+                                        <?php elseif (!empty($gpsInfo['urlDomicilio'])): ?>
+                                            <a href="<?= htmlspecialchars($gpsInfo['urlDomicilio'], ENT_QUOTES, 'UTF-8') ?>" 
+                                               target="_blank" 
+                                               rel="noopener noreferrer"
+                                               class="btn btn-sm btn-outline-secondary px-2 py-1" 
+                                               title="Buscar domicilio en Montero">
+                                                <i class="bi bi-house me-1"></i>Domicilio
                                             </a>
                                         <?php endif; ?>
                                         <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode($idRecl) ?>&origen=trabajos" 
@@ -217,9 +229,21 @@
                         <?php endif; ?>
 
                         <div class="d-flex justify-content-end align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #f1f5f9;">
-                            <?php if (!empty($coords)): ?>
-                                <a href="https://www.google.com/maps?q=<?= urlencode($coords) ?>" target="_blank" class="btn btn-sm btn-outline-secondary px-3">
-                                    GPS
+                            <?php if (!empty($gpsInfo['esGps'])): ?>
+                                <a href="<?= htmlspecialchars($gpsInfo['urlMaps'], ENT_QUOTES, 'UTF-8') ?>" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   class="btn btn-sm btn-outline-danger px-3 <?= empty($gpsInfo['enMontero']) ? 'border-warning text-warning-emphasis' : '' ?>"
+                                   title="<?= empty($gpsInfo['enMontero']) ? 'Ubicación GPS fuera de Montero' : 'Ver ubicación GPS' ?>">
+                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>GPS
+                                </a>
+                            <?php elseif (!empty($gpsInfo['urlDomicilio'])): ?>
+                                <a href="<?= htmlspecialchars($gpsInfo['urlDomicilio'], ENT_QUOTES, 'UTF-8') ?>" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   class="btn btn-sm btn-outline-secondary px-2.5"
+                                   title="Buscar domicilio en Montero">
+                                    <i class="bi bi-house me-1"></i>Domicilio
                                 </a>
                             <?php endif; ?>
                             <a href="/administrador/trabajos/detalle?tipo=reclamo&id=<?= urlencode($idRecl) ?>&origen=trabajos" class="btn btn-sm btn-primary px-3">

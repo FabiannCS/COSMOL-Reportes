@@ -71,24 +71,18 @@ switch ($idTipoReconexion) {
         break;
 }
 
-// Validación de tipo de ubicación: GPS vs Mi Domicilio
+// Validación y normalización de tipo de ubicación: GPS vs Mi Domicilio
 $rawGps = isset($trabajo['coordenadas_gps']) ? trim((string)$trabajo['coordenadas_gps']) : '';
-$esGpsValido     = false;
-$coordsGpsLimpia = '';
-$esMiDomicilio   = false;
+$gpsInfo = function_exists('normalizarYValidarGps') 
+    ? normalizarYValidarGps($rawGps, $direccion) 
+    : ['esGps' => false, 'coordsLimpia' => '', 'esDomicilio' => true, 'alerta' => null, 'enMontero' => false, 'urlDomicilio' => ''];
 
-if (!empty($rawGps)) {
-    if (strtoupper($rawGps) === 'DOMICILIO_REGISTRADO' || stripos($rawGps, 'DOMICILIO') !== false) {
-        $esMiDomicilio = true;
-    } elseif (preg_match('/^-?\d{1,3}\.\d+[\s]*,[\s]*-?\d{1,3}\.\d+$/', $rawGps)) {
-        $esGpsValido     = true;
-        $coordsGpsLimpia = preg_replace('/\s+/', '', $rawGps);
-    } else {
-        $esMiDomicilio = true;
-    }
-} else {
-    $esMiDomicilio = true;
-}
+$esGpsValido     = $gpsInfo['esGps'];
+$coordsGpsLimpia = $gpsInfo['coordsLimpia'];
+$esMiDomicilio   = $gpsInfo['esDomicilio'];
+$alertaGps       = $gpsInfo['alerta'];
+$enMontero       = $gpsInfo['enMontero'];
+$urlDomicilio    = $gpsInfo['urlDomicilio'];
 
 // Formateo de fecha de solicitud
 $fechaStr = isset($trabajo['fecha_registro']) ? $trabajo['fecha_registro'] : '';
@@ -274,6 +268,16 @@ $glosaMostrar = !empty($glosaInterna) ? $glosaInterna : $glosaRegistro;
                                     <span class="font-monospace small text-dark fw-bold"><?= htmlspecialchars($coordsGpsLimpia, ENT_QUOTES, 'UTF-8') ?></span>
                                 </div>
 
+                                <?php if (!empty($alertaGps)): ?>
+                                    <div class="alert alert-warning py-2 px-3 small mb-2.5 d-flex align-items-start gap-2 border-warning">
+                                        <i class="bi bi-exclamation-triangle-fill text-warning flex-shrink-0 mt-0.5"></i>
+                                        <div>
+                                            <strong class="d-block text-dark" style="font-size: 0.8rem;">Aviso de Ubicación:</strong>
+                                            <span class="text-secondary"><?= htmlspecialchars($alertaGps, ENT_QUOTES, 'UTF-8') ?></span>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="d-flex gap-2 flex-wrap mb-2.5">
                                     <a href="<?= htmlspecialchars($urlVerMapa, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm fw-semibold flex-fill d-inline-flex align-items-center justify-content-center gap-1.5" style="min-height: 40px;">
                                         <i class="bi bi-box-arrow-up-right"></i> Abrir en Google Maps
@@ -289,18 +293,27 @@ $glosaMostrar = !empty($glosaInterna) ? $glosaInterna : $glosaRegistro;
                             </div>
                         <?php else: ?>
                             <!-- Aviso: Solicitud en Domicilio Propio / Hogar del Socio -->
-                            <div class="p-3 rounded bg-light border d-flex align-items-start gap-3" style="border-color: #cbd5e1 !important;">
-                                <div class="p-2 rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
-                                    <i class="bi bi-house-check-fill fs-5"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-bold text-dark fs-6 mb-1">
-                                        Reconexión en Domicilio Propio
+                            <div class="p-3 rounded bg-light border d-flex flex-column gap-2" style="border-color: #cbd5e1 !important;">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="p-2 rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-house-check-fill fs-5"></i>
                                     </div>
-                                    <div class="text-secondary small mb-0">
-                                        El socio solicitó la reconexión en su domicilio registrado. No requiere navegación GPS externa.
+                                    <div>
+                                        <div class="fw-bold text-dark fs-6 mb-1">
+                                            Reconexión en Domicilio Registrado
+                                        </div>
+                                        <div class="text-secondary small mb-0">
+                                            El socio solicitó la reconexión en su domicilio registrado. Guiarse por la Zona, Ruta y Ubicación Catastral.
+                                        </div>
                                     </div>
                                 </div>
+                                <?php if (!empty($urlDomicilio)): ?>
+                                    <div class="pt-2 border-top" style="border-color: #e2e8f0;">
+                                        <a href="<?= htmlspecialchars($urlDomicilio, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5" style="font-size: 0.8125rem;">
+                                            <i class="bi bi-geo-alt"></i> Buscar Dirección en Google Maps (Montero)
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
 
