@@ -76,23 +76,15 @@ if (empty($zonaRuta)) {
     $zonaRuta = 'Zona / Ruta no asignada';
 }
 
-$rawGps = isset($t['coordenadas_gps']) ? trim((string)$t['coordenadas_gps']) : '';
-$esGpsValido     = false;
-$coordsGpsLimpia = '';
-$esMiDomicilio   = false;
+$rawGps    = isset($t['coordenadas_gps']) ? trim((string)$t['coordenadas_gps']) : '';
+$dirPredio = isset($t['direccion_predio']) ? trim((string)$t['direccion_predio']) : (isset($t['direccion']) ? trim((string)$t['direccion']) : '');
+$gpsInfo   = function_exists('normalizarYValidarGps') 
+    ? normalizarYValidarGps($rawGps, $dirPredio) 
+    : ['esGps' => false, 'coordsLimpia' => '', 'urlMaps' => '', 'esDomicilio' => true, 'enMontero' => false];
 
-if (!empty($rawGps)) {
-    if (strtoupper($rawGps) === 'DOMICILIO_REGISTRADO' || stripos($rawGps, 'DOMICILIO') !== false) {
-        $esMiDomicilio = true;
-    } elseif (preg_match('/^-?\d{1,3}\.\d+[\s]*,[\s]*-?\d{1,3}\.\d+$/', $rawGps)) {
-        $esGpsValido     = true;
-        $coordsGpsLimpia = preg_replace('/\s+/', '', $rawGps);
-    } else {
-        $esMiDomicilio = true;
-    }
-} else {
-    $esMiDomicilio = true;
-}
+$esGpsValido     = $gpsInfo['esGps'];
+$coordsGpsLimpia = $gpsInfo['coordsLimpia'];
+$esMiDomicilio   = $gpsInfo['esDomicilio'];
 
 // 4. Tipo de Reconexión (si aplica)
 $idTipoReconexion = isset($t['id_tipo_reconexion']) ? (int)$t['id_tipo_reconexion'] : 1;
@@ -261,16 +253,13 @@ if ($is_historial) {
         <div class="card-footer bg-white border-top p-2.5 p-md-3 d-flex flex-wrap align-items-center justify-content-between gap-2 mt-auto" 
              style="border-color: #e2e8f0 !important;">
             <?php if ($esGpsValido): ?>
-                <?php 
-                    $urlGps = "https://www.google.com/maps?q={$coordsGpsLimpia}";
-                ?>
-                <a href="<?= htmlspecialchars($urlGps, ENT_QUOTES, 'UTF-8') ?>" 
+                <a href="<?= htmlspecialchars($gpsInfo['urlMaps'], ENT_QUOTES, 'UTF-8') ?>" 
                    target="_blank" 
                    rel="noopener noreferrer" 
-                   class="btn btn-outline-danger btn-sm fw-semibold d-inline-flex align-items-center gap-1 px-2.5" 
+                   class="btn btn-outline-danger btn-sm fw-semibold d-inline-flex align-items-center gap-1 px-2.5 <?= empty($gpsInfo['enMontero']) ? 'border-warning text-warning-emphasis' : '' ?>" 
                    style="min-height: 44px; font-size: 0.8125rem;" 
-                   title="Abrir ubicación en Google Maps">
-                    <i class="bi bi-geo-alt-fill"></i>
+                   title="<?= empty($gpsInfo['enMontero']) ? 'Ubicación GPS referencial (fuera de Montero)' : 'Abrir ubicación GPS en Google Maps' ?>">
+                    <i class="bi bi-geo-alt-fill text-danger"></i>
                     <span>Mapa GPS</span>
                 </a>
             <?php endif; ?>
