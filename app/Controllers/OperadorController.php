@@ -249,8 +249,11 @@ class OperadorController extends Controller
         $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . ($especialidad['nombre'] === 'Reconexión' ? $glosa : $observacionConclusion);
 
         if ($estado === 'NO CONCLUIDO' || $estado === 'NO PROCEDENTE') {
+            $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : null;
+            $nombreOperador = isset($_SESSION['usuario']['username']) ? (string)$_SESSION['usuario']['username'] : '';
+
             // Guardar localmente
-            $exito = $seguimientoModel->registrarSeguimiento($idTrabajo, $tipoTrabajo, $estado, $glosaFinal);
+            $exito = $seguimientoModel->registrarSeguimiento($idTrabajo, $tipoTrabajo, $estado, $glosaFinal, $idUsuario, $nombreOperador);
             if (!$exito) {
                 $_SESSION['error'] = 'Error al registrar el seguimiento local.';
                 $this->redirect("/operador/detalle?id={$idTrabajo}");

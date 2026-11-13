@@ -12,7 +12,7 @@ class Usuario extends Model
      * @param string|null $buscar
      * @return array
      */
-    public function all($buscar = null)
+    public function all($buscar = null, $idRol = null, $idEspecialidad = null, $estado = null)
     {
         $sql = "SELECT u.id_usuario, u.username, u.estado, u.fecha_creacion, u.fecha_actualizacion, 
                     u.id_rol, r.nombre_rol, u.id_especialidad, e.nombre as nombre_especialidad 
@@ -20,10 +20,31 @@ class Usuario extends Model
              LEFT JOIN rol r ON u.id_rol = r.id_rol 
              LEFT JOIN especialidad e ON u.id_especialidad = e.id_especialidad";
              
+        $where = [];
         $params = [];
+
         if (!empty($buscar)) {
-            $sql .= " WHERE u.username ILIKE :buscar";
+            $where[] = "u.username ILIKE :buscar";
             $params['buscar'] = '%' . $buscar . '%';
+        }
+
+        if (!empty($idRol)) {
+            $where[] = "u.id_rol = :id_rol";
+            $params['id_rol'] = (int)$idRol;
+        }
+
+        if (!empty($idEspecialidad)) {
+            $where[] = "u.id_especialidad = :id_especialidad";
+            $params['id_especialidad'] = (int)$idEspecialidad;
+        }
+
+        if ($estado !== null && $estado !== '') {
+            $where[] = "u.estado = :estado";
+            $params['estado'] = (int)$estado;
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
         }
         
         $sql .= " ORDER BY u.fecha_creacion DESC";
@@ -71,6 +92,17 @@ class Usuario extends Model
         );
         $stmt->execute(['id_usuario' => (int)$idUsuario]);
         return $stmt->fetch();
+    }
+
+    /**
+     * Alias para findById
+     *
+     * @param int $idUsuario
+     * @return array|false
+     */
+    public function find($idUsuario)
+    {
+        return $this->findById($idUsuario);
     }
 
     public function create(array $data)

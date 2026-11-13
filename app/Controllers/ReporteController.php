@@ -88,7 +88,7 @@ class ReporteController extends Controller
         }
 
         // 4. Renderizar la vista
-        $this->view('reportes/visualizar', [
+        $this->view('reportes/Reportes_chatbot', [
             'vista'            => $vista,
             'socios'           => $socios,
             'accionesPorSocio' => $accionesPorSocio,
@@ -195,6 +195,9 @@ class ReporteController extends Controller
         $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
         $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
         $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        if ($idTipo === 4) {
+            $idTipo = null; // Reclamos no forman parte del módulo de reportes de App Móvil
+        }
         $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
 
         $filtros = [
@@ -274,6 +277,9 @@ class ReporteController extends Controller
         $fechaInicio = isset($_GET['fecha_inicio']) && $_GET['fecha_inicio'] !== '' ? trim($_GET['fecha_inicio']) : null;
         $fechaFin    = isset($_GET['fecha_fin']) && $_GET['fecha_fin'] !== '' ? trim($_GET['fecha_fin']) : null;
         $idTipo      = isset($_GET['id_tipo']) && $_GET['id_tipo'] !== '' ? (int)$_GET['id_tipo'] : null;
+        if ($idTipo === 4) {
+            $idTipo = null; // Reclamos no forman parte del módulo de reportes de App Móvil
+        }
         $buscar      = isset($_GET['buscar']) && $_GET['buscar'] !== '' ? trim($_GET['buscar']) : null;
 
         $filtros = [

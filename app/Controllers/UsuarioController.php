@@ -19,8 +19,12 @@ class UsuarioController extends Controller
         $rolModel = new Rol();
         $especialidadModel = new Especialidad();
 
-        $buscar = isset($_GET['buscar']) ? trim($_GET['buscar']) : null;
-        $usuarios = $usuarioModel->all($buscar);
+        $buscar         = isset($_GET['buscar']) ? trim($_GET['buscar']) : null;
+        $idRol          = isset($_GET['id_rol']) && $_GET['id_rol'] !== '' ? (int)$_GET['id_rol'] : null;
+        $idEspecialidad = isset($_GET['id_especialidad']) && $_GET['id_especialidad'] !== '' ? (int)$_GET['id_especialidad'] : null;
+        $estadoFiltro   = isset($_GET['estado']) && $_GET['estado'] !== '' ? (int)$_GET['estado'] : null;
+
+        $usuarios = $usuarioModel->all($buscar, $idRol, $idEspecialidad, $estadoFiltro);
         $roles = $rolModel->allActive();
         $especialidades = $especialidadModel->getAll();
 
@@ -81,7 +85,10 @@ class UsuarioController extends Controller
             'totalPaginas'    => $totalPaginas,
             'mensaje'         => $mensaje,
             'error'           => $error,
-            'buscar'          => $buscar
+            'buscar'          => $buscar,
+            'idRol'           => $idRol,
+            'idEspecialidad'  => $idEspecialidad,
+            'estadoFiltro'    => $estadoFiltro
         ], 'main');
     }
 

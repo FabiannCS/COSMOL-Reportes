@@ -1,283 +1,213 @@
 <?php
 /**
- * Vista: Detalle Supervisado de Reconexión (Administrador)
- * @var array $trabajo
- * @var string $apiFotoBaseUrl
- * @var string $error
- * @var string $urlVolver
- * @var string $textoVolver
- * @var string $origen
- * Muestra la ficha completa de una reconexión en modo solo lectura.
- * Los datos ($trabajo, $apiFotoBaseUrl) son inyectados por AdministradorController::trabajoDetalle()
+ * Vista: Detalle Supervisado de Reconexión (Módulo Administrador)
+ * Muestra la ficha completa y gestión de una reconexión con diseño claro, modular y funcional.
+ *
+ * @var array|null  $trabajo
+ * @var string|null $apiFotoBaseUrl
+ * @var string|null $error
+ * @var string|null $urlVolver
+ * @var string|null $textoVolver
+ * @var string|null $origen
  */
-$urlVolver = isset($urlVolver) && !empty($urlVolver) ? $urlVolver : '/administrador/trabajos';
-$origen    = isset($origen) ? $origen : '';
+
+$error = isset($error) && $error ? $error : (isset($_SESSION['error']) ? $_SESSION['error'] : null);
+unset($_SESSION['error']);
+
+$urlVolver   = isset($urlVolver) && !empty($urlVolver) ? $urlVolver : '/administrador/trabajos';
+$textoVolver = isset($textoVolver) && !empty($textoVolver) ? $textoVolver : 'Volver a la lista';
+$origen      = isset($origen) ? $origen : '';
+
+$idReconexion = isset($trabajo['id_reconexion']) ? (string)$trabajo['id_reconexion'] : '—';
+$codSocio     = isset($trabajo['cod_socio']) ? (string)$trabajo['cod_socio'] : '';
+$nombreSocio  = isset($trabajo['nombre_socio']) && !empty($trabajo['nombre_socio']) ? trim((string)$trabajo['nombre_socio']) : 'No especificado';
+$direccion    = isset($trabajo['direccion_predio']) && !empty($trabajo['direccion_predio']) ? (string)$trabajo['direccion_predio'] : (isset($trabajo['direccion']) ? (string)$trabajo['direccion'] : '');
+$zona         = isset($trabajo['zona']) ? trim((string)$trabajo['zona']) : '';
+$ruta         = isset($trabajo['ruta']) ? trim((string)$trabajo['ruta']) : '';
+$ubicacion    = isset($trabajo['ubicacion']) ? trim((string)$trabajo['ubicacion']) : '';
+
+// Fila Clave: Zona y Ruta (Ej. "Zona 2 Ruta 24")
+$textoZona = '';
+if (!empty($zona)) {
+    $textoZona = (stripos($zona, 'zona') === false ? 'Zona ' : '') . $zona;
+}
+$textoRuta = '';
+if (!empty($ruta)) {
+    $textoRuta = (stripos($ruta, 'ruta') === false ? 'Ruta ' : '') . $ruta;
+}
+$zonaRuta = trim($textoZona . ' ' . $textoRuta);
+if (empty($zonaRuta) && !empty($ubicacion)) {
+    $zonaRuta = $ubicacion;
+}
+if (empty($zonaRuta)) {
+    $zonaRuta = 'Zona / Ruta no asignada';
+}
+
+$glosaRegistro = isset($trabajo['glosa']) ? trim((string)$trabajo['glosa']) : '';
+$foto          = isset($trabajo['foto']) && !empty($trabajo['foto']) ? trim((string)$trabajo['foto']) : null;
+
+// Tipo de Reconexión (API: id_tipo_reconexion)
+$idTipoReconexion = isset($trabajo['id_tipo_reconexion']) ? (int)$trabajo['id_tipo_reconexion'] : 1;
+$tipoReconexionTexto = 'Corte normal';
+$tipoReconexionDesc  = 'Sin retiro de medidor';
+$badgeTipoReconexion = 'bg-primary-subtle text-primary border border-primary-subtle';
+
+switch ($idTipoReconexion) {
+    case 1:
+        $tipoReconexionTexto = 'Corte normal';
+        $tipoReconexionDesc  = 'Sin retiro de medidor';
+        $badgeTipoReconexion = 'bg-primary-subtle text-primary border border-primary-subtle';
+        break;
+    case 2:
+        $tipoReconexionTexto = 'Con medidor';
+        $tipoReconexionDesc  = 'Retiro de medidor — Requiere instalar nuevo medidor';
+        $badgeTipoReconexion = 'bg-warning-subtle text-dark border border-warning';
+        break;
+    case 3:
+        $tipoReconexionTexto = 'Con material';
+        $tipoReconexionDesc  = 'Falta de accesorios — Requiere accesorios de plomería';
+        $badgeTipoReconexion = 'bg-info-subtle text-dark border border-info-subtle';
+        break;
+    case 4:
+        $tipoReconexionTexto = 'Otros';
+        $tipoReconexionDesc  = 'Otro motivo registrado';
+        $badgeTipoReconexion = 'bg-secondary-subtle text-secondary border border-secondary-subtle';
+        break;
+}
+
+// Validación de tipo de ubicación: GPS vs Mi Domicilio
+$rawGps = isset($trabajo['coordenadas_gps']) ? trim((string)$trabajo['coordenadas_gps']) : '';
+$esGpsValido     = false;
+$coordsGpsLimpia = '';
+$esMiDomicilio   = false;
+
+if (!empty($rawGps)) {
+    if (strtoupper($rawGps) === 'DOMICILIO_REGISTRADO' || stripos($rawGps, 'DOMICILIO') !== false) {
+        $esMiDomicilio = true;
+    } elseif (preg_match('/^-?\d{1,3}\.\d+[\s]*,[\s]*-?\d{1,3}\.\d+$/', $rawGps)) {
+        $esGpsValido     = true;
+        $coordsGpsLimpia = preg_replace('/\s+/', '', $rawGps);
+    } else {
+        $esMiDomicilio = true;
+    }
+} else {
+    $esMiDomicilio = true;
+}
+
+// Formateo de fecha y cálculo de plazo SLA (24h)
+$fechaStr = isset($trabajo['fecha_registro']) ? $trabajo['fecha_registro'] : '';
+$fechaFormateada = '—';
+if ($fechaStr) {
+    $fechaObj = date_create($fechaStr);
+    $fechaFormateada = $fechaObj ? date_format($fechaObj, 'd/m/Y H:i') : htmlspecialchars($fechaStr, ENT_QUOTES, 'UTF-8');
+}
+
+// Estados operativos
+$estadoRaw = strtoupper(trim(isset($trabajo['estado']) ? (string)$trabajo['estado'] : ''));
+$estadoCalculado = isset($trabajo['estado_calculado']) 
+    ? $trabajo['estado_calculado'] 
+    : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($trabajo) : 'PENDIENTE');
+
+$plazoSla = function_exists('calcularPlazo24h') ? calcularPlazo24h($fechaStr, $estadoCalculado) : null;
+
+$tieneEstadoPendienteLocal = !empty($trabajo['estado_interno']);
+$esEstadoNoConcluido       = ($estadoCalculado === 'NO CONCLUIDO' || $estadoCalculado === 'NO PROCEDENTE' || $tieneEstadoPendienteLocal);
+$esFinalizadoEnApi         = ($estadoRaw === 'CONCLUIDA' || $estadoRaw === 'CONCLUIDO') && !$esEstadoNoConcluido;
+
+$badgeClass = 'bg-warning-subtle text-dark border-warning';
+if ($estadoCalculado === 'CONCLUIDA' || $estadoCalculado === 'CONCLUIDO') {
+    $badgeClass = 'bg-success-subtle text-success border-success';
+} elseif ($estadoCalculado === 'NO CONCLUIDO') {
+    $badgeClass = 'bg-danger-subtle text-danger border-danger';
+} elseif ($estadoCalculado === 'NO PROCEDENTE' || $estadoCalculado === 'ANULADO' || $estadoCalculado === 'CANCELADO') {
+    $badgeClass = 'bg-secondary-subtle text-secondary border-secondary';
+}
+
+$lecturaActual = isset($trabajo['lectura_reconexion']) ? (string)$trabajo['lectura_reconexion'] : '';
+$glosaInterna  = isset($trabajo['glosa_interna']) ? (string)$trabajo['glosa_interna'] : '';
+$estadoInterno = isset($trabajo['estado_interno']) ? (string)$trabajo['estado_interno'] : 'CONCLUIDO';
+
+$esAdmin = function_exists('hasRole') ? hasRole('Administrador') : (isset($_SESSION['usuario']['nombre_rol']) && $_SESSION['usuario']['nombre_rol'] === 'Administrador');
+
+$esPendiente     = ($estadoCalculado === 'PENDIENTE' && empty($trabajo['estado_interno']));
+$mostrarOperador = $esAdmin && !$esPendiente && ($esEstadoNoConcluido || $esFinalizadoEnApi);
+
+$operadorMostrar = $mostrarOperador ? (!empty($trabajo['operador_nombre']) 
+    ? $trabajo['operador_nombre'] 
+    : (!empty($trabajo['operador_reporta']) 
+        ? $trabajo['operador_reporta'] 
+        : (!empty($trabajo['nombre_operador']) ? $trabajo['nombre_operador'] : ''))) : '';
+
+$fechaOperador = !empty($trabajo['fecha_reconexion']) 
+    ? $trabajo['fecha_reconexion'] 
+    : (!empty($trabajo['fecha_seguimiento']) ? $trabajo['fecha_seguimiento'] : '');
+$fechaOperadorFormateada = '';
+if (!empty($fechaOperador)) {
+    $fo = date_create($fechaOperador);
+    $fechaOperadorFormateada = $fo ? date_format($fo, 'd/m/Y H:i') : $fechaOperador;
+}
 ?>
 
-<div class="container-fluid p-0">
-    <!-- Encabezado con navegación -->
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+<div class="container-fluid px-0">
+    <!-- Encabezado de Página -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4 border-bottom pb-3" style="border-color: #e2e8f0 !important;">
         <div>
-            <h1 class="h3 mb-1">
-                Reconexión #<?= htmlspecialchars(isset($trabajo['id_reconexion']) ? $trabajo['id_reconexion'] : '—', ENT_QUOTES, 'UTF-8') ?>
-            </h1>
-            <p class="text-muted mb-0">Ficha supervisada — Solo lectura</p>
+            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <h1 class="h3 fw-bold mb-0 text-dark">
+                    Reconexión <span class="font-monospace text-primary">#<?= htmlspecialchars($idReconexion, ENT_QUOTES, 'UTF-8') ?></span>
+                </h1>
+                <?php if ($plazoSla && $plazoSla['estadoPlazo'] !== 'desconocido'): ?>
+                    <span class="badge <?= $plazoSla['badgeClass'] ?> font-monospace" style="font-size: 0.75rem;" title="Plazo de resolución: 24h desde la solicitud (Límite: <?= htmlspecialchars($plazoSla['fechaLimite'], ENT_QUOTES, 'UTF-8') ?>)">
+                        <?= htmlspecialchars($plazoSla['label'], ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+            <p class="text-secondary small mb-0">
+                <span>Solicitud: <strong class="text-dark font-monospace"><?= $fechaFormateada ?></strong></span>
+                <?php if (!empty($mostrarOperador) && !empty($operadorMostrar)): ?>
+                    <span class="text-muted ms-2 me-2">•</span>
+                    <span>Operador: <strong class="text-dark"><?= htmlspecialchars($operadorMostrar, ENT_QUOTES, 'UTF-8') ?></strong></span>
+                <?php endif; ?>
+            </p>
         </div>
-        <a href="<?= htmlspecialchars($urlVolver, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Volver
+        <a href="<?= htmlspecialchars($urlVolver, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" style="min-height: 38px;">
+            <i class="bi bi-arrow-left"></i>
+            <span><?= htmlspecialchars($textoVolver, ENT_QUOTES, 'UTF-8') ?></span>
         </a>
     </div>
 
-    <?php if (isset($error) && $error): ?>
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
+    <!-- Alertas de Error -->
+    <?php if ($error): ?>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border mb-3" role="alert" style="border-color: #fecaca !important;">
+            <div class="small fw-semibold"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
     <?php endif; ?>
 
-    <?php if ($trabajo): ?>
-    <div class="row g-4">
-        <!-- Columna de Información -->
-        <div class="col-lg-7 d-flex flex-column gap-4">
-            <!-- Información de la Reconexión -->
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Reconexión</h5>
-                </div>
-                <div class="card-body bg-light">
-                    
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">ID Reconexión</label>
-                        <input type="text" class="form-control bg-e9ecef" value="#<?= htmlspecialchars($trabajo['id_reconexion'] ?? 'N/A') ?>" readonly disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">Socio</label>
-                        <input type="text" class="form-control bg-e9ecef" value="Cod. <?= htmlspecialchars(!empty($trabajo['cod_socio']) ? $trabajo['cod_socio'] . ' - ' : '') ?><?= htmlspecialchars(trim($trabajo['nombre_socio'] ?? 'No especificado')) ?>" readonly disabled>
-                    </div>
-
-                    <!-- SECCIÓN: DATOS DE SISTEMA -->
-                    <div class="alert alert-secondary border-0 p-3 mb-4 rounded-3 bg-opacity-50">
-                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2"><i class="bi bi-house-door me-1"></i> 1. Dirección del Socio Registrada en Sistema</h6>
-                        
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold mb-1">Ubicación (U-Z-R)</label>
-                            <input type="text" class="form-control bg-e9ecef" value="<?= htmlspecialchars($trabajo['ubicacion'] ?? '') ?> (Zona: <?= htmlspecialchars($trabajo['zona'] ?? '') ?>, Ruta: <?= htmlspecialchars($trabajo['ruta'] ?? '') ?>)" readonly disabled>
-                        </div>
-
-                        <?php if (!empty($trabajo['direccion_predio']) || !empty($trabajo['direccion'])): ?>
-                            <div class="mb-0">
-                                <label class="form-label text-muted small fw-bold mb-1">Dirección fija del Socio</label>
-                                <textarea class="form-control bg-e9ecef" rows="2" readonly disabled><?= htmlspecialchars($trabajo['direccion_predio'] ?? $trabajo['direccion'] ?? '') ?></textarea>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- SECCIÓN: REPORTE EN CAMPO -->
-                    <h6 class="fw-bold mb-3 border-bottom border-primary border-opacity-25 pb-2 text-primary">2.- Reporte de Trabajo</h6>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">Glosa / Observación del Registro</label>
-                        <textarea class="form-control bg-e9ecef text-dark" rows="3" readonly disabled><?= htmlspecialchars($trabajo['glosa'] ?? 'Sin glosa extra') ?></textarea>
-                    </div>
-
-                    <!-- GPS SECTION CON MAPA -->
-                    <?php if (!empty($trabajo['coordenadas_gps'])): ?>
-                        <?php 
-                            $coordsLimpia = preg_replace('/\s+/', '', $trabajo['coordenadas_gps']); 
-                            $urlVerMapa = "https://www.google.com/maps?q={$coordsLimpia}";
-                            $urlRuta    = "https://www.google.com/maps/dir/?api=1&destination={$coordsLimpia}";
-                            // URL para embeber el mapa directamente en la página
-                            $urlIframe  = "https://maps.google.com/maps?q={$coordsLimpia}&hl=es&z=15&output=embed";
-                        ?>
-                        <div class="mb-4 p-3 border border-danger border-opacity-25 rounded-3 bg-white shadow-sm">
-                            <label class="form-label text-danger small fw-bold mb-2"><i class="bi bi-geo-alt-fill"></i> Ubicación Física (GPS)</label>
-                            
-                            <div class="alert alert-warning border-warning p-2 mb-3 small text-dark d-flex align-items-center">
-                                <i class="bi bi-info-circle-fill fs-5 me-2 text-warning"></i> 
-                                <div>
-                                    <strong>¡Atención!</strong> Esta es la ubicación de la reconexión. <span class="text-danger fw-bold">Puede ser distinta a su casa.</span> ¡Guíese por esta dirección!
-                                </div>
-                            </div>
-                            
-                            <!-- Mapa Embebido de Google Maps -->
-                            <div class="ratio ratio-16x9 mb-3 border rounded overflow-hidden shadow-sm">
-                                <iframe src="<?= htmlspecialchars($urlIframe) ?>" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                            </div>
-
-                            <div class="input-group mb-2">
-                                <span class="input-group-text bg-light text-muted small" style="font-size: 15px;">Coordenadas:</span>
-                                <input type="text" class="form-control bg-e9ecef text-center fw-bold" style="font-size: 15px;" value="<?=htmlspecialchars($trabajo['coordenadas_gps']) ?>" readonly disabled>
-                            </div>
-                            
-                            <div class="d-flex gap-2">
-                                <a href="<?= htmlspecialchars($urlVerMapa) ?>" target="_blank" class="btn btn-outline-secondary flex-fill">
-                                    <i class="bi bi-box-arrow-up-right me-1"></i> Abrir en Maps
-                                </a>
-                                <a href="<?= htmlspecialchars($urlRuta) ?>" target="_blank" class="btn btn-success flex-fill shadow-sm fw-bold">
-                                    <i class="bi bi-sign-turn-right-fill me-1"></i> Iniciar Ruta GPS
-                                </a>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- Fotografía Adjunta -->
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold mb-1">Fotografía del Predio / Medidor</label>
-                        <?php if (!empty($trabajo['foto'])): ?>
-                            <?php 
-                                $fotoRaw = trim($trabajo['foto']);
-                                if (strpos($fotoRaw, 'http://') === 0 || strpos($fotoRaw, 'https://') === 0) {
-                                    $fotoUrl = $fotoRaw;
-                                } else {
-                                    if (strpos($fotoRaw, '/uploads/') === false && strpos($fotoRaw, 'uploads/') === false) {
-                                        $fotoRaw = '/uploads/reconexiones/' . ltrim($fotoRaw, '/');
-                                    }
-                                    $base = !empty($apiFotoBaseUrl) ? rtrim($apiFotoBaseUrl, '/') : '';
-                                    $fotoUrl = $base . '/' . ltrim($fotoRaw, '/');
-                                }
-                                $fotoId = htmlspecialchars($trabajo['id_reconexion'] ?? '0');
-                            ?>
-                            <div class="border rounded p-2 bg-white text-center shadow-sm">
-                                <a href="<?= htmlspecialchars($fotoUrl) ?>" target="_blank" title="Clic para ampliar en pestaña nueva">
-                                    <img src="<?= htmlspecialchars($fotoUrl) ?>" 
-                                         alt="Foto de la reconexión" 
-                                         loading="lazy"
-                                         decoding="async"
-                                         class="img-fluid rounded border mb-2" 
-                                         style="max-height: 240px; width: auto; object-fit: contain;"
-                                         onerror="this.style.display='none'; document.getElementById('foto_error_rec_<?= $fotoId ?>').style.display='block';">
-                                </a>
-                                <div id="foto_error_rec_<?= $fotoId ?>" style="display: none;" class="alert alert-warning small py-2 mb-2">
-                                    <i class="bi bi-exclamation-circle text-warning me-1"></i> No se pudo cargar la vista previa de la imagen.
-                                </div>
-                            </div>
-                        <?php else: ?>
-                            <div class="p-3 bg-white rounded border text-muted small text-center">
-                                <i class="bi bi-camera-slash display-6 d-block mb-1 text-secondary opacity-50"></i>
-                                El socio no adjuntó fotografía en esta reconexión.
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
+    <?php if (!$trabajo): ?>
+        <div class="card shadow-sm border text-center p-4 p-md-5 bg-white rounded-2" style="border-color: #cbd5e1 !important;">
+            <h2 class="h5 fw-bold text-dark mb-2">No se pudo cargar la orden</h2>
+            <p class="text-secondary small mb-3">No fue posible obtener los datos de esta reconexión en el servidor central.</p>
+            <div>
+                <a href="<?= htmlspecialchars($urlVolver, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary px-3 py-2 fw-semibold">
+                    Regresar a la lista
+                </a>
             </div>
         </div>
-
-        <!-- Columna de Conclusión -->
-        <div class="col-lg-5">
-            <?php 
-                $estadoRaw = strtoupper(trim(isset($trabajo['estado']) ? (string)$trabajo['estado'] : ''));
-                $estadoCalculado = isset($trabajo['estado_calculado']) 
-                    ? $trabajo['estado_calculado'] 
-                    : (function_exists('determinarEstadoTrabajo') ? determinarEstadoTrabajo($trabajo) : 'PENDIENTE');
-                
-                $tieneEstadoPendienteLocal = !empty($trabajo['estado_interno']);
-                $esEstadoNoConcluido = ($estadoCalculado === 'NO CONCLUIDO' || $estadoCalculado === 'NO PROCEDENTE' || $tieneEstadoPendienteLocal);
-
-                // Solo bloqueamos como solo-lectura si la API dice CONCLUIDO/CONCLUIDA Y NO es un estado NO CONCLUIDO / NO PROCEDENTE
-                $esFinalizadoEnApi = ($estadoRaw === 'CONCLUIDA' || $estadoRaw === 'CONCLUIDO') && !$esEstadoNoConcluido;
-            ?>
-            
-            <?php if ($esFinalizadoEnApi): ?>
-                <div class="card shadow-sm h-100 border-success">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="bi bi-check-circle-fill me-2"></i>Reconexión Concluida</h5>
-                    </div>
-                    <div class="card-body bg-light text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-shield-check display-1 text-success mb-3"></i>
-                        <h4 class="text-success mb-2">Trabajo Finalizado</h4>
-                        <p class="text-muted mb-0">Esta reconexión ya fue procesada y guardada exitosamente.</p>
-                    </div>
-                </div>
-            <?php else: ?>
-            <div class="card shadow-sm h-100 border-primary">
-                <div class="card-header color-cosmol text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-check2-square me-2"></i>Concluir Trabajo
-                        <?php if(!empty($trabajo['estado_interno'])): ?>
-                            <span class="badge bg-warning ms-2"><?= htmlspecialchars($trabajo['estado_interno']) ?></span>
-                        <?php endif; ?>
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <?php if (hasPermission('trabajos.concluir')): ?>
-                    <form action="/administrador/trabajos/concluir" method="POST" id="form-concluir">
-                        <?= csrfField(); ?>
-                        <input type="hidden" name="tipo" value="reconexion">
-                        <input type="hidden" name="id_trabajo" value="<?= htmlspecialchars($trabajo['id_reconexion'] ?? '') ?>">
-                        <input type="hidden" name="origen" value="<?= htmlspecialchars($origen, ENT_QUOTES, 'UTF-8') ?>">
-                        
-                        <?php if(!empty($trabajo['glosa_interna'])): ?>
-                            <div class="alert alert-warning mb-4">
-                                <strong>Informe previo (<?= htmlspecialchars($trabajo['estado_interno']) ?>):</strong><br>
-                                <?= nl2br(htmlspecialchars($trabajo['glosa_interna'])) ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="mb-4">
-                            <label for="estado" class="form-label fw-bold">Estado <span class="text-danger">*</span></label>
-                            <?php $estadoActual = isset($trabajo['estado_interno']) ? $trabajo['estado_interno'] : 'NO CONCLUIDO'; ?>
-                            <select name="estado" id="estado" class="form-select" required onchange="toggleReconexionFields()">
-                                <option value="CONCLUIDO" <?= $estadoActual === 'CONCLUIDO' ? 'selected' : '' ?>>Concluido</option>
-                                <option value="NO CONCLUIDO" <?= $estadoActual === 'NO CONCLUIDO' ? 'selected' : '' ?>>No Concluido (Pendiente)</option>
-                                <option value="NO PROCEDENTE" <?= $estadoActual === 'NO PROCEDENTE' ? 'selected' : '' ?>>No Procedente</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-4" id="div-lecturacion">
-                            <label for="lecturacion" class="form-label fw-bold">Lecturación <span class="text-danger">*</span></label>
-                            <input type="text" name="lecturacion" id="lecturacion" class="form-control" placeholder="Ingrese el valor de la lecturación..." value="<?= htmlspecialchars($trabajo['lectura_reconexion'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
-                        </div>
-                        
-                        <script>
-                            function toggleReconexionFields() {
-                                const estado = document.getElementById('estado').value;
-                                const lecturacion = document.getElementById('lecturacion');
-                                const divLecturacion = document.getElementById('div-lecturacion');
-                                
-                                if (estado === 'CONCLUIDO') {
-                                    divLecturacion.style.display = 'block';
-                                    lecturacion.required = true;
-                                } else {
-                                    divLecturacion.style.display = 'none';
-                                    lecturacion.required = false;
-                                }
-                            }
-                        </script>
-
-                        <div class="mb-4">
-                            <label for="glosa" class="form-label fw-bold">Glosa / Observación <span class="text-danger">*</span></label>
-                            <textarea name="glosa" id="glosa" class="form-control" rows="4" placeholder="Detalle qué trabajo se realizó o cualquier otra observación técnica..." required><?= htmlspecialchars($trabajo['glosa_interna'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
-                            <div class="form-text">Si selecciona CONCLUIDO, esta conclusión actualizará el estado permanentemente en el servidor central de COSMOL.</div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-send me-1"></i> Enviar Conclusión
-                            </button>
-                        </div>
-                    </form>
-                    <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="bi bi-shield-slash fs-1 text-muted d-block mb-2"></i>
-                        <p class="text-muted fw-semibold mb-3">No cuenta con los permisos necesarios para concluir este trabajo.</p>
-                        <button type="button" class="btn btn-secondary btn-lg disabled" disabled title="Permiso denegado">
-                            <i class="bi bi-lock-fill me-1"></i> Conclusión Bloqueada
-                        </button>
-                    </div>
-                    <?php endif; ?>
-                </div>
+    <?php else: ?>
+        <div class="row g-3 g-md-4">
+            <!-- Columna Izquierda: Información de la Reconexión -->
+            <div class="col-12 col-lg-7 d-flex flex-column gap-3">
+                <?php include __DIR__ . '/partials/trabajo_historial_detalle/reconexion_info.php'; ?>
             </div>
-            <?php endif; ?>
+
+            <!-- Columna Derecha: Gestión / Conclusión de Trabajo -->
+            <div class="col-12 col-lg-5">
+                <?php include __DIR__ . '/partials/trabajo_historial_detalle/reconexion_conclusion.php'; ?>
+            </div>
         </div>
-    </div>
     <?php endif; ?>
 </div>
 
-<style>
-    /* Diferenciación visual clara para campos de solo lectura */
-    .bg-e9ecef {
-        background-color: #e9ecef !important;
-        opacity: 1;
-        cursor: not-allowed;
-    }
-</style>
+<!-- Lógica JS y Modal -->
+<?php include __DIR__ . '/partials/trabajo_historial_detalle/reconexion_scripts.php'; ?>
