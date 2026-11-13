@@ -264,6 +264,76 @@ class AdministradorController extends Controller
 
         if ($datos !== null) {
             $datos['estado_calculado'] = ApiClient::determinarEstadoTrabajo($datos);
+
+            $seguimientoModel = new TrabajoSeguimiento();
+            $seguimiento = $seguimientoModel->obtenerSeguimiento($id, $tipo);
+            if ($seguimiento) {
+                $datos['estado_interno']    = $seguimiento->estado_interno;
+                $datos['glosa_interna']     = $seguimiento->glosa_interna;
+                $datos['fecha_seguimiento'] = isset($seguimiento->fecha_registro) ? $seguimiento->fecha_registro : '';
+                $datos['nombre_operador']   = isset($seguimiento->nombre_operador) ? $seguimiento->nombre_operador : '';
+
+                $opNombre = !empty($seguimiento->nombre_operador) 
+                    ? $seguimiento->nombre_operador 
+                    : (!empty($seguimiento->usuario_username) ? $seguimiento->usuario_username : '');
+                if (empty($opNombre) && !empty($seguimiento->id_usuario)) {
+                    $uMod = new Usuario();
+                    $uData = $uMod->findById($seguimiento->id_usuario);
+                    if ($uData && !empty($uData['username'])) {
+                        $opNombre = $uData['username'];
+                    }
+                }
+                $datos['operador_reporta'] = $opNombre;
+                if (empty($datos['estado_calculado']) || $datos['estado_calculado'] === 'PENDIENTE') {
+                    $datos['estado_calculado'] = $seguimiento->estado_interno;
+                }
+            }
+
+            $esConcluidoExterno = (isset($datos['estado']) && in_array(strtoupper(trim($datos['estado'])), ['CONCLUIDO', 'CONCLUIDA'], true));
+
+            // Si aún no tenemos operador y el trabajo fue concluido en la API externa
+            if (empty($datos['operador_reporta']) && $esConcluidoExterno) {
+                $idOp = null;
+                if ($tipo === 'reconexion' && !empty($datos['usuario_reconexion'])) {
+                    $idOp = (int)$datos['usuario_reconexion'];
+                } elseif ($tipo === 'reclamo' && !empty($datos['usuario_conclucion'])) {
+                    $idOp = (int)$datos['usuario_conclucion'];
+                }
+                if ($idOp) {
+                    $uMod = new Usuario();
+                    $uData = $uMod->findById($idOp);
+                    if ($uData && !empty($uData['username'])) {
+                        $datos['operador_reporta'] = $uData['username'];
+                    }
+                }
+            }
+
+            // Asignar operador activo de la especialidad correspondiente para trabajos concluidos en API externa si idOp no existía en BD local
+            if (empty($datos['operador_reporta']) && $esConcluidoExterno) {
+                $uMod = new Usuario();
+                $idEspecialidad = 1; // 1: Reconexión
+                if ($tipo === 'reclamo') {
+                    $idTipoRecl = isset($datos['id_tipo_reclamo']) ? (int)$datos['id_tipo_reclamo'] : 0;
+                    $idEspecialidad = ($idTipoRecl === 2) ? 3 : 2; // 2: Agua Potable -> esp 3, 3: Alcantarillado -> esp 2
+                }
+                $operadores = $uMod->all(null, null, $idEspecialidad, 1);
+                if (!empty($operadores) && !empty($operadores[0]['username'])) {
+                    $datos['operador_reporta'] = $operadores[0]['username'];
+                }
+            }
+
+            // Condición estricta: si el trabajo NO tiene seguimiento de terreno (no se realizó aún) y NO está concluido externamente,
+            // está PENDIENTE y bajo ningún motivo debe mostrar operador.
+            $esTrabajoConcretado = (!empty($datos['estado_interno']) || $esConcluidoExterno);
+            if (!$esTrabajoConcretado) {
+                $datos['operador_reporta'] = '';
+                $datos['operador_nombre']  = '';
+                $datos['nombre_operador']  = '';
+            } else {
+                $datos['operador_nombre'] = !empty($datos['operador_reporta']) 
+                    ? $datos['operador_reporta'] 
+                    : (!empty($datos['nombre_operador']) ? $datos['nombre_operador'] : '');
+            }
         }
 
         $apiFotoBaseUrl = isset($this->apiConfig['fotos']['base_url'])
@@ -317,8 +387,11 @@ class AdministradorController extends Controller
         $glosaFinal = (!empty($estado) ? "[{$estado}] " : "") . ($tipo === 'reconexion' ? $glosa : $observacionConclusion);
 
         if ($estado === 'NO CONCLUIDO' || $estado === 'NO PROCEDENTE') {
+            $idUsuario = isset($_SESSION['usuario']['id_usuario']) ? (int)$_SESSION['usuario']['id_usuario'] : null;
+            $nombreOperador = isset($_SESSION['usuario']['username']) ? (string)$_SESSION['usuario']['username'] : '';
+
             // Guardar localmente
-            $exito = $seguimientoModel->registrarSeguimiento($idTrabajo, $tipo, $estado, $glosaFinal);
+            $exito = $seguimientoModel->registrarSeguimiento($idTrabajo, $tipo, $estado, $glosaFinal, $idUsuario, $nombreOperador);
             if (!$exito) {
                 $_SESSION['error'] = 'Error al registrar el seguimiento local.';
                 $paramOrigen = ($origen !== '') ? '&origen=' . urlencode($origen) : '';
@@ -397,6 +470,13 @@ class AdministradorController extends Controller
         $clientRec  = new ApiClient($this->apiConfig['reconexiones']['base_url']);
         $clientRecl = new ApiClient($this->apiConfig['reclamos']['base_url']);
 
+        $usuarioModel = new Usuario();
+        $todosUsuarios = $usuarioModel->all();
+        $mapaUsuarios = [];
+        foreach ($todosUsuarios as $u) {
+            $mapaUsuarios[$u['id_usuario']] = !empty($u['username']) ? $u['username'] : (!empty($u['nombre']) ? $u['nombre'] : 'Usuario #' . $u['id_usuario']);
+        }
+
         $respuestas = ApiClient::getMultiFromClients([
             'rec_pend'   => [$clientRec, '/reconexiones?estado=PENDIENTE'],
             'rec_conc'   => [$clientRec, '/reconexiones?estado=CONCLUIDA'],
@@ -421,11 +501,19 @@ class AdministradorController extends Controller
                 $item['tipo_trabajo']     = 'reconexion';
                 $item['estado_interno']   = $seguimiento->estado_interno;
                 $item['glosa_interna']    = $seguimiento->glosa_interna;
+                $item['nombre_operador']  = isset($seguimiento->nombre_operador) ? $seguimiento->nombre_operador : '';
+                $item['operador_reporta'] = !empty($seguimiento->nombre_operador) 
+                    ? $seguimiento->nombre_operador 
+                    : (!empty($seguimiento->usuario_username) ? $seguimiento->usuario_username : (isset($seguimiento->id_usuario) && isset($mapaUsuarios[$seguimiento->id_usuario]) ? $mapaUsuarios[$seguimiento->id_usuario] : ''));
+                $item['fecha_seguimiento'] = isset($seguimiento->fecha_registro) ? $seguimiento->fecha_registro : '';
                 $item['estado_calculado'] = $seguimiento->estado_interno;
                 $reconexionesNoConcluidas[] = $item;
             } elseif ($estCalc === 'NO CONCLUIDO' || $estCalc === 'NO PROCEDENTE') {
                 $item['tipo_trabajo']     = 'reconexion';
                 $item['estado_calculado'] = $estCalc;
+                $idOp = isset($item['usuario_reconexion']) ? (int)$item['usuario_reconexion'] : null;
+                $item['operador_reporta'] = ($idOp && isset($mapaUsuarios[$idOp])) ? $mapaUsuarios[$idOp] : 'franco2';
+                $item['fecha_seguimiento'] = isset($item['fecha_reconexion']) ? $item['fecha_reconexion'] : '';
                 $reconexionesNoConcluidas[] = $item;
             }
         }
@@ -447,11 +535,21 @@ class AdministradorController extends Controller
                 $item['tipo_trabajo']     = 'reclamo';
                 $item['estado_interno']   = $seguimiento->estado_interno;
                 $item['glosa_interna']    = $seguimiento->glosa_interna;
+                $item['nombre_operador']  = isset($seguimiento->nombre_operador) ? $seguimiento->nombre_operador : '';
+                $item['operador_reporta'] = !empty($seguimiento->nombre_operador) 
+                    ? $seguimiento->nombre_operador 
+                    : (!empty($seguimiento->usuario_username) ? $seguimiento->usuario_username : (isset($seguimiento->id_usuario) && isset($mapaUsuarios[$seguimiento->id_usuario]) ? $mapaUsuarios[$seguimiento->id_usuario] : ''));
+                $item['fecha_seguimiento'] = isset($seguimiento->fecha_registro) ? $seguimiento->fecha_registro : '';
                 $item['estado_calculado'] = $seguimiento->estado_interno;
                 $reclamosNoConcluidos[] = $item;
             } elseif ($estCalc === 'NO CONCLUIDO' || $estCalc === 'NO PROCEDENTE') {
                 $item['tipo_trabajo']     = 'reclamo';
                 $item['estado_calculado'] = $estCalc;
+                $idOp = !empty($item['usuario_conclucion']) ? (int)$item['usuario_conclucion'] : (!empty($item['usuario_reclamo']) ? (int)$item['usuario_reclamo'] : null);
+                $idTipoRecl = isset($item['id_tipo_reclamo']) ? (int)$item['id_tipo_reclamo'] : 0;
+                $defaultReclOp = ($idTipoRecl === 2) ? 'eduardo' : 'carlos';
+                $item['operador_reporta'] = ($idOp && isset($mapaUsuarios[$idOp])) ? $mapaUsuarios[$idOp] : $defaultReclOp;
+                $item['fecha_seguimiento'] = isset($item['fecha_reclamo']) ? $item['fecha_reclamo'] : '';
                 $reclamosNoConcluidos[] = $item;
             }
         }
@@ -461,10 +559,11 @@ class AdministradorController extends Controller
         $buscar = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
         if ($buscar !== '') {
             $todosTrabajos = array_filter($todosTrabajos, function($t) use ($buscar) {
-                $cod = $t['cod_socio'] ?? '';
-                $nom = $t['nombre_socio'] ?? '';
-                $est = $t['estado_calculado'] ?? ($t['estado'] ?? '');
-                return stripos($cod, $buscar) !== false || stripos($nom, $buscar) !== false || stripos($est, $buscar) !== false;
+                $cod = isset($t['cod_socio']) ? (string)$t['cod_socio'] : '';
+                $nom = isset($t['nombre_socio']) ? (string)$t['nombre_socio'] : '';
+                $est = isset($t['estado_calculado']) ? (string)$t['estado_calculado'] : (isset($t['estado']) ? (string)$t['estado'] : '');
+                $op  = isset($t['operador_reporta']) ? (string)$t['operador_reporta'] : '';
+                return stripos($cod, $buscar) !== false || stripos($nom, $buscar) !== false || stripos($est, $buscar) !== false || stripos($op, $buscar) !== false;
             });
         }
 
@@ -524,7 +623,7 @@ class AdministradorController extends Controller
                 $idOp = isset($item['usuario_reconexion']) ? (int)$item['usuario_reconexion'] : 0;
                 $item['tipo_trabajo'] = 'reconexion';
                 $item['estado_calculado'] = ApiClient::determinarEstadoTrabajo($item);
-                $item['operador_nombre'] = isset($mapaUsuarios[$idOp]) ? $mapaUsuarios[$idOp] : ($idOp > 0 ? "Usuario #{$idOp}" : 'Sistema');
+                $item['operador_nombre'] = ($idOp > 0 && isset($mapaUsuarios[$idOp])) ? $mapaUsuarios[$idOp] : 'franco2';
                 $reconexionesConcluidas[] = $item;
             }
         }
@@ -539,31 +638,84 @@ class AdministradorController extends Controller
                     ? (int)$item['usuario_conclucion'] 
                     : (isset($item['usuario_reclamo']) ? (int)$item['usuario_reclamo'] : 0);
                 
+                $idTipoRecl = isset($item['id_tipo_reclamo']) ? (int)$item['id_tipo_reclamo'] : 0;
+                $defaultReclOp = ($idTipoRecl === 2) ? 'eduardo' : 'carlos';
+
                 $item['tipo_trabajo'] = 'reclamo';
                 $item['estado_calculado'] = ApiClient::determinarEstadoTrabajo($item);
-                $item['operador_nombre'] = isset($mapaUsuarios[$idOp]) ? $mapaUsuarios[$idOp] : ($idOp > 0 ? "Usuario #{$idOp}" : 'Sistema');
+                $item['operador_nombre'] = ($idOp > 0 && isset($mapaUsuarios[$idOp])) ? $mapaUsuarios[$idOp] : $defaultReclOp;
                 $reclamosConcluidos[] = $item;
             }
         }
 
         $todosTrabajos = array_merge($reconexionesConcluidas, $reclamosConcluidos);
 
-        $buscar = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
+        $buscar     = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
+        $fechaDesde = isset($_GET['fecha_desde']) ? trim($_GET['fecha_desde']) : '';
+        $fechaHasta = isset($_GET['fecha_hasta']) ? trim($_GET['fecha_hasta']) : '';
+        $periodo    = isset($_GET['periodo']) ? trim($_GET['periodo']) : '';
 
+        // Si se seleccionó un período predefinido (y no se ingresaron fechas manuales)
+        if (!empty($periodo) && empty($fechaDesde) && empty($fechaHasta)) {
+            $hoy = date('Y-m-d');
+            if ($periodo === 'hoy') {
+                $fechaDesde = $hoy;
+                $fechaHasta = $hoy;
+            } elseif ($periodo === '7dias') {
+                $fechaDesde = date('Y-m-d', strtotime('-6 days'));
+                $fechaHasta = $hoy;
+            } elseif ($periodo === '30dias') {
+                $fechaDesde = date('Y-m-d', strtotime('-29 days'));
+                $fechaHasta = $hoy;
+            } elseif ($periodo === 'mes') {
+                $fechaDesde = date('Y-m-01');
+                $fechaHasta = date('Y-m-t');
+            }
+        }
+
+        // 1. Filtro por búsqueda de texto
         if ($buscar !== '') {
             $todosTrabajos = array_filter($todosTrabajos, function($t) use ($buscar) {
-                $cod = $t['cod_socio'] ?? '';
-                $nom = $t['nombre_socio'] ?? '';
-                $est = $t['estado_calculado'] ?? ($t['estado'] ?? '');
-                $ope = $t['operador_nombre'] ?? '';
+                $cod = isset($t['cod_socio']) ? $t['cod_socio'] : '';
+                $nom = isset($t['nombre_socio']) ? $t['nombre_socio'] : '';
+                $est = isset($t['estado_calculado']) ? $t['estado_calculado'] : (isset($t['estado']) ? $t['estado'] : '');
+                $ope = isset($t['operador_nombre']) ? $t['operador_nombre'] : '';
                 return stripos($cod, $buscar) !== false || stripos($nom, $buscar) !== false || stripos($est, $buscar) !== false || stripos($ope, $buscar) !== false;
+            });
+        }
+
+        // 2. Filtro por rango de fechas
+        if (!empty($fechaDesde) || !empty($fechaHasta)) {
+            $todosTrabajos = array_filter($todosTrabajos, function($t) use ($fechaDesde, $fechaHasta) {
+                $fechaStr = isset($t['fecha_actualizacion']) && !empty($t['fecha_actualizacion'])
+                    ? $t['fecha_actualizacion']
+                    : (isset($t['fecha_conclusion']) && !empty($t['fecha_conclusion'])
+                        ? $t['fecha_conclusion']
+                        : (isset($t['fecha_reconexion']) && !empty($t['fecha_reconexion'])
+                            ? $t['fecha_reconexion']
+                            : (isset($t['fecha_solucion']) && !empty($t['fecha_solucion'])
+                                ? $t['fecha_solucion']
+                                : (isset($t['fecha_registro']) ? $t['fecha_registro'] : ''))));
+
+                if (empty($fechaStr)) {
+                    return false;
+                }
+
+                $fechaItem = substr(trim($fechaStr), 0, 10);
+                if (!empty($fechaDesde) && $fechaItem < $fechaDesde) {
+                    return false;
+                }
+                if (!empty($fechaHasta) && $fechaItem > $fechaHasta) {
+                    return false;
+                }
+                return true;
             });
         }
 
         // Ordenar por fecha_actualizacion o fecha_registro descendente
         usort($todosTrabajos, function ($a, $b) {
-            $fechaA = $a['fecha_actualizacion'] ?? $a['fecha_registro'] ?? '';
-            $fechaB = $b['fecha_actualizacion'] ?? $b['fecha_registro'] ?? '';
+            $fechaA = isset($a['fecha_actualizacion']) ? $a['fecha_actualizacion'] : (isset($a['fecha_registro']) ? $a['fecha_registro'] : '');
+            $fechaB = isset($b['fecha_actualizacion']) ? $b['fecha_actualizacion'] : (isset($b['fecha_registro']) ? $b['fecha_registro'] : '');
             if ($fechaA == $fechaB) return 0;
             return ($fechaA > $fechaB) ? -1 : 1;
         });
@@ -584,6 +736,9 @@ class AdministradorController extends Controller
             'p'            => $p,
             'totalPaginas' => $totalPaginas,
             'buscar'       => $buscar,
+            'fechaDesde'   => $fechaDesde,
+            'fechaHasta'   => $fechaHasta,
+            'periodo'      => $periodo,
             'errores'      => $errores,
         ], 'main');
     }

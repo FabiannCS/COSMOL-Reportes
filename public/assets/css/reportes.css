@@ -1,0 +1,57 @@
+/* ============================================================
+   COSMOL Reportes - Estilos Específicos para Módulos de Reportes
+   (Chatbot WhatsApp y App Móvil)
+   ============================================================ */
+
+/* Botones de Pestaña Segmentada (Modos de Vista) */
+.filtro-vista-btn {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-weight: 500;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.filtro-vista-btn:hover {
+    color: #0284c7;
+    background-color: rgba(2, 132, 199, 0.08);
+}
+
+.filtro-vista-btn.active {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.35);
+}
+
+.filtro-vista-btn .filtro-badge {
+    font-size: 0.72rem;
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+}
+
+.filtro-vista-btn.active .filtro-badge {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Tarjetas de Auditoría y Métricas (KPIs Clicables) */
+.tarjeta-kpi {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tarjeta-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+}

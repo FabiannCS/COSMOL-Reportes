@@ -2,3 +2,16 @@
 /vendor/
 .DS_Store
 Thumbs.db
+
+# Configuración y skills de agentes IA
+.agents/
+.skills/
+skills/
+*.skill
+
+# Archivos temporales y editores
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

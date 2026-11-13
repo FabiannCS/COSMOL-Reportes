@@ -17,6 +17,7 @@
 
     <!-- Estilos Propios de la Aplicación -->
     <link rel="stylesheet" href="/assets/css/app.css?v=<?= @filemtime(__DIR__ . '/../../../../public/assets/css/app.css') ?: time() ?>">
+    <link rel="stylesheet" href="/assets/css/reportes.css?v=<?= @filemtime(__DIR__ . '/../../../../public/assets/css/reportes.css') ?: time() ?>">
 </head>
 <body>
     <script>
@@ -52,6 +53,9 @@
 
     <!-- Bootstrap 5.3 Bundle JS Local -->
     <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chart.js 4.5.1 Local -->
+    <script src="/assets/vendor/chartjs/chart.min.js"></script>
 
     <!-- Script de la Aplicación -->
     <script src="/assets/js/app.js?v=<?= @filemtime(__DIR__ . '/../../../../public/assets/js/app.js') ?: time() ?>"></script>
